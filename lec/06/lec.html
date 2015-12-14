@@ -1,0 +1,1199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lec. 06: Using GDB to Trace a Program</title>
+<!-- 2015-09-09 Wed 07:48 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 06: Using GDB to Trace a Program</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Compiling with Debug Symbols</a></li>
+<li><a href="#sec-2">2. Source code line-by-line debugging with <code>gdb</code></a>
+<ul>
+<li><a href="#sec-2-1">2.1. Run, Continue and Next</a></li>
+<li><a href="#sec-2-2">2.2. Stepping</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">3. Instruction Level Debugging</a>
+<ul>
+<li><a href="#sec-3-1">3.1. Next Instruction and Examine</a></li>
+<li><a href="#sec-3-2">3.2. Step Instruction and Stack Frames</a></li>
+<li><a href="#sec-3-3">3.3. Backtrace and Info</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Compiling with Debug Symbols</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+To use GDB to its fullest, we want to include the debug flags during
+compilation. This enable us to view the code along side the
+compilation process. So far, we've just been looking at the binary,
+but we might want to actually track the progress of a program
+line-by-line.  Consider first the simple program <code>datatype</code>:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;math.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">c</span>;
+  <span style="color: #98fb98;">short</span> <span style="color: #eedd82;">s</span>;
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>,<span style="color: #eedd82;">i</span>;
+  <span style="color: #98fb98;">float</span> <span style="color: #eedd82;">f</span>;
+  <span style="color: #98fb98;">double</span> <span style="color: #eedd82;">d</span>;
+
+
+  c = <span style="color: #ffa07a;">'a'</span>;
+  s = 0x1001;
+  f = 3.1415926 ;
+  d = exp(exp(1));
+
+  <span style="color: #00ffff;">for</span>(i=0;i&lt;10;i++){
+    printf(<span style="color: #ffa07a;">"i:%d c:%c s:%d f:%f d:%f\n"</span>,
+    i,c,s,f,d);
+  }
+
+}
+</pre>
+</div>
+
+<p>
+If we were to compile this program, we might do something like this:
+</p>
+
+<pre class="example">
+gcc datatype.c -o datatype
+</pre>
+
+<p>
+Which gives us the executable binary datatype, and we can run it
+to produce the expected output:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./datatype 
+i:0 c:a s:4097 f:3.141593 d:15.154262
+i:1 c:a s:4097 f:3.141593 d:15.154262
+i:2 c:a s:4097 f:3.141593 d:15.154262
+i:3 c:a s:4097 f:3.141593 d:15.154262
+i:4 c:a s:4097 f:3.141593 d:15.154262
+i:5 c:a s:4097 f:3.141593 d:15.154262
+i:6 c:a s:4097 f:3.141593 d:15.154262
+i:7 c:a s:4097 f:3.141593 d:15.154262
+i:8 c:a s:4097 f:3.141593 d:15.154262
+i:9 c:a s:4097 f:3.141593 d:15.154262
+</pre>
+
+<p>
+We can also trace the program with gdb and take a look at the output
+(the <code>-q</code> just suppreses the welcome message):
+</p>
+<pre class="example">
+user@si485H-base:demo$ gdb -q ./datatype 
+Reading symbols from ./datatype...(no debugging symbols found)...done.
+(gdb) disassemble main
+Dump of assembler code for function main:
+   0x0804841d &lt;+0&gt;:	push   ebp
+   0x0804841e &lt;+1&gt;:	mov    ebp,esp
+   0x08048420 &lt;+3&gt;:	and    esp,0xfffffff0
+   0x08048423 &lt;+6&gt;:	sub    esp,0x40
+   0x08048426 &lt;+9&gt;:	mov    BYTE PTR [esp+0x3b],0x61
+   0x0804842b &lt;+14&gt;:	mov    WORD PTR [esp+0x38],0x1001
+   0x08048432 &lt;+21&gt;:	mov    eax,ds:0x804854c
+   0x08048437 &lt;+26&gt;:	mov    DWORD PTR [esp+0x34],eax
+   0x0804843b &lt;+30&gt;:	fld    QWORD PTR ds:0x8048550
+   0x08048441 &lt;+36&gt;:	fstp   QWORD PTR [esp+0x28]
+   0x08048445 &lt;+40&gt;:	mov    DWORD PTR [esp+0x3c],0x0
+   0x0804844d &lt;+48&gt;:	jmp    0x804848a &lt;main+109&gt;
+   0x0804844f &lt;+50&gt;:	fld    DWORD PTR [esp+0x34]
+   0x08048453 &lt;+54&gt;:	movsx  edx,WORD PTR [esp+0x38]
+   0x08048458 &lt;+59&gt;:	movsx  eax,BYTE PTR [esp+0x3b]
+   0x0804845d &lt;+64&gt;:	fld    QWORD PTR [esp+0x28]
+   0x08048461 &lt;+68&gt;:	fstp   QWORD PTR [esp+0x18]
+   0x08048465 &lt;+72&gt;:	fstp   QWORD PTR [esp+0x10]
+   0x08048469 &lt;+76&gt;:	mov    DWORD PTR [esp+0xc],edx
+   0x0804846d &lt;+80&gt;:	mov    DWORD PTR [esp+0x8],eax
+   0x08048471 &lt;+84&gt;:	mov    eax,DWORD PTR [esp+0x3c]
+   0x08048475 &lt;+88&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x08048479 &lt;+92&gt;:	mov    DWORD PTR [esp],0x8048530
+   0x08048480 &lt;+99&gt;:	call   0x80482f0 &lt;printf@plt&gt;
+   0x08048485 &lt;+104&gt;:	add    DWORD PTR [esp+0x3c],0x1
+   0x0804848a &lt;+109&gt;:	cmp    DWORD PTR [esp+0x3c],0x9
+   0x0804848f &lt;+114&gt;:	jle    0x804844f &lt;main+50&gt;
+   0x08048491 &lt;+116&gt;:	leave  
+   0x08048492 &lt;+117&gt;:	ret    
+End of assembler dump.
+(gdb)
+</pre>
+<p>
+But, if you look closely, you'll notice that we are missing the
+debugging symbols, which further inform <code>gdb</code> about named values. This
+means, line-by-line stepping of the program will not work. For
+example, if I try and break at <code>main</code> and then take a step, it will
+fail because gdb doesn't know what the next line of the source code
+is.
+</p>
+<pre class="example">
+(gdb) br main
+Breakpoint 1 at 0x8048420
+(gdb) r
+Starting program: /home/user/git/si485-binary-exploits/lec/04/demo/datatype 
+
+Breakpoint 1, 0x08048420 in main ()
+(gdb) n
+Single stepping until exit from function main,
+which has no line number information.
+i:0 c:a s:4097 f:3.141593 d:15.154262
+i:1 c:a s:4097 f:3.141593 d:15.154262
+i:2 c:a s:4097 f:3.141593 d:15.154262
+i:3 c:a s:4097 f:3.141593 d:15.154262
+i:4 c:a s:4097 f:3.141593 d:15.154262
+i:5 c:a s:4097 f:3.141593 d:15.154262
+i:6 c:a s:4097 f:3.141593 d:15.154262
+i:7 c:a s:4097 f:3.141593 d:15.154262
+i:8 c:a s:4097 f:3.141593 d:15.154262
+i:9 c:a s:4097 f:3.141593 d:15.154262
+__libc_start_main (main=0x804841d &lt;main&gt;, argc=1, argv=0xbffff724, init=0x80484a0 &lt;__libc_csu_init&gt;, fini=0x8048510 &lt;__libc_csu_fini&gt;, rtld_fini=0xb7fed180 &lt;_dl_fini&gt;, 
+    stack_end=0xbffff71c) at libc-start.c:321
+321	libc-start.c: No such file or directory.
+(gdb)
+</pre>
+
+<p>
+All is not lost though, we can still work with just the binary without
+the debug symbols, which is an embedding of the program source in the
+binary. This is really important because for most of the programs we
+want to analyze from a security perspective, we will not have access
+to the debug symbols because most code is proprietary. It defeats the
+purpose to release debug compiled versions.
+</p>
+
+<p>
+However, this is a class where we are specifically trying to learn how
+to use GDB for both line-by-line and also by instrction. We might as
+well include the debug symbols &#x2026; for now.  The gcc option to compile
+with debug symbols is <code>-g</code>:
+</p>
+
+<pre class="example">
+gcc -g datatype.c -o datatype
+</pre>
+
+<p>
+Now, when we run the program in <code>gdb</code> we can actually step through it:
+</p>
+<pre class="example">
+user@si485H-base:demo$ gdb -q ./datatype 
+Reading symbols from ./datatype...done.
+(gdb) br main
+Breakpoint 1 at 0x8048426: file datatype.c, line 15.
+(gdb) r
+Starting program: /home/user/git/si485-binary-exploits/lec/04/demo/datatype 
+
+Breakpoint 1, main () at datatype.c:15
+15	  c = 'a';
+(gdb) n
+16	  s = 0x1001;
+(gdb) n
+17	  f = 3.1415926 ;
+(gdb) n
+18	  d = exp(exp(1));
+</pre>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Source code line-by-line debugging with <code>gdb</code></h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Now that we have a compiled binary with debug symbols, we can explore
+the process of line-by-line source code debugging. Here are the
+standard commands for iterating through a program:
+</p>
+
+<ul class="org-ul">
+<li><code>break</code> or <code>br</code> or <code>b</code> <i>&lt;linenum|function|*memaddress&gt;</i> : Set a
+break point where execution will halt at a given line number or
+function name. Additionally, we can set a break point at the memory
+address of an instruction.
+</li>
+<li><code>run</code> or <code>r</code> <i>&lt;args&gt;</i> : run the program with the command line arguments args.
+</li>
+<li><code>continue</code> or <code>c</code> <i>&lt;count&gt;</i> : continue the program until the next break point count times or program terminates
+</li>
+<li><code>next</code> or <code>n</code>: execute the next line of the program and <b>step over</b> function calls
+</li>
+<li><code>step</code> or <code>s</code>: execute the next line of the program and <b>step into</b> function calls
+</li>
+<li><code>finish</code> : finish the execution of the current function, or complete the current stack frame
+</li>
+<li><code>print</code> or <code>p</code> <i>&lt;var&gt;</i> : print the given variable and store the value in a gdb variable
+</li>
+<li><code>list</code> : display the current source code location
+</li>
+</ul>
+</div>
+
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> Run, Continue and Next</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+Let's get our hands dirty and see some of these commands in action
+</p>
+
+<pre class="example">
+$ gdb -q ./datatypes 
+Reading symbols from ./datatypes...done.
+(gdb) list
+6 int main(){
+7   
+8   char c;
+9   short s;
+10   int a,i;
+11   float f;
+12   double d;
+13   
+14 
+15   c = 'a';
+(gdb) br main
+Breakpoint 1 at 0x8048426: file datatypes.c, line 15.
+(gdb) r
+Starting program: /home/user/git/si485-binary-exploits/lec/02/demos/datatypes 
+
+Breakpoint 1, main () at datatypes.c:15
+15   c = 'a';
+(gdb) n
+16   s = 0x1001;
+(gdb) p c
+$1 = 97 'a'
+(gdb) c
+Continuing.
+i:0 c:a s:4097 f:3.141593 d:15.154262
+i:1 c:a s:4097 f:3.141593 d:15.154262
+i:2 c:a s:4097 f:3.141593 d:15.154262
+i:3 c:a s:4097 f:3.141593 d:15.154262
+i:4 c:a s:4097 f:3.141593 d:15.154262
+i:5 c:a s:4097 f:3.141593 d:15.154262
+i:6 c:a s:4097 f:3.141593 d:15.154262
+i:7 c:a s:4097 f:3.141593 d:15.154262
+i:8 c:a s:4097 f:3.141593 d:15.154262
+i:9 c:a s:4097 f:3.141593 d:15.154262
+[Inferior 1 (process 6523) exited with code 042]
+</pre>
+<p>
+We then set a break point at the main function, so when we run the
+program, execution will halt at the first non-initializing code line
+in main(), namely the assignment of 'a' to c. After advancing to the
+next line, we can print the value of c, which is 'a'. Finally, we can
+continue the program to let it reach its conclusion.
+</p>
+
+<p>
+Let's do it again, with a bit more advanced this time:
+</p>
+<pre class="example">
+gdb) br main
+Breakpoint 1 at 0x8048426: file datatypes.c, line 15.
+(gdb) list 21
+16   s = 0x1001;
+17   f = 3.1415926 ;
+18   d = exp(exp(1));
+19 
+20   for(i=0;i&lt;10;i++){
+21     printf("i:%d c:%c s:%d f:%f d:%f\n",
+22    i, c,s,f,d);
+23   }
+24 
+25 }
+(gdb) b 21
+Breakpoint 2 at 0x804844f: file datatypes.c, line 21.
+(gdb) r
+Starting program: /home/user/git/si485-binary-exploits/lec/02/demos/datatypes 
+
+Breakpoint 1, main () at datatypes.c:15
+15   c = 'a';
+(gdb) c
+Continuing.
+
+Breakpoint 2, main () at datatypes.c:21
+21     printf("i:%d c:%c s:%d f:%f d:%f\n",
+(gdb) c 3
+Will ignore next 2 crossings of breakpoint 2.  Continuing.
+i:0 c:a s:4097 f:3.141593 d:15.154262
+i:1 c:a s:4097 f:3.141593 d:15.154262
+i:2 c:a s:4097 f:3.141593 d:15.154262
+
+Breakpoint 2, main () at datatypes.c:21
+21     printf("i:%d c:%c s:%d f:%f d:%f\n",
+(gdb) c
+Continuing.
+i:3 c:a s:4097 f:3.141593 d:15.154262
+
+Breakpoint 2, main () at datatypes.c:21
+21     printf("i:%d c:%c s:%d f:%f d:%f\n",
+(gdb) c 10
+Will ignore next 9 crossings of breakpoint 2.  Continuing.
+i:4 c:a s:4097 f:3.141593 d:15.154262
+i:5 c:a s:4097 f:3.141593 d:15.154262
+i:6 c:a s:4097 f:3.141593 d:15.154262
+i:7 c:a s:4097 f:3.141593 d:15.154262
+i:8 c:a s:4097 f:3.141593 d:15.154262
+i:9 c:a s:4097 f:3.141593 d:15.154262
+[Inferior 1 (process 6546) exited with code 046]
+</pre>
+
+<p>
+This time we set a breakpoint in the for loop. So every iteration of
+the loop will result in a breakpoint. But, we can continue the loop
+for some number of breakpoint by using the count option to continue.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Stepping</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+So far we've been using the next option, but let's see what happens if
+we use step. The major difference is that next will <b>step over</b>
+functions, which means it will allow the function to execute without
+debugging. If we want to also debug the funciton, we need to <b>step
+into</b> the function. That is the step option.
+</p>
+
+<pre class="example">
+(gdb) br 21
+Breakpoint 1 at 0x804844f: file datatypes.c, line 21.
+(gdb) r
+Starting program: /home/user/git/si485-binary-exploits/lec/02/demos/datatypes 
+
+Breakpoint 1, main () at datatypes.c:21
+21     printf("i:%d c:%c s:%d f:%f d:%f\n",
+(gdb) s
+__printf (format=0x8048530 "i:%d c:%c s:%d f:%f d:%f\n") at printf.c:28
+28 printf.c: No such file or directory.
+(gdb) list
+23 in printf.c
+</pre>
+
+<p>
+When we try to step into printf, we find that we can but we don't have
+any debugging symbols. We only know that we are in printf.c. The
+reason for this is that printf comes from the stdio library, which is
+dynamically loaded into the program at run time. It is a separately
+compiled binary and it was not compiled with debugging symbols. BUT,
+we can still look at the assembly:
+</p>
+
+<pre class="example">
+(gdb) disassemble printf
+Dump of assembler code for function __printf:
+=&gt; 0xb7e684a0 &lt;+0&gt;: push   ebx
+   0xb7e684a1 &lt;+1&gt;: sub    esp,0x18
+   0xb7e684a4 &lt;+4&gt;: call   0xb7f4246b &lt;__x86.get_pc_thunk.bx&gt;
+   0xb7e684a9 &lt;+9&gt;: add    ebx,0x15db57
+   0xb7e684af &lt;+15&gt;: lea    eax,[esp+0x24]
+   0xb7e684b3 &lt;+19&gt;: mov    DWORD PTR [esp+0x8],eax
+   0xb7e684b7 &lt;+23&gt;: mov    eax,DWORD PTR [esp+0x20]
+   0xb7e684bb &lt;+27&gt;: mov    DWORD PTR [esp+0x4],eax
+   0xb7e684bf &lt;+31&gt;: mov    eax,DWORD PTR [ebx-0x70]
+   0xb7e684c5 &lt;+37&gt;: mov    eax,DWORD PTR [eax]
+   0xb7e684c7 &lt;+39&gt;: mov    DWORD PTR [esp],eax
+   0xb7e684ca &lt;+42&gt;: call   0xb7e5e8c0 &lt;_IO_vfprintf_internal&gt;
+   0xb7e684cf &lt;+47&gt;: add    esp,0x18
+   0xb7e684d2 &lt;+50&gt;: pop    ebx
+   0xb7e684d3 &lt;+51&gt;: ret    
+End of assembler dump.
+</pre>
+
+<p>
+We're only concerned with the source code debugging right now, so we
+can get out of here by using the <code>finish</code> option, which will complete
+the current function and break on return.
+</p>
+
+<pre class="example">
+(gdb) finish
+Run till exit from #0  __printf (format=0x8048530 "i:%d c:%c s:%d f:%f d:%f\n") at printf.c:37
+main () at datatypes.c:20
+20   for(i=0;i&lt;10;i++){
+Value returned is $1 = 38
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Instruction Level Debugging</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+We have a similar set of gdb tools for stepping through programs at
+the instruction level as at the source level. Basic program control
+flow remains the same, but we now have additional commands:
+</p>
+
+<ul class="org-ul">
+<li><code>nexti</code> or <code>ni</code> : move on to the next machine instruction, <b>do not</b>
+follow a call
+</li>
+<li><code>stepi</code> or <code>si</code> : move on to the next machine instruction, <b>do</b> follow
+a call
+</li>
+<li><code>disassemble</code> or <code>disa</code> <i>&lt;frame|function&gt;</i> : display disassembled
+instructions for the current frame or specified function (default
+current frame). (If you've set up your gdb environemnt, this can be
+further shorted to <code>ds</code>)
+</li>
+<li><code>info reg</code> or <code>i r</code> : show the current value of the registers
+</li>
+<li><code>x</code> <i>&lt;address|expression&gt;</i> : examine the memory
+</li>
+<li><code>info frame</code> or <code>i f</code>: show information about the current stack frame
+</li>
+<li><code>backtrace</code> or <code>bt</code>: print trace of frames in stack from innermost to outermost
+</li>
+</ul>
+
+<p>
+For these example, let's look at a program with a little bit more
+heft:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="print_n_times.c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">print_n_times</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">str</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>){
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span>;
+
+  <span style="color: #00ffff;">for</span>( i=0 ; i &lt; n ; i++){
+    printf(<span style="color: #ffa07a;">"%s"</span>,str);
+  }
+
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>;
+
+  n = 5;
+
+  print_n_times(<span style="color: #ffa07a;">"Go Navy! Beat Army!\n"</span>,n);
+
+  <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+</div>
+
+<div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> Next Instruction and Examine</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+Starting with the basic, let's run the program <code>print_n_times</code> in
+<code>gdb</code> with a break at main: (/note: that I'm using <code>ds</code> for
+<code>disassemble</code> because I've set up the aliase in my gdb init file, see
+the resource pages for how to do this/).
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gdb -q ./print_n_times 
+Reading symbols from ./print_n_times...done.
+(gdb) br main
+Breakpoint 1 at 0x8048456: file print_n_times.c, line 16.
+(gdb) r
+Starting program: /home/user/git/si485-binary-exploits/lec/04/demo/print_n_times 
+
+Breakpoint 1, main () at print_n_times.c:16
+16	  n = 5;
+(gdb) ds
+Dump of assembler code for function main:
+   0x0804844d &lt;+0&gt;:	push   ebp
+   0x0804844e &lt;+1&gt;:	mov    ebp,esp
+   0x08048450 &lt;+3&gt;:	and    esp,0xfffffff0
+   0x08048453 &lt;+6&gt;:	sub    esp,0x20
+=&gt; 0x08048456 &lt;+9&gt;:	mov    DWORD PTR [esp+0x1c],0x5
+   0x0804845e &lt;+17&gt;:	mov    eax,DWORD PTR [esp+0x1c]
+   0x08048462 &lt;+21&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x08048466 &lt;+25&gt;:	mov    DWORD PTR [esp],0x8048513
+   0x0804846d &lt;+32&gt;:	call   0x804841d &lt;print_n_times&gt;
+   0x08048472 &lt;+37&gt;:	mov    eax,0x0
+   0x08048477 &lt;+42&gt;:	leave  
+   0x08048478 &lt;+43&gt;:	ret    
+End of assembler dump.
+(gdb)
+</pre>
+
+<p>
+Much like source code tracing, gdb is now showing the specific
+instruction that is being executed. You may also notice that gdb
+skipped over the function frame setup routines &#x2026; that can be traced
+too, if we really want, but let's not focus on that right now. 
+</p>
+
+<p>
+We can now look at the state of the program in a bit more detail,
+starting with the sate of the registers:
+</p>
+<pre class="example">
+(gdb) i r
+eax            0x1	1
+ecx            0x7669b348	1986638664
+edx            0xbffff6b4	-1073744204
+ebx            0xb7fc5000	-1208201216
+esp            0xbffff660	0xbffff660
+ebp            0xbffff688	0xbffff688
+esi            0x0	0
+edi            0x0	0
+eip            0x8048456	0x8048456 &lt;main+9&gt;
+eflags         0x286	[ PF SF IF ]
+cs             0x73	115
+ss             0x7b	123
+ds             0x7b	123
+es             0x7b	123
+fs             0x0	0
+gs             0x33	51
+</pre>
+<p>
+The register we are concerned with is the <code>eip</code> register, or the
+instruction pointer, and you see that it is reference 0x8048456, or
+<code>&lt;main+9&gt;</code>, which matches the current instruction makred with an
+<i>=&gt;</i>. We can go further, but inspecting this address using the <code>x</code>
+command:
+</p>
+
+<pre class="example">
+(gdb) x $eip
+0x8048456 &lt;main+9&gt;:	0x1c2444c7
+</pre>
+
+<p>
+Interestingly, that doesn't look like an address; it's a 4-byte hex
+value. Even though gdb correctly identified the offset of the address
+from <code>main</code> it wants to show you the address in the most raw
+form. However, we can ask gdb to change it's preesentation of that
+memory, this time showing the bytes as an x86 instruction:
+</p>
+
+<pre class="example">
+(gdb) x/i $eip
+=&gt; 0x8048456 &lt;main+9&gt;:	mov    DWORD PTR [esp+0x1c],0x5
+</pre>
+
+<p>
+And that's more like it. 
+</p>
+
+<p>
+Moving on in the program, we see that the current instruction is going
+to write the value 0x5 to the stack at an offset from the stack
+pointer of 0x16. Let's execute the instruction and use examine to see
+that this did in fact occur:
+</p>
+
+<pre class="example">
+(gdb) ni
+18	  print_n_times("Go Navy! Beat Army!\n",n);
+(gdb) ds
+Dump of assembler code for function main:
+   0x0804844d &lt;+0&gt;:	push   ebp
+   0x0804844e &lt;+1&gt;:	mov    ebp,esp
+   0x08048450 &lt;+3&gt;:	and    esp,0xfffffff0
+   0x08048453 &lt;+6&gt;:	sub    esp,0x20
+   0x08048456 &lt;+9&gt;:	mov    DWORD PTR [esp+0x1c],0x5
+=&gt; 0x0804845e &lt;+17&gt;:	mov    eax,DWORD PTR [esp+0x1c]
+   0x08048462 &lt;+21&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x08048466 &lt;+25&gt;:	mov    DWORD PTR [esp],0x8048513
+   0x0804846d &lt;+32&gt;:	call   0x804841d &lt;print_n_times&gt;
+   0x08048472 &lt;+37&gt;:	mov    eax,0x0
+   0x08048477 &lt;+42&gt;:	leave  
+   0x08048478 &lt;+43&gt;:	ret    
+End of assembler dump.
+(gdb)  x $esp+0x1c
+   0xbffff67c:	add    eax,0x80000000
+</pre>
+<p>
+The next instruction moves the value from the stack and puts it in the
+eax register. Let's continue with the next instruction and see the
+states of the eax register:
+</p>
+<pre class="example">
+(gdb) ni 
+0x08048462	18	  print_n_times("Go Navy! Beat Army!\n",n);
+(gdb) i r eax
+eax            0x5	5
+(gdb) p/x $eax 
+$1 = 0x5
+</pre>
+<p>
+Note, we can inspect the register either with the <code>info reg</code> command
+(shortened to <code>i r</code> here) or with the print command, shorted to <code>p</code>. I
+used the extra <code>x</code> in <code>p/x</code> to say print the value of the register in
+hex.  
+</p>
+
+<p>
+The next instructoin, takes the value in <code>eax</code>, namely 0x5, and writes
+to the address 4-bytes above the stack pointer:
+</p>
+<pre class="example">
+(gdb) ds
+Dump of assembler code for function main:
+   0x0804844d &lt;+0&gt;:	push   ebp
+   0x0804844e &lt;+1&gt;:	mov    ebp,esp
+   0x08048450 &lt;+3&gt;:	and    esp,0xfffffff0
+   0x08048453 &lt;+6&gt;:	sub    esp,0x20
+   0x08048456 &lt;+9&gt;:	mov    DWORD PTR [esp+0x1c],0x5
+   0x0804845e &lt;+17&gt;:	mov    eax,DWORD PTR [esp+0x1c]
+=&gt; 0x08048462 &lt;+21&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x08048466 &lt;+25&gt;:	mov    DWORD PTR [esp],0x8048513
+   0x0804846d &lt;+32&gt;:	call   0x804841d &lt;print_n_times&gt;
+   0x08048472 &lt;+37&gt;:	mov    eax,0x0
+   0x08048477 &lt;+42&gt;:	leave  
+   0x08048478 &lt;+43&gt;:	ret    
+End of assembler dump.
+(gdb) ni
+0x08048466	18	  print_n_times("Go Navy! Beat Army!\n",n);
+(gdb) i r eax
+eax            0x5	5
+(gdb) x/x $esp+0x4
+0xbffff664:	0x00000005
+</pre>
+
+<p>
+Good, Continuing on (ni) we see that the value 0x8048513 is written to
+the memory address at the top of the stack.
+</p>
+<pre class="example">
+(gdb) ds
+Dump of assembler code for function main:
+   0x0804844d &lt;+0&gt;:	push   ebp
+   0x0804844e &lt;+1&gt;:	mov    ebp,esp
+   0x08048450 &lt;+3&gt;:	and    esp,0xfffffff0
+   0x08048453 &lt;+6&gt;:	sub    esp,0x20
+   0x08048456 &lt;+9&gt;:	mov    DWORD PTR [esp+0x1c],0x5
+   0x0804845e &lt;+17&gt;:	mov    eax,DWORD PTR [esp+0x1c]
+   0x08048462 &lt;+21&gt;:	mov    DWORD PTR [esp+0x4],eax
+=&gt; 0x08048466 &lt;+25&gt;:	mov    DWORD PTR [esp],0x8048513
+   0x0804846d &lt;+32&gt;:	call   0x804841d &lt;print_n_times&gt;
+   0x08048472 &lt;+37&gt;:	mov    eax,0x0
+   0x08048477 &lt;+42&gt;:	leave  
+   0x08048478 &lt;+43&gt;:	ret    
+End of assembler dump.
+(gdb) ni
+0x0804846d	18	  print_n_times("Go Navy! Beat Army!\n",n);
+(gdb) x/x $esp
+0xbffff660:	0x08048513
+(gdb)
+</pre>
+<p>
+What is 0x8048513? It is the memory address of the string "Go Navy!
+Beat Army!\n" and we can see this by examining the memory address.
+</p>
+<pre class="example">
+(gdb) x/x 0x08048513
+0x8048513:	0x4e206f47
+</pre>
+<p>
+The initial examine will just display the values in hex, but if you
+look closely you see that this is ASCII. We can get gdb to display
+this a little more clearly with more options to examine:
+</p>
+<pre class="example">
+(gdb) x/21b 0x08048513
+0x8048513:	0x47	0x6f	0x20	0x4e	0x61	0x76	0x79	0x21
+0x804851b:	0x20	0x42	0x65	0x61	0x74	0x20	0x41	0x72
+0x8048523:	0x6d	0x79	0x21	0x0a	0x00
+</pre>
+<p>
+This time I use the <code>b</code> option, which says to print single byte
+values, and now we see each of the bytes all the way up to the NULL at
+the end. Let's go one step further, and using the <code>bc</code> option which
+shows the bytes and the ASCII char values.
+</p>
+<pre class="example">
+(gdb) x/21bc 0x08048513
+0x8048513:	71 'G'	111 'o'	32 ' '	78 'N'	97 'a'	118 'v'	121 'y'	33 '!'
+0x804851b:	32 ' '	66 'B'	101 'e'	97 'a'	116 't'	32 ' '	65 'A'	114 'r'
+0x8048523:	109 'm'	121 'y'	33 '!'	10 '\n'	0 '\000'
+</pre>
+<p>
+Now, the string is mostly revealed. We can go further and just treat
+the address as a char * and print the string directly with the <code>s</code>
+option:
+</p>
+<pre class="example">
+(gdb) x/s 0x08048513
+0x8048513:	"Go Navy! Beat Army!\n"
+</pre>
+
+<p>
+As you can see, examine is a very powerful command that can show data
+in many different formats. If we look at the different formats for examine, we have a lot of options:
+</p>
+
+<ul class="org-ul">
+<li><code>x[/Nuf]</code> : where N is the number of u unit size display and f is a format
+<ul class="org-ul">
+<li><code>u</code> can be the following
+<ul class="org-ul">
+<li><code>b</code> : byte
+</li>
+<li><code>h</code> : half word (2 bytes)
+</li>
+<li><code>w</code> : word (4 bytes)
+</li>
+<li><code>g</code> : giant word (8 bytes)
+</li>
+</ul>
+</li>
+<li><code>f</code> can be any print format, plus
+<ul class="org-ul">
+<li><code>s</code> : null-terminated string
+</li>
+<li><code>i</code> : machine instruction
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> Step Instruction and Stack Frames</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+At this point in the trace, we are about to call <code>print_n_times()</code>
+function, so lets <i>step into</i> that function with the <code>step
+instruction</code> or <code>si</code> command:
+</p>
+
+<pre class="example">
+(gdb) ds
+Dump of assembler code for function main:
+   0x0804844d &lt;+0&gt;:	push   ebp
+   0x0804844e &lt;+1&gt;:	mov    ebp,esp
+   0x08048450 &lt;+3&gt;:	and    esp,0xfffffff0
+   0x08048453 &lt;+6&gt;:	sub    esp,0x20
+   0x08048456 &lt;+9&gt;:	mov    DWORD PTR [esp+0x1c],0x5
+   0x0804845e &lt;+17&gt;:	mov    eax,DWORD PTR [esp+0x1c]
+   0x08048462 &lt;+21&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x08048466 &lt;+25&gt;:	mov    DWORD PTR [esp],0x8048513
+=&gt; 0x0804846d &lt;+32&gt;:	call   0x804841d &lt;print_n_times&gt;
+   0x08048472 &lt;+37&gt;:	mov    eax,0x0
+   0x08048477 &lt;+42&gt;:	leave  
+   0x08048478 &lt;+43&gt;:	ret    
+End of assembler dump.
+(gdb) si
+print_n_times (str=0x8048513 "Go Navy! Beat Army!\n", n=5) at print_n_times.c:3
+3	void print_n_times(char * str, int n){
+(gdb) ds
+Dump of assembler code for function print_n_times:
+=&gt; 0x0804841d &lt;+0&gt;:	push   ebp
+   0x0804841e &lt;+1&gt;:	mov    ebp,esp
+   0x08048420 &lt;+3&gt;:	sub    esp,0x28
+   0x08048423 &lt;+6&gt;:	mov    DWORD PTR [ebp-0xc],0x0
+   0x0804842a &lt;+13&gt;:	jmp    0x8048443 &lt;print_n_times+38&gt;
+   0x0804842c &lt;+15&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+   0x0804842f &lt;+18&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x08048433 &lt;+22&gt;:	mov    DWORD PTR [esp],0x8048510
+   0x0804843a &lt;+29&gt;:	call   0x80482f0 &lt;printf@plt&gt;
+   0x0804843f &lt;+34&gt;:	add    DWORD PTR [ebp-0xc],0x1
+   0x08048443 &lt;+38&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x08048446 &lt;+41&gt;:	cmp    eax,DWORD PTR [ebp+0xc]
+   0x08048449 &lt;+44&gt;:	jl     0x804842c &lt;print_n_times+15&gt;
+   0x0804844b &lt;+46&gt;:	leave  
+   0x0804844c &lt;+47&gt;:	ret    
+End of assembler dump.
+(gdb)
+</pre>
+
+<p>
+We have now stepped out of the <code>main</code> function and into the
+<code>print_n_times</code> instruction. The <code>call</code> instruction that got is here
+does two things. It will first save the next instruction after the
+call on the stack via a push and then it will transfer control to the
+called address.  The reason the next instruction is saved is that
+after a return, control continue after the function call. So if we ere
+to look at the top of the stack right now, we'll that it references
+the instruction at <code>&lt;main+37&gt;</code>:
+</p>
+<pre class="example">
+(gdb) x/wx $esp
+0xbffff65c:	0x08048472
+(gdb) x/i 0x08048472
+   0x8048472 &lt;main+37&gt;:	mov    eax,0x0
+</pre>
+<p>
+What about the variables for <code>print_n_times()</code> function? If we look at
+the instruction prior to the call, you see that we wrote the address
+of the string to be printed at the top of the stack. That means, the
+next items above (higher in the address space) from the stack pointer
+will be the arguments to the function:
+</p>
+<pre class="example">
+(gdb) x/3wx $esp
+0xbffff65c:	0x08048472	0x08048513	0x00000005
+(gdb) x/s 0x08048513
+0x8048513:	"Go Navy! Beat Army!\n"
+</pre>
+
+<p>
+Now, looking back at where are in the instructions of the function, we
+see the familiar setup for the stack frame. First, we must save the
+old base pointer, and set the new base pointer to the top of the
+stack. This is often called the saved frame pointer or (sfp). Let's
+execute these and see where we are at:
+</p>
+
+<pre class="example">
+(gdb) ds
+Dump of assembler code for function print_n_times:
+=&gt; 0x0804841d &lt;+0&gt;:	push   ebp
+   0x0804841e &lt;+1&gt;:	mov    ebp,esp
+   0x08048420 &lt;+3&gt;:	sub    esp,0x28
+   0x08048423 &lt;+6&gt;:	mov    DWORD PTR [ebp-0xc],0x0
+   0x0804842a &lt;+13&gt;:	jmp    0x8048443 &lt;print_n_times+38&gt;
+   0x0804842c &lt;+15&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+   0x0804842f &lt;+18&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x08048433 &lt;+22&gt;:	mov    DWORD PTR [esp],0x8048510
+   0x0804843a &lt;+29&gt;:	call   0x80482f0 &lt;printf@plt&gt;
+   0x0804843f &lt;+34&gt;:	add    DWORD PTR [ebp-0xc],0x1
+   0x08048443 &lt;+38&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x08048446 &lt;+41&gt;:	cmp    eax,DWORD PTR [ebp+0xc]
+   0x08048449 &lt;+44&gt;:	jl     0x804842c &lt;print_n_times+15&gt;
+   0x0804844b &lt;+46&gt;:	leave  
+   0x0804844c &lt;+47&gt;:	ret    
+End of assembler dump.
+(gdb) ni
+0x0804841e	3	void print_n_times(char * str, int n){
+(gdb) ni
+0x08048420	3	void print_n_times(char * str, int n){
+(gdb) ni
+6	  for( i=0 ; i &lt; n ; i++){
+(gdb) ds
+Dump of assembler code for function print_n_times:
+   0x0804841d &lt;+0&gt;:	push   ebp
+   0x0804841e &lt;+1&gt;:	mov    ebp,esp
+   0x08048420 &lt;+3&gt;:	sub    esp,0x28
+=&gt; 0x08048423 &lt;+6&gt;:	mov    DWORD PTR [ebp-0xc],0x0
+   0x0804842a &lt;+13&gt;:	jmp    0x8048443 &lt;print_n_times+38&gt;
+   0x0804842c &lt;+15&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+   0x0804842f &lt;+18&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x08048433 &lt;+22&gt;:	mov    DWORD PTR [esp],0x8048510
+   0x0804843a &lt;+29&gt;:	call   0x80482f0 &lt;printf@plt&gt;
+   0x0804843f &lt;+34&gt;:	add    DWORD PTR [ebp-0xc],0x1
+   0x08048443 &lt;+38&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x08048446 &lt;+41&gt;:	cmp    eax,DWORD PTR [ebp+0xc]
+   0x08048449 &lt;+44&gt;:	jl     0x804842c &lt;print_n_times+15&gt;
+   0x0804844b &lt;+46&gt;:	leave  
+   0x0804844c &lt;+47&gt;:	ret    
+End of assembler dump.
+</pre>
+
+<p>
+At this point we have saved the old base pointer. The new base pointer
+references the start of the stack for this stack frame, and we've
+allocated 0x28 additional bytes on the stack by subtracting from the
+stack pointer.
+</p>
+
+<p>
+The next parts here should be familiar, we are working a for loop. One
+thing that is different the last time we did this is that assembly
+mixes between referring to items in the stack in offsets from the base
+pointer and the stack pointer. Using our newly trained eye we can see
+that:
+</p>
+
+<ul class="org-ul">
+<li><code>ebp-0xc</code> : this is the variable i
+</li>
+<li><code>ebp+0x8</code> : this is the variable str passed as an argument 
+</li>
+<li><code>ebp+0xc</code> : this is the variable n
+</li>
+<li><code>esp</code> : First argument to printf() : address of "%s"
+</li>
+<li><code>esp+0x4</code> : Second argument to printf() : address of "Go Navy! Beat Army!"
+</li>
+</ul>
+
+
+<p>
+We can see this visually like so at the point:
+</p>
+
+
+<div class="figure">
+<p><a href="imgs/stack-frame.png" width="65%"><img src="imgs/stack-frame.png" alt="stack-frame.png" width="65%"></a>
+</p>
+</div>
+
+<p>
+And if we can also inspect this within gdb by examining from the stack
+pointer going backward. This is the stack right before the call to
+printf():
+</p>
+
+<pre class="example">
+(gdb) ds
+Dump of assembler code for function print_n_times:
+   0x0804841d &lt;+0&gt;:	push   ebp
+   0x0804841e &lt;+1&gt;:	mov    ebp,esp
+   0x08048420 &lt;+3&gt;:	sub    esp,0x28
+   0x08048423 &lt;+6&gt;:	mov    DWORD PTR [ebp-0xc],0x0
+   0x0804842a &lt;+13&gt;:	jmp    0x8048443 &lt;print_n_times+38&gt;
+   0x0804842c &lt;+15&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+   0x0804842f &lt;+18&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x08048433 &lt;+22&gt;:	mov    DWORD PTR [esp],0x8048510
+=&gt; 0x0804843a &lt;+29&gt;:	call   0x80482f0 &lt;printf@plt&gt;
+   0x0804843f &lt;+34&gt;:	add    DWORD PTR [ebp-0xc],0x1
+   0x08048443 &lt;+38&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x08048446 &lt;+41&gt;:	cmp    eax,DWORD PTR [ebp+0xc]
+   0x08048449 &lt;+44&gt;:	jl     0x804842c &lt;print_n_times+15&gt;
+   0x0804844b &lt;+46&gt;:	leave  
+   0x0804844c &lt;+47&gt;:	ret    
+End of assembler dump.
+(gdb) i r esp
+esp            0xbffff630	0xbffff630
+(gdb) i r ebp
+ebp            0xbffff658	0xbffff658
+(gdb) x/14wx $esp
+0xbffff630:	0x08048510	0x08048513	0xb7e27bf8	0xb7e4e273
+0xbffff640:	0x00000000	0x00ca0000	0x00000001	0x00000000
+0xbffff650:	0xbffff844	0x0000002f	0xbffff688	0x08048472
+0xbffff660:	0x08048513	0x00000005
+</pre>
+</div>
+</div>
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3"><span class="section-number-3">3.3</span> Backtrace and Info</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+It's a little verbose to examine the stack in this manner and so gdb
+provides some easier ways to inspect the stack. The first is a
+backtrace:
+</p>
+<pre class="example">
+(gdb) bt
+#0  0x0804843a in print_n_times (str=0x8048513 "Go Navy! Beat Army!\n", n=5) at print_n_times.c:7
+#1  0x08048472 in main () at print_n_times.c:18
+</pre>
+
+<p>
+The backtrace will show you the frames going backwards. Above, main
+called print<sub>n</sub><sub>times</sub>, so we have two frames. The 0 frame is always the
+current one.
+</p>
+
+<p>
+Additionally the info tools are really, really helpful. We've seen the
+info registers, but you can alss use info to inspect the frame:
+</p>
+
+<pre class="example">
+(gdb) info frame
+Stack level 0, frame at 0xbffff660:
+ eip = 0x804843a in print_n_times (print_n_times.c:7); saved eip = 0x8048472
+ called by frame at 0xbffff690
+ source language c.
+ Arglist at 0xbffff658, args: str=0x8048513 "Go Navy! Beat Army!\n", n=5
+ Locals at 0xbffff658, Previous frame's sp is 0xbffff660
+ Saved registers:
+  ebp at 0xbffff658, eip at 0xbffff65c
+</pre>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

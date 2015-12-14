@@ -1,0 +1,420 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lec. 09: Shell Code in x86</title>
+<!-- 2015-09-21 Mon 17:23 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 09: Shell Code in x86</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. System Calls in x86</a></li>
+<li><a href="#sec-2">2. An x86 Programming</a>
+<ul>
+<li><a href="#sec-2-1">2.1. Hello x86 programming</a></li>
+<li><a href="#sec-2-2">2.2. Compiling and Executing ASM program</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> System Calls in x86</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+To review, let's recall how system calls work in x86. To invoke a
+system call, we first must issue a trap instruction, or
+<i>interrupt</i>. The interrupt for a system call is 0x80. The arguments to
+a system call are passed through the registers:
+</p>
+
+<ul class="org-ul">
+<li><code>eax</code> : the system call number specifying which system call. For
+example, 0x4 is write, 0x1 is exit.
+</li>
+<li><code>ebx</code> : the first argument
+</li>
+<li><code>ecx</code> : the second argument
+</li>
+<li><code>edx</code> : the third argument
+</li>
+</ul>
+
+<p>
+For example, when we were examining how the system call executed for
+starting a shell with execve, we saw that this call
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">args</span>[] = {<span style="color: #ffa07a;">"/bin/sh"</span>,<span style="color: #7fffd4;">NULL</span>};
+execve(args[0], args, <span style="color: #7fffd4;">NULL</span>);
+</pre>
+</div>
+
+<p>
+was transformed into a stack with the following settings
+</p>
+
+<pre class="example">
+                           ___________.--&gt; "/bin/sh"
+                          /           |                  
+esp + 0x20 -&gt; |   0x80bea08  |&lt;-.   .-'
+esp + 0x1c -&gt; |              |  |  /                  
+esp + 0x18 -&gt; |              |  | |    eax: 0xb       
+esp + 0x14 -&gt; |              |  | |    ebx: 0x80bea08 
+esp + 0x10 -&gt; |     0x00     |  | |    ecx: [esp+0x20]
+esp + 0xc  -&gt; |  [esp+0x20]  | -' |    edx: 0x00          
+esp + 0x8  -&gt; |  0x80bea08   | ---'                      
+esp + 0x4  -&gt; |  ret addr    |
+esp + 0x0  -&gt; |  saved ebx   |
+              '--------------'
+</pre>
+
+<p>
+And, we can write down the ultimate register values to their ultimate values:
+</p>
+<ul class="org-ul">
+<li><code>eax</code> : 0xb 
+</li>
+<li><code>ebx</code> : 0x80bea08 : a memory reference to the string "/bin/sh"
+</li>
+<li><code>ecx</code> : [esp+0x20] : a memory reference to the memory reference to "/bin/sh" (double pinter)
+</li>
+<li><code>edx</code> : 0x00       : a null byte
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> An x86 Programming</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Now that we know what shell code looks like when we compile a program
+from C, our goal is to write our own program in x86 that will perform
+the necessary system call for executing a shell. We'll do this using
+the NASM compiler and the gnu linker to build the executable, but we
+first need to get a grip on x86 programming generally. So we start with Hello World!
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> Hello x86 programming</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+We can write straight up assembly programs. Typically these files are
+described as ASM files, and have the <code>.asm</code> extension. Here's a hello
+world program to get us started:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm" id="helloworld.asm"><span style="color: #87cefa;">SECTION</span> .data                   <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">data section to store string Hello, World\n</span>
+        <span style="color: #00ffff;">hello</span>:   db <span style="color: #ffa07a;">"Hello, World!"</span>,0x0a,0x00 <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">newline and null terminated</span>
+
+
+<span style="color: #87cefa;">SECTION</span> .text                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Code section</span>
+        <span style="color: #00ffff;">global</span> _start           <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Make label available to linker</span>
+
+<span style="color: #87cefa;">_start</span>:
+
+        <span style="color: #00ffff;">mov</span> edx,0x10            <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">number of bytes to write</span>
+
+        <span style="color: #00ffff;">mov</span> ecx,hello           <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">memory reference to write</span>
+
+        <span style="color: #00ffff;">mov</span> ebx,0x1             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">write to stdout</span>
+
+        <span style="color: #00ffff;">mov</span> eax,0x4             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">system call number 4 for write</span>
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">interupt</span>
+
+        <span style="color: #00ffff;">mov</span> ebx,0               <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">exit value</span>
+        <span style="color: #00ffff;">mov</span> eax,1               <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">exit systemcall number</span>
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">interupt</span>
+</pre>
+</div>
+
+<p>
+First off, <code>main()</code> doesn't exist in assembly, it is a c-language
+construct. The real starting point of any program is <code>_start</code>. It is
+the special tag that indicates where to start a program. This tag, or
+label, needs to be declared globally so that the linker can find it
+and it must be declared in the <code>.text</code> section, which is where the
+code goes.
+</p>
+
+<p>
+Also within the text section is the main functionality of the program
+to set up the registers for the system call. Recall that the
+arguments to the <code>write()</code> system call are:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #98fb98;">ssize_t</span> <span style="color: #87cefa;">write</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">fd</span>, <span style="color: #00ffff;">const</span> <span style="color: #98fb98;">void</span> *<span style="color: #eedd82;">buf</span>, <span style="color: #98fb98;">size_t</span> <span style="color: #eedd82;">count</span>);
+</pre>
+</div>
+
+<p>
+The system call number for <code>write()</code> is 4, so looking at the setting
+of the registers prior to the first interrupt we must do the following:
+</p>
+<ul class="org-ul">
+<li><code>eax</code> : <code>0x4</code> : system call number for write
+</li>
+<li><code>ebx</code> : <code>0x1</code> : write to stdout file descriptor 1
+</li>
+<li><code>ecx</code> : <code>hello</code> : reference to data segment to string "Hello, World\n\0"
+</li>
+<li><code>edx</code> : 0x10 : write 16 bytes at the reference, i.e., the string "Hello World\n"
+</li>
+</ul>
+
+<p>
+You may also notice the following line in the <code>.data</code> section:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">hello</span>:   <span style="color: #00ffff;">db</span> <span style="color: #ffa07a;">"Hello, World!"</span>,0x0a,0x00
+</pre>
+</div>
+<p>
+This instruction creates a named variable in asm called <code>hello</code> which
+at that reference's location in memory exist the sequence of bytes
+representing "Hello, World!" followed by 0x0a (the newline symbol) and
+0x00 (NULL). This is an easy convention for adding bytes to the
+program with a reference to be determined later.
+</p>
+
+<p>
+Lastly, we preform another system call at the end of the program to
+perform an exit. The system call number of <code>exit()</code> is 1 and the
+return value in <code>ebx</code> is 0, a successful exit.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Compiling and Executing ASM program</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+To compile our program we use nasm, the netwide assember. We wish to
+assemble our asm program into an elf object file. Next, we will link
+our file using ld to create the executable. This is pretty much
+exactly what happens under the hood of gcc.
+</p>
+
+<p>
+To assemble using nasm
+</p>
+<pre class="example">
+nasme -f elf helloworld.asm -o helloworld.o
+</pre>
+
+<p>
+The <code>-f elf</code> indicates the output format should be in elf. The object
+file output is the same as any object file we've worked with this
+semester.
+</p>
+
+<p>
+Next, we can link our object file with <code>ld</code> to produce the executable:
+</p>
+<pre class="example">
+ld helloworld.o -o helloworld
+</pre>
+
+<p>
+Then, we run our program:
+</p>
+<pre class="example">
+user@si485H-base:demo$ nasm -f elf helloworld.asm -o helloworld.o; ld helloworld.o -o helloworld
+user@si485H-base:demo$ ./helloworld 
+Hello, World!
+</pre>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

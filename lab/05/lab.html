@@ -1,0 +1,454 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-09-22 Tue 16:12 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 05: a little <code>push esp</code> h makes the shell code go round</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lab 05: a little <code>push esp</code> h makes the shell code go round</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline1">Submission Instructions</a></li>
+<li><a href="#orgheadline2">Part 1:  Cat-tastic (1 point)</a></li>
+<li><a href="#orgheadline3">Part 2:  System Call Timesamp-Bonaza (3 point)</a></li>
+<li><a href="#orgheadline4">Part 3:  Grep-a-root-a-licious (2 point)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1">Submission Instructions</h2>
+<div class="outline-text-2" id="text-orgheadline1">
+<p>
+Submission instructions for labs can be found on the resource
+pages. In paticular, you should view this subsection: <a href="https://www.usna.edu/Users/cs/aviv/classes/si485h/f15/rsc/submit.html">Creating a new
+branch and submitting</a>
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2">Part 1:  Cat-tastic (1 point)</h2>
+<div class="outline-text-2" id="text-orgheadline2">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Write shell code that will cat /etc/passwd to stdout using
+<code>/bin/cat</code> and the <code>execve</code> system call.</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository</li>
+<li>gitlab repository</li>
+</ul>
+
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-5.1
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li><p>
+Your task is to complete the <code>exploit.asm</code> file such that when
+compiled and run, it will printout <code>/etc/passwd</code> using <code>/bin/cat</code>.
+For example, here is the execution of the <code>exploit</code>:
+</p>
+<pre class="example">
+user@si485H-base:5.1$ ./exploit 
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+(...)
+</pre>
+<p>
+And if we strace it, we see that, yes, it runs <code>/bin/cat</code>
+</p>
+<pre class="example">
+user@si485H-base:5.1$ strace ./exploit &gt; /dev/null 
+execve("./exploit", ["./exploit"], [/* 20 vars */]) = 0
+execve("/bin/cat", ["/bin/cat", "/etc/passwd"], [/* 0 vars */]) = 0
+(...)
+</pre></li>
+
+<li>To demonstrate your exploit, use the <code>hexify.sh</code> program to place
+your byte code in the <code>dummy_exploit.c</code> program. So that when it
+is compiled and run, it will show the exploit.</li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit two files: <code>exploit.asm</code> and <code>dummy_exploit.c</code></li>
+<li><code>exploit.asm</code> will contain your assembly code for the shell code</li>
+<li><code>dummy_exploit.c</code> will contain the bytes of your shell code in a mock exploit</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>You do not need to worry of null bytes, but you will need to worry
+about fixed references</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline3" class="outline-2">
+<h2 id="orgheadline3">Part 2:  System Call Timesamp-Bonaza (3 point)</h2>
+<div class="outline-text-2" id="text-orgheadline3">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Write shell code that has no NULLS, will open a file, write the
+current time to it, close the file, and exit.</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository</li>
+<li>gitlab repository</li>
+</ul>
+
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-5.2
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li><p>
+You must complete the <code>exploit.asm</code> program with instructions that
+will execute the following system calls that will execute the
+equivlalent c program below:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #eedd82;">fd</span> = open(<span style="color: #ffa07a;">"timestamp.dat"</span>, O_WRONLY|O_CREAT|O_TRUNC, 0600);
+<span style="color: #98fb98;">time_t</span> <span style="color: #eedd82;">t</span> = time(<span style="color: #7fffd4;">NULL</span>);
+write(fd,&amp;time,4);
+close(fd);
+exit(0);
+</pre>
+</div></li>
+</ul>
+<ul class="org-ul">
+<li>Your program should have NO fied referecens and NO null bytes
+(except for one terminated the shell code)</li>
+<li><p>
+When executed properly, you should see the following strace output:
+</p>
+<pre class="example">
+user@si485H-base:5.2$ strace -x ./exploit 
+execve("./exploit", ["./exploit"], [/* 20 vars */]) = 0
+open("timestamp.dat", O_WRONLY|O_CREAT|O_TRUNC, 0660) = 3
+time(NULL)                              = 1442952463
+write(3, "\x0f\xb5\x01\x56", 4)         = 4
+close(3)                                = 0
+_exit(0)                                = ?
++++ exited with 0 +++
+user@si485H-base:5.2$ hexdump -C timestamp.dat 
+00000000  0f b5 01 56                                       |...V|
+00000004
+</pre>
+<p>
+Of course timestamp may change, but you can check the timestamp in
+<code>timestamp.dat</code> with hexdump:
+</p>
+<pre class="example">
+user@si485H-base:5.2$ ./exploit 
+user@si485H-base:5.2$ hexdump -C timestamp.dat 
+00000000  0e b6 01 56                                       |...V|
+00000004
+user@si485H-base:5.2$ ./exploit 
+user@si485H-base:5.2$ hexdump -C timestamp.dat 
+00000000  11 b6 01 56                                       |...V|
+00000004
+</pre></li>
+<li><p>
+Your program should also work with the dumy exploit like so:
+</p>
+<pre class="example">
+user@si485H-base:5.2$ ./dummy_exploit $(printf `./hexify.sh ./exploit`)
+user@si485H-base:5.2$ hexdump -C timestamp.dat 
+00000000  2a b6 01 56                                       |*..V|
+00000004
+user@si485H-base:5.2$ ./dummy_exploit $(printf `./hexify.sh ./exploit`)
+user@si485H-base:5.2$ hexdump -C timestamp.dat 
+00000000  34 b6 01 56                                       |4..V|
+00000004
+</pre></li>
+</ul>
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>Complete files</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>Look up your system call numbers and their arugments</li>
+<li>Use the stack to save previous return values, like the file descriptor</li>
+<li>Be creative with avoiding NULL bytes with adds, shifts, and what not</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline4" class="outline-2">
+<h2 id="orgheadline4">Part 3:  Grep-a-root-a-licious (2 point)</h2>
+<div class="outline-text-2" id="text-orgheadline4">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Complete shell code that will grep out the root entry in /etc/passwd</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository</li>
+<li>gitlab repository</li>
+</ul>
+
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-5.3
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li><p>
+Create assembly in <code>exploit.asm</code> that will execute the following
+command via a call to execve:
+</p>
+<pre class="example">
+/bin/grep root /etc/passwd
+</pre></li>
+<li><p>
+Was completed, running <code>exploit</code> should result in:
+</p>
+<pre class="example">
+user@si485H-base:5.3$ ./exploit 
+root:x:0:0:root:/root:/bin/bash
+</pre></li>
+<li>I will check your <code>strace</code> to make sure you are making the right
+system calls with the right arguments</li>
+<li><p>
+Your resulting shell code should have NO fixed references and NO
+NULL bytes. It should work with the dummy exploit like so:
+</p>
+<pre class="example">
+user@si485H-base:5.3$ ./dummy_exploit $(printf `./hexify.sh ./exploit`)
+root:x:0:0:root:/root:/bin/bash
+</pre></li>
+</ul>
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>Complete the file <code>exploit.asm</code> for your submission</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li><p>
+jmp-callback is not the only way to get references to strings, consider:
+</p>
+<pre class="example">
+push 0x6e69622f
+mov eax,esp
+</pre>
+<p>
+0x6e69622f is the ascii values of "/bin" and now <code>eax</code> stores the
+address of that string. It's not null terminated, yet&#x2026;
+</p></li>
+
+<li>"/bin/grep" is the same as "/bin////grep" and "/bin////grep" can
+be broken into groupings of 4, which seems really useful given the
+above hint.</li>
+
+<li>"/etc/passwd" is the same "//etc/passwd" for the same useful hint as above</li>
+
+<li>"root" is already of length 4, fortunately.</li>
+
+<li>0x2f is "/"</li>
+
+<li>Little endian!</li>
+
+<li>Go Navy!</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

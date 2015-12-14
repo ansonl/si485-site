@@ -1,0 +1,589 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lec. 01: C Review</title>
+<!-- 2015-08-21 Fri 14:01 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 01: C Review</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Hello World</a>
+<ul>
+<li><a href="#sec-1-1">1.1. Simple Compilation Process</a></li>
+<li><a href="#sec-1-2">1.2. Multi Step Compilation Process</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">2. Library Functions vs. System Calls</a>
+<ul>
+<li><a href="#sec-2-1">2.1. Tracing Function and System Calls</a></li>
+<li><a href="#sec-2-2">2.2. Hello System Call</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Hello World</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Let's start in the beginning: Hello World!
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="helloworld.c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  printf(<span style="color: #ffa07a;">"Hello World!\n"</span>);
+
+  <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+
+<p>
+This program prints "Hello World!" by making a call to the library
+function <code>printf()</code>, the format print function. Additionally, note
+that <code>main()</code> in c programs take two arguments:
+</p>
+
+<ul class="org-ul">
+<li><code>int argc</code> : the number of command line arguments (always at least 1)
+</li>
+<li><code>char * argv[]</code> : a NULL terminated array of strings for the command line arguments.
+</li>
+</ul>
+
+<p>
+We'll come back to <code>main()</code>'s function arguments later when we discuss
+arrays and strings. The last item to note from the <code>main()</code> function
+is that it has a return value, namely 0. This return value is also the
+<i>exit value</i> for the program. It is customary for programs that return
+successful to return 0 while those that do not succeed to return some
+value other than 0, typically 1 or 2 depending on the error.
+</p>
+
+<p>
+Finally, note the two includes: <code>stdio.h</code> <code>stdlib.h</code>. These are the
+<i>header files</i> for portions of the c-standard lib (often referred to
+as clib). <code>stdio.h</code> refers to c standard input and output, and
+<code>stdlib</code> refers to c standard library functions. 
+</p>
+
+<p>
+As we will see below, by default for all c programs, libc is included,
+but the headers describe which portions of the library functions you
+will use. The header files contain the function definitions, for
+example for <code>printf()</code>, so the compiler knows if the function call
+type checks. More on the compilation process next.
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Simple Compilation Process</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+We will use <code>gcc</code> (the GNU c compiler) exclusively to do compilation
+for c programs. The most straight forward way to use <code>gcc</code> is to just
+call it with the program source file as the argument.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gcc helloworld.c 
+user@si485H-base:demo$ ls
+a.out  helloworld.c
+user@si485H-base:demo$ ./a.out 
+Hello World!
+</pre>
+
+
+<p>
+This produces an output binary file called <code>a.out</code> that we can execute
+to get the "Hello World!" message. If we want to compile the program
+to a specific file name, same <code>helloworld</code>, then we use the <code>-o</code>
+option to specify the name of the output file.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gcc -o helloworld helloworld.c 
+user@si485H-base:demo$ ./helloworld 
+Hello World!
+</pre>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> Multi Step Compilation Process</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+There is is actually obscuring a large portion of the compilation
+process which really involves multiple steps. A source program actually goes through two stages before becoming a
+binary executable. 
+</p>
+
+<p>
+First, the source code must be <i>compiled</i> into <i>object code</i>, which is
+an intermediate representation of the source file. This is called
+compilation because there is a literal transformation of one source
+doe to another source code. The object file contains the compiled
+source in machine level instructions (e.g. x86 assembly) but it is not
+executable yet because it must be <i>assembled</i> and <i>linked</i> properly
+with some other code sources (e.g., code from the c standard library)
+so that it can actually execute on the specific target machine.
+</p>
+
+<p>
+To see how this works, lets look at multi-file hello world program. In
+one file (below) we have the <code>main()</code> function which calls two other
+functions <code>hello()</code> and <code>world()</code>, but only <code>hello()</code> is provided in
+the program source. Both functions have definitions, that is, the
+types of their input is known, but not the code for both functions. 
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="hello.c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">world</span>(<span style="color: #98fb98;">void</span>);
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">hello</span>(<span style="color: #98fb98;">void</span>);
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">hello</span>(){
+  printf(<span style="color: #ffa07a;">"Hello "</span>);
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+  hello();
+  world();
+}
+</pre>
+</div>
+
+<p>
+If we were to try and compile this program, we will get an error.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gcc -o hello hello.c
+/tmp/ccC4VYbK.o: In function `main':
+hello.c:(.text+0x20): undefined reference to `world'
+collect2: error: ld returned 1 exit status
+</pre>
+
+<p>
+Looking closely at the error, we see that it is actually <i>not</i> gcc
+that is printing an error, but rather <code>ld</code>. That is because the
+program actually compiled but did not assemble properly. <code>ld</code> the
+GNU linker was not able to find the reference (or code) for <code>world()</code>
+and failed to link the code into the executable source and those
+nothing was assembled.
+</p>
+
+<p>
+You can see, that yes, this program does actually compile by using the
+<code>-c</code> tag with gcc, which says to compile the source to an object file:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gcc -c -o hello.o hello.c
+</pre>
+
+<p>
+This succeeds, and now we have an object file for <code>hello</code> and we need
+to provide more compiled code to complete the assembly
+process. Specifcially, we need to provide code that fills in the
+<code>world()</code> function. 
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="world.c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">world</span>( ){
+
+  printf(<span style="color: #ffa07a;">"World!\n"</span>);
+}
+</pre>
+</div>
+
+<p>
+Once we have that, we can compile <code>world.c</code> into <code>world.o</code> and we can
+assemble the two <code>.o</code> files into a single executable. 
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gcc -c -o world.o world.c
+user@si485H-base:demo$ gcc -o hello hello.o world.o
+user@si485H-base:demo$ ./hello 
+Hello World!
+</pre>
+
+
+<p>
+However, as you will see many times in this class. There is still more
+going on beneath the surface. There is still more code that is being
+used in the assembly process. And we can actually use <code>ld</code> directly to
+do the final linking to expose all those parts.
+</p>
+
+<pre class="example">
+ld -o hello hello.o world.o --dynamic-linker /lib/ld-linux.so.2 /usr/lib/i386-linux-gnu/crt1.o /usr/lib/i386-linux-gnu/crti.o -lc /usr/lib/i386-linux-gnu/crtn.o
+</pre>
+
+<p>
+The compilation actually requires three other object files <code>crt1.o</code>
+<code>crti.o</code> and <code>crtn.o</code> as well as a dynamically linked library
+<code>ld-linkux.so.2</code> to really assemble the code. These object files
+provide important starter and ending code blocks and other functions
+that will become relevant when we start to reverse engineer some
+software.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Library Functions vs. System Calls</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+If you look more closely at the <code>ld</code> command line above, you will also
+see the flag <code>-lc</code> which says to include <code>clib</code> in the
+compilation. The c standard library provides a lot of functionality
+for the programmer, but its primary task is to provide an interface by
+which the programmer can easily access the underlying operating system
+interface.
+</p>
+
+<p>
+Recall that a system call is a mechanisms for the programmer to gain
+access to an operating system feature. The operating system provides a
+few key features relevant to this class:
+</p>
+
+<ul class="org-ul">
+<li>Input/Output : reading and writing from devices, such as the
+terminal, network, and other peripherals
+</li>
+<li>Memory Management : maintain the memory for programs and ensuring
+that programs do not access memory that is invalid, this includes
+maintaining the virtual memory layout for a program
+</li>
+<li>Program Execution: loading and unloading programs and executing
+them on the CPU
+</li>
+</ul>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> Tracing Function and System Calls</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+A library function, on the other hand, provides a more user friendly
+interface to the system calls. To see this dynamic, we can <i>trace</i> a
+programs execution and see where library functions vice system
+calls. There are two tracers we will use heavily in this class:
+</p>
+
+<ul class="org-ul">
+<li><code>ltrace</code> trace library functions
+</li>
+<li><code>strace</code> trace system calls.
+</li>
+</ul>
+
+<p>
+And we can look at the output of these traces to get a sense of how
+programs execute.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ltrace ./hello &gt; /dev/null 
+__libc_start_main(0x8048304, 1, 0xbffa7744, 0x8048360 &lt;unfinished ...&gt;
+printf("Hello ")                                                                  = 6
+puts("World!")                                                                    = 7
++++ exited (status 7) +++
+</pre>
+
+<p>
+In the <code>ltrace</code> above, we see that for the <code>hello</code> program from the
+previous section, there are two library calls: <code>printf()</code> and
+<code>puts()</code>. If you were to look at the manual page, both <code>puts()</code>
+<code>printf()</code> takes a string and writes it to <code>stdout</code>. However, we know
+that the actual method for writing to <code>stdout</code> is using the <code>write()</code>
+system call, and we can see this using <code>strace</code>.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ strace ./hello &gt; /dev/null 
+execve("./hello", ["./hello"], [/* 20 vars */]) = 0
+brk(0)                                  = 0x87b7000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+mmap2(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7760000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=70286, ...}) = 0
+mmap2(NULL, 70286, PROT_READ, MAP_PRIVATE, 3, 0) = 0xb774e000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/i386-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\340\233\1\0004\0\0\0"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0755, st_size=1754876, ...}) = 0
+mmap2(NULL, 1759868, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xb75a0000
+mmap2(0xb7748000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1a8000) = 0xb7748000
+mmap2(0xb774b000, 10876, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xb774b000
+close(3)                                = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb759f000
+set_thread_area({entry_number:-1 -&gt; 6, base_addr:0xb759f940, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}) = 0
+mprotect(0xb7748000, 8192, PROT_READ)   = 0
+mprotect(0xb7783000, 4096, PROT_READ)   = 0
+munmap(0xb774e000, 70286)               = 0
+fstat64(1, {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 3), ...}) = 0
+ioctl(1, SNDCTL_TMR_TIMEBASE or SNDRV_TIMER_IOCTL_NEXT_DEVICE or TCGETS, 0xbf8187d8) = -1 ENOTTY (Inappropriate ioctl for device)
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb775f000
+write(1, "Hello World!\n", 13)          = 13
+exit_group(7)                           = ?
++++ exited with 7 +++
+</pre>
+
+<p>
+In fact, there are a lot of system calls that get involved
+here. Starting at the top, we have the <code>execve()</code> system call that
+executes the program, but after that, there is a lot of loading and
+reading libraries into memory. And finally, two from the bottom, we
+see the <code>write()</code> system call to <code>stdout</code> (file descriptor 1).
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Hello System Call</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+We can, of course, write a hello-world program without any library
+functions. But, we'll need some helper functions, like writing our own
+string length function.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="hellosystem.c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;unistd.h&gt;</span>
+
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">mystrlen</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">str</span>){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span>;
+  <span style="color: #00ffff;">for</span>(i=0; str[i]; i++);
+
+  <span style="color: #00ffff;">return</span> i;
+
+}
+
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">str</span>[] = <span style="color: #ffa07a;">"Hello World!\n"</span>;
+
+  write(1,str,mystrlen(str));
+
+}
+</pre>
+</div>
+
+<p>
+Compiling and executing this program and analyzing the <code>ltrace</code>, we
+still see a call to <code>write()</code> but no calls to <code>puts()</code> or <code>printf()</code>.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ltrace ./hellosystem &gt; /dev/null 
+__libc_start_main(0x8048494, 1, 0xbf8c5034, 0x8048510 &lt;unfinished ...&gt;
+write(1, "Hello World!\n", 13)                                                                                                    = 13
++++ exited (status 13) +++
+</pre>
+
+<p>
+The reason that <code>write()</code> still appears is that this <code>write()</code> is not
+the <i>real</i> system call <code>write()</code>, but is a library wrapper to it
+&#x2026; but that is a story for another day. What's more interesting is
+the <code>strace</code>, which if you observe closely, you will see is the same
+as the other version of the program.
+</p>
+
+
+<pre class="example">
+user@si485H-base:demo$ strace ./hellosystem &gt; /dev/null 
+execve("./hellosystem", ["./hellosystem"], [/* 20 vars */]) = 0
+brk(0)                                  = 0x8c9b000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+mmap2(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb77c3000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=70286, ...}) = 0
+mmap2(NULL, 70286, PROT_READ, MAP_PRIVATE, 3, 0) = 0xb77b1000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/i386-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\340\233\1\0004\0\0\0"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0755, st_size=1754876, ...}) = 0
+mmap2(NULL, 1759868, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xb7603000
+mmap2(0xb77ab000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1a8000) = 0xb77ab000
+mmap2(0xb77ae000, 10876, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xb77ae000
+close(3)                                = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7602000
+set_thread_area({entry_number:-1 -&gt; 6, base_addr:0xb7602940, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}) = 0
+mprotect(0xb77ab000, 8192, PROT_READ)   = 0
+mprotect(0x8049000, 4096, PROT_READ)    = 0
+mprotect(0xb77e6000, 4096, PROT_READ)   = 0
+munmap(0xb77b1000, 70286)               = 0
+write(1, "Hello World!\n", 13)          = 13
+exit_group(13)                          = ?
++++ exited with 13 +++
+</pre>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

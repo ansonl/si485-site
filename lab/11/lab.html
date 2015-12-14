@@ -1,0 +1,566 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-11-18 Wed 18:30 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 11: Pesky Formats</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lab 11: Pesky Formats</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline1">Submission Instructions</a></li>
+<li><a href="#orgheadline2">Part 1: FTW: Format the Win! (1 points)</a></li>
+<li><a href="#orgheadline3">Part 2: FTW2: Format The Win with a side of dead beef (2 points)</a></li>
+<li><a href="#orgheadline4">Part 3: Two Phased Attack (2 points)</a></li>
+<li><a href="#orgheadline5">Part 4: Formatting in the Blind (2 points)</a></li>
+<li><a href="#orgheadline6">Part 5: Launching Shells in the Blind (3 points)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1">Submission Instructions</h2>
+<div class="outline-text-2" id="text-orgheadline1">
+<p>
+Submission instructions for labs can be found on the resource
+pages. In paticular, you should view this subsection: <a href="https://www.usna.edu/Users/cs/aviv/classes/si485h/f15/rsc/submit.html">Creating a new
+branch and submitting</a>
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2">Part 1: FTW: Format the Win! (1 points)</h2>
+<div class="outline-text-2" id="text-orgheadline2">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Write an format string exploit to reveal the secret flag.</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li><p>
+The assignment must be completed on the clone-2 saddleback VM which can be reached as follows:
+</p>
+<pre class="example">
+ssh -p 5555 saddleback.academy.usna.edu
+</pre></li>
+<li><p>
+gitlab repository for this lab is found here
+</p>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab11.1
+</pre></li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>You will find a source file for a program called <code>vulnerable.c</code>
+    you ca compile and work with this file as you wish</li>
+<li><p>
+Your task is to exploit the version of the program that is
+compiled and executable on clone-2 saddleback VM at this location
+</p>
+<pre class="example">
+/home/aviv/lab/11.1/vulnerable
+</pre></li>
+<li>Your task is to overwrite the return address of <code>main()</code> with the
+function called <code>flag()</code> such that the flag is printed to the
+screen.</li>
+<li>Once you've completed the assignment, plase your exploit paramater
+for the format attack in a file called <code>exploit.txt</code> and the
+secret message in a file called flag.</li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least two files: 
+<ul class="org-ul">
+<li><code>flag</code> : contents of the flag file</li>
+<li><code>exploit.txt</code> : the format string you used</li>
+</ul></li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>Set up your format the whole way through first with the right length, and then start to manipulate</li>
+<li>Use the target variable to get things setup before targeting the return address</li>
+<li>Use the index flag options: e.g., <code>%3$x</code> &#x2026; will make life a lot esier.</li>
+<li>Don't forget to escape <code>$</code> with <code>\$</code> as <code>$</code> is a special symbol in bash</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline3" class="outline-2">
+<h2 id="orgheadline3">Part 2: FTW2: Format The Win with a side of dead beef (2 points)</h2>
+<div class="outline-text-2" id="text-orgheadline3">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Write an format string exploit to reveal the secret flag.</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li><p>
+The assignment must be completed on the clone-2 saddleback VM which can be reached as follows:
+</p>
+<pre class="example">
+ssh -p 5555 saddleback.academy.usna.edu
+</pre></li>
+<li><p>
+gitlab repository for this lab is found here
+</p>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab11.2
+</pre></li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>You will find a source file for a program called <code>vulnerable.c</code>
+    you ca compile and work with this file as you wish</li>
+<li><p>
+Your task is to exploit the version of the program that is
+compiled and executable on clone-2 saddleback VM at this location
+</p>
+<pre class="example">
+/home/aviv/lab/11.2/vulnerable
+</pre></li>
+<li>Your task is to overwrite the return address of <code>main()</code> with the
+function called <code>flag()</code> such that the flag is printed to the
+screen.</li>
+<li>Once you've completed the assignment, plase your exploit paramater
+for the format attack in a file called <code>exploit.txt</code> and the
+secret message in a file called flag.</li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least two files: 
+<ul class="org-ul">
+<li><code>flag</code> : contents of the flag file</li>
+<li><code>exploit.txt</code> : the format string you used</li>
+</ul></li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>Set up your format the whole way through first with the right length, and then start to manipulate</li>
+<li>Use the target variable to get things setup before targeting the return address</li>
+<li>Use the index flag options: e.g., <code>%3$x</code> &#x2026; will make life a lot esier.</li>
+<li>Don't forget to escape <code>$</code> with <code>\$</code> as <code>$</code> is a special symbol in bash</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline4" class="outline-2">
+<h2 id="orgheadline4">Part 3: Two Phased Attack (2 points)</h2>
+<div class="outline-text-2" id="text-orgheadline4">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Exploit the hex<sub>to</sub><sub>char</sub> service by first identifying the cannary
+and then performing a buffer overflow</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li><p>
+The assignment must be completed on the clone-2 saddleback VM which can be reached as follows:
+</p>
+<pre class="example">
+ssh -p 5555 saddleback.academy.usna.edu
+</pre></li>
+<li><p>
+gitlab repository for this lab is found here
+</p>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab11.3
+</pre></li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>You will find a source file for the hex<sub>to</sub><sub>char</sub> service which is
+running on port 9595 on clone 2 for saddleback.</li>
+<li>The service is using stack guards as a protection</li>
+<li>Your task is to use a format string attack to identify the cannary
+and then use the cannary value as part of a stack smashing attack</li>
+<li><p>
+Once you've exploited the process, you should be able to reveal
+the flag here:
+</p>
+<pre class="example">
+cat /home/aviv/lab/11.3/flag
+</pre></li>
+<li><p>
+Place your exploit in a file called <code>exploit.sh</code>, such that
+when executed the secret flag is revealed.
+</p>
+<pre class="example">
+./exploit.sh
+&lt;FLAG&gt;
+</pre>
+<p>
+The exploit may contain a script (i.e., run the program multiple
+times)
+</p></li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least two files: 
+<ul class="org-ul">
+<li><code>flag</code> : contents of the flag file</li>
+<li><code>exploit.sh</code> : which when run on clone 2, should reveal the flag</li>
+</ul></li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>This is a two phased attack</li>
+<li>All the source code is available for you, so practice the attack
+locally first and then go after the main one</li>
+<li>Your shell code should be used to</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline5" class="outline-2">
+<h2 id="orgheadline5">Part 4: Formatting in the Blind (2 points)</h2>
+<div class="outline-text-2" id="text-orgheadline5">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Write a format string attack that will execute the flag function to reveal a flag</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li><p>
+The assignment must be completed on the clone-2 saddleback VM which can be reached as follows:
+</p>
+<pre class="example">
+ssh -p 5555 saddleback.academy.usna.edu
+</pre></li>
+<li><p>
+gitlab repository for this lab is found here
+</p>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab11.4
+</pre></li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>You will find a source file the vulnerable program</li>
+<li><p>
+Your task is to exploit the version of the program found on the
+clone-2 saddleback VM at this location
+</p>
+<pre class="example">
+/home/aviv/lab/11.4/vulnerable
+</pre></li>
+<li>Once you've succesfully exploited the program to overwrite the
+return address of foo() to flag(), the flag should be revealed.</li>
+<li>Place your exploit format in a file called <code>exploit.txt</code></li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least two files: 
+<ul class="org-ul">
+<li><code>flag</code> : contents of the flag file</li>
+<li><code>exploit.txt</code> : the format you used in the exploit</li>
+</ul></li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>You'll need to do some detective work for this one by running a
+copy in gdb to determine an offset to the address of the return
+address of foo based on something that can be revealed via a
+format. For example, if the format <code>%0x</code> prints an address on the
+stack, how far is that address offset from the return address in
+gdb? Then you can run it outside of gdb to determine the address
+of the return address</li>
+<li>When you are doing your probing, be sure to use a format string
+that is of the same length as your eventual format so you don't
+need to any recaclulations.</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline6" class="outline-2">
+<h2 id="orgheadline6">Part 5: Launching Shells in the Blind (3 points)</h2>
+<div class="outline-text-2" id="text-orgheadline6">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Write a format string attack that will launch a shell such tht you can retrieve the flag</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>You should work and develop your exploit locally and then finish your exploit on the VM</li>
+<li><p>
+The assignment must be completed on the clone-2 saddleback VM which can be reached as follows:
+</p>
+<pre class="example">
+ssh -p 5555 saddleback.academy.usna.edu
+</pre></li>
+<li><p>
+gitlab repository for this lab is found here
+</p>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab11.5
+</pre></li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>You will find a source file with the vulnerable program which you
+can compile and test with before moving to the saddleback-VM</li>
+<li><p>
+Your task is to exploit the version of the program found on the
+clone-2 saddleback VM at this location
+</p>
+<pre class="example">
+/home/aviv/lab/11.5/vulnerable
+</pre></li>
+<li><p>
+Once you've succesfully exploited the program such that a shell is
+launched, you can reveal the flag via:
+</p>
+<pre class="example">
+cat /home/aviv/lab/11.5/flag
+</pre></li>
+<li>Place your exploit format in a file called <code>exploit.txt</code></li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least two files: 
+<ul class="org-ul">
+<li><code>flag</code> : contents of the flag file</li>
+<li><code>exploit.txt</code> : the format you used in the exploit</li>
+</ul></li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>You'll need to do some detective work again (see 11.4 for a hint
+on that) but this time you need to overwrite the return address to
+your input buffer somewhere. You can use a similar technique as in
+in lab 11.4 for this by calculating an offset to an address that
+is revealed via format directive</li>
+<li>When you are doing your probing, be sure to use a format string
+that is of the same length as your eventual format <b>including the shell code</b> so you don't
+need to do any recalculations.</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

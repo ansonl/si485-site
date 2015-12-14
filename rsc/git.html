@@ -1,0 +1,352 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Gitlab Environment</title>
+<!-- 2015-08-20 Thu 17:30 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../index.html">Home</a> <a href="../policy.html">Policy</a> <a href="../cal.html">Calendar</a>  <a href="./index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Gitlab Environment</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">What is gitlab?</a></li>
+<li><a href="#sec-2">Creating an Account</a></li>
+<li><a href="#sec-3">Setting up your ssh-keys</a></li>
+<li><a href="#sec-4">Retrieving your ssh public key</a></li>
+<li><a href="#sec-5">Generating a ssh key pair</a></li>
+<li><a href="#sec-6">Testing your key pair</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">What is gitlab?</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Gitlab is a backend git management system, much like github, but
+privately hosted instead of publically available. I am hosting a
+gitlab instance on a server at USNA. You can reach it here:
+</p>
+
+<div class="center">
+<p>
+<a href="http://saddleback.academy.usna.edu/users/sign_in">http://saddleback.academy.usna.edu/users/sign_in</a>
+</p>
+</div>
+
+
+<div class="figure">
+<p><a href="git-images/git-login.png" width="70%"><img src="git-images/git-login.png" alt="git-login.png" width="70%"></a>
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Creating an Account</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+You will need to create an account on the local gitlab instance. *It
+is very important that your account information properly match your
+USNA login account*.
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-signup.png" width="70%"><img src="git-images/git-signup.png" alt="git-signup.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+Pleas use the following information:
+</p>
+
+<ul class="org-ul">
+<li>Name: Your First Name and Last NAme
+</li>
+<li>Username: your usna network username, e.g., m179999
+</li>
+<li>Email: your usna network email, e.g., m179999@usna.edu
+</li>
+<li>Password: a good strong password, <b>not</b> your usna network password
+</li>
+</ul>
+
+<p>
+Once you've created an account, the system will send you an email to
+complete the process.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Setting up your ssh-keys</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+We will exclusively use ssh as the transfer agent for git, so you
+must set up your ssh public key for authentication. The idea is that
+from a given computer where you posses the private associated with
+the uploaded public key, you will have access to the git repository.
+</p>
+
+<p>
+To do this, log into your account on gitlab:
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-signin.png" width="70%"><img src="git-images/git-signin.png" alt="git-signin.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+The first thing you'll see is a dashboard, something like this, with
+probably a lot less activity. And click on the profile settings
+option (looks like a cog) in the top right.
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-dashboard.png" width="70%"><img src="git-images/git-dashboard.png" alt="git-dashboard.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+Then click the key symbol on the left:
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-account-settings.png" width="70%"><img src="git-images/git-account-settings.png" alt="git-account-settings.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+Here your find your ssh-key management system. The public keys you
+add here will be for two purposes: (1) to access the gitlab git
+repositories and (2) to log on the class VM system. So let's go
+ahead and add a new ssh key:
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-ssh-keys.png" width="70%"><img src="git-images/git-ssh-keys.png" alt="git-ssh-keys.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+Now, you will see a text box with a place to put the key:
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-add-key.png" width="70%"><img src="git-images/git-add-key.png" alt="git-add-key.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+In this box, you will paste your ssh public key. 
+</p>
+</div>
+</div>
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Retrieving your ssh public key</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Typically, your ssh public key is stored in the <code>.ssh</code> directory
+under your home folder:
+</p>
+
+<pre class="example">
+aviv@mich302csd01u: ~ $ ls ~/.ssh/
+authorized_keys  config  config~  id_rsa  id_rsa.pub  known_hosts  known_hosts.old
+</pre>
+
+<p>
+There are two files, <code>id_rsa</code> and <code>id_rsa.pub</code>. The former is your
+private key, the latter, ending in <code>.pub</code>, is your public key. Go
+ahead an <code>cat</code> your public key to copy paste:
+</p>
+
+<pre class="example">
+  aviv@mich302csd01u: ~ $ cat ~/.ssh/id_rsa.pub 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDcN2gjt4kJzFOb2m/ZL75t2a2DJ5EMC0mngx5efHaQu3esGvjNLDvVOJyrMMCQ3o5ATMZD/hDulmIP3QQkKqtlfW5Hm7t2WBIF+SOIuh2VQIbtJb1aRa3+td35d7R0eRcDDEyWyDi+bkJYM/gI9ISAiwCAhDm8jNuLxQZsikGHtH51GXJr87s9WYZf49dgrQDsYKyO5l1lJppDs//DgWotjzj2Ibi7Mlah1dV+5IB3O6rVDoUTby0WJhZsn06i9rPoIDoxEcEjmbdiAt3tBjj3sHe6f3Qy0aeiwUkz7yLzWaaOyzFI1tFzjLvWl9wO0zA2bhN5N/9WSBwkcR1dFc6R aviv@mich316csd08u
+</pre>
+
+<p>
+That big block of text starting with <code>ssh-rsa</code> through the end,
+including <code>username@host</code>, should be copied to gitlab.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Generating a ssh key pair</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+If you do not an ssh key pair, which may be the case if you just
+installed a new system, then you will need to generate one using
+<code>ssh-keygen</code>.
+</p>
+
+<p>
+Hit enter for all the default options, and when complete, retrieve
+your public key in the <code>.ssh</code> directory.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">Testing your key pair</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+You should now be able to use this key pair to log into the class
+VM. Try the following from the account you uploaded the public key from:
+</p>
+
+<pre class="example">
+ssh -p 2222 saddleback.academy.usna.edu
+</pre>
+
+<p>
+And you should be able to log on without having to type a password
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

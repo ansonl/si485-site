@@ -1,0 +1,234 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+
+<link rel="stylesheet" type="text/css" href="class.css" />
+<link rel="stylesheet" type="text/css" href="print.css" media="print" />
+
+<html><head>
+<title>SI485H (F15)</title>
+</head>
+<body>
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="index.html">Home</a> <a href="policy.html">Policy</a> <a href="cal.html">Calendar</a>  <a href="rsc/index.html">Resources</a>
+<hr>
+
+<h2> Course Policy </h2>
+
+<h3> Instructors </h3>
+<ul>
+  <li> Assistant Professor Adam Aviv e-mail: aviv@usna.edu *course coordinator
+</ul>
+
+<h3> Text Book </h3>
+<ul>
+<li> <i> Hacking: The art of exploitation </i>, 2nd Edition. Jon Erickson. No Starch Press. (<b>Required</b>)
+</ul>
+
+<h3> Extra Instruction</h3>
+
+<p> You are encouraged to come in for extra instruction (EI) when you
+are having trouble. There is an open-door policy on EI. Any time my
+door is open you may come for EI, although, I may not be directly
+available. Appointments can also be made by email. </p>
+
+<h3> Meeting Times </h3>
+<ul>
+  <li> Lecture: Monday and Wednesday 4th period
+  <li> Lab: Thursday 3rd and 4th period
+</ul>
+
+<h3> MGSP </h3>
+<p> There will be one MGSP student leaders to compliment extra
+instruction. The times of the meetings are still to be
+determined. </p>
+
+<hr>
+
+<h2> Course Objectives and Assessment </h2>
+
+<h3> Learning Objectives </h3>
+<ol type="1">
+  <li> Understand how programs are loaded and executed in a typical computing environment
+  <li> The ability to trace the execution of a program using standard tools (e.g., gdb, idaPro)
+  <li> The ability to identify, exploit, and fix vulnerable software 
+  <li> Read, write, and understand x86 assembly programs
+  <li> Understand system level defenses (e.g., ASLR, stack cannaries) and how to circumvent them
+  <li> Develop and deploy stack based exploits (e.g., stack overflows, format string attacks, ROP)
+</ol>
+
+<h2> Grading Policy </h2>
+
+<h3> Grading Breakdown </h3>
+<ul>
+  <li> Final Grades </li>
+
+  <ul>
+    <li> <b> 10%</b>: <i> Final Exam </i>
+
+    <li> <b> 5%</b>: <i> Final Exam Practicum</i>
+
+    <li> <b> 10% </b> : <i> 6-week and 12-week Written Exam </i>
+    
+    <li> <b> 5% </b> :<i>  6-week and 12-week Practicum Exam </i>
+    
+    <li> <b> 40% </b>:  <i> Labs </i>
+
+    <li> <b> 25% </b>:  <i> Homework </i>
+      
+    <li> <b> 5% </b>: <i> Summary Reports </i>
+
+  </ul>
+    <li> 6-/12-Week Grades: 20% Exam, 10% Practicum, 40% Labs, 25% Homework, 5% Summary Report
+  </ul>
+
+</ul>
+
+<h3> Lab Submission and Grading Policy </h3>
+    
+<p> There is no fixed due date for the labs, and you may complete labs
+at any time during the semester, even well after they are
+assigned. However, there will be three lab assessment dates at which
+point your progress will be measured and a grade assigned. These dates
+correspond to the exam periods:
+  <ul>
+    <li> 2 Oct 2015: 6-Week Assessment
+    <li> 6 Nov 2015: 12-Week Assessment
+    <li> 22 Dec 2015: Final Assessment
+  </ul>
+
+<p> All labs will be graded on a strict PASS/FAIL bases. No partial
+credit will be provided for lab submission; however, each part of a
+lab will be separately graded based on the number of points
+  assigned to each part. Your overall lab grade will be based on the
+  total number of points earned from completing parts of the labs.
+  
+<h3> Homework Submission and Grading Policy </h3>
+    
+    <p> Homeworks for each week will post on Monday nights, and are
+    due the following Monday at the start of lecture. Homeworks must
+    be submitted in <b> hard copy</b> to the instructor. Late homework
+    will not be accepted without prior arrangement with the
+    instructor</p>
+
+    <p> Homework will be self graded, in-class under the direction of
+    the instructor. You are expected to honestly and carefully assess
+    your work and answers. Improper self-grading will be considered a
+    potential honor violation.
+
+<h3> Summary Report Submission Policy </h3>
+    
+    <p> Summary reports will be assigned in class and posted on the
+    course calendar with the due date noted. Submission must occur via
+    hard copy.
+
+    <p> A summary report will comprise of a one-to-two paragraph
+    summary of the technical readings. A one paragraph summary of
+    measurements and results. And, one paragraph describing an item
+    you found surprising and an item you found lacking or
+    insufficient.
+
+    <p> Summary reports will be graded on a sufficient or insufficient
+    basis. An insufficient summary may be resubmitted for partial
+    credit at the discretion of the instructor.
+
+
+<h2> Honor, Collaboration and Classroom Conduct Policy</h2>
+
+      <p> The honor and collaboration policy of this class references
+       and adapts the language of Computer Science Department
+       Instruction 1531.1D, <a
+        href="http://www.usna.edu/CS/_files/documents/ProgrammingPolicy.pdf">Policy
+       Concerning Programming Projects</a>. We make the following
+       course-specific adaptations and revisions below; however, when
+       not explicitey stated, the policy of the departments policy
+       holds. </p>
+
+<h3> Homework Assignment Collaboration </h3>
+      <ul>
+
+	<li> You may work freely with classmates on the
+      homework. This includes working together and solving problems
+      together.
+	
+	<li> You are required to indicate all collaborators on your
+      homework assignments.
+
+	<li> Each student must submit an individual assignment,
+      and the pencile-to-paper/fingers-to-keyboard work must be your
+      own. Even when collaborating, in many situations, we do not
+      expect two students to produce the same answer.
+
+	<li> Copying of homework assignments is strictly forbidden and
+      is considred an honor violation. We define copying as the act of
+      viewing or discussing another's answers, copying down those
+      answers without having completed the work
+      individually. 
+
+    </ul>
+  
+<h3> Lab Assignment Collaboration Policy</h3> 
+<ul>
+  
+    <li> You may collaborate on all lab assignments for the purpose of
+    discussion and problem exploration; however, each student must
+    individually solve each of the lab assignments and submit their
+    own solution. </b>
+  
+    <li> You are not allowed to share code or other solution material
+    with others. However, you may discuss the main concepts and
+    solution techniques with others and collaborate on developing
+    solution processes. Sharing specific solutions, however, is
+    strictly against this policy.
+  
+    <li> You are required to indicate all collaborators on your lab
+      assignments via an appropriate mechanism (e.g., by submitting a
+      README file). Collaborating and not indicating your
+      collaborators is in violation of this and the departments
+      policy.
+
+  </ul>
+  
+<h3> Classroom Decorum </h3>
+<ul>
+  
+  <li> Beverages are permitted in classrooms and labs provided they
+  are in closed containers. No food or smokeless tobacco is permitted
+  in classrooms or labs.
+
+  <li> Vulgar language and classroom disruptions will not be
+  tolerated. A student who disrupts the class for those reasons will
+  be asked to leave immediately and will be marked has having left
+  early in the attendance roster and may be considered for a conduct
+  offense.
+</ul>
+
+<hr>
+    
+<b> APPROVED </b><br><br>
+<br>
+<br>
+
+<div style="float:left;margin-left:25px">
+__________________________<br>
+Asst. Prof. Adam J. Aviv <br> 
+Course Coordinator <br>
+</div>
+
+
+<div style="float:left;margin-left:100px">
+___________________ <br>
+CDR Mike Bilzor<br>
+CS Department Chair <br>
+</div>
+
+<br>
+<br>
+<br>
+
+
+<hr>
+<address></address>
+<!-- hhmts start -->Last modified: Mon Aug 24 11:55:31 EDT 2015 <!-- hhmts end -->
+</body> </html>

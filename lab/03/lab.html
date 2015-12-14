@@ -1,0 +1,396 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lab 03: Tracing is fun, but <code>gdb</code> is funner!</title>
+<!-- 2015-09-16 Wed 10:48 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lab 03: Tracing is fun, but <code>gdb</code> is funner!</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Submission Instructions</a></li>
+<li><a href="#sec-2">Part 1: GDB's Secrets (1 point)</a></li>
+<li><a href="#sec-3">Part 2: Crack the Secret II (3 point)</a></li>
+<li><a href="#sec-4">Part 3: The input is &#x2026; (2 point)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Submission Instructions</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Submission instructions for labs can be found on the resource
+pages. In paticular, you should view this subsection: <a href="https://www.usna.edu/Users/cs/aviv/classes/si485h/f15/rsc/submit.html">Creating a new
+branch and submitting</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Part 1: GDB's Secrets (1 point)</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Given the compiled program <code>main</code>, use gdb to trace and analyze it
+to find the secret message
+</li>
+</ul>
+
+<p>
+<i>preliminaries</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your VM machine
+</li>
+<li>gitlab repository
+</li>
+</ul>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-3.1
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>fork and clone the repo
+</li>
+<li>You will find a single file: <code>main</code>
+</li>
+<li>Use gdb to analyze the file and determine the embeded secret message
+</li>
+<li>Once found, fill in the json file:
+<pre class="example">
+{
+  "msg" : "Secret message",
+  "description": "Description of where and how the secret message was found"
+}
+</pre>
+</li>
+</ul>
+
+<p>
+<i>Submission Requirements</i>
+</p>
+<ul class="org-ul">
+<li><code>solution.json</code>
+</li>
+</ul>
+
+<p>
+<i>Hint</i>
+</p>
+<ul class="org-ul">
+<li>You don't need to run the program to find the secret. The
+computation is not relevant.
+</li>
+<li>Use the gdb print function to look at extraneous bytes interpreted
+in different ways
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Part 2: Crack the Secret II (3 point)</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Crack the decrypted text
+</li>
+</ul>
+
+<p>
+<i>preliminaries</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on any machine but you must have
+access to the saddleback VM
+</li>
+<li>gitlab repository
+</li>
+</ul>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-3.2
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>fork and clone the repo
+</li>
+<li>You will find one file to complete
+<ul class="org-ul">
+<li><code>crack_secret.c</code> : complete the decryption function
+</li>
+</ul>
+</li>
+</ul>
+
+
+<ul class="org-ul">
+<li>ssh to the saddleback vm:
+<pre class="example">
+ssh -p 2222 saddleback.academy.usna.edu
+</pre>
+</li>
+<li>Execute the following program to get your secret message
+<pre class="example">
+~aviv/lab/03.2/get_secret
+</pre>
+<p>
+You will get a key and IV, but you need to figure out the
+encryption routine. Use <code>objdump</code> and <code>gdb</code> to figure that out.
+</p>
+</li>
+
+<li>Once you've cracked the secret, complete the <code>solution.json</code> file:
+<pre class="example">
+ {
+   "msg": "the secret message"
+   "description" : "short description of how you cracked the message",
+}
+</pre>
+</li>
+</ul>
+
+<p>
+<i>Submission Requirements</i>
+</p>
+<ul class="org-ul">
+<li><code>crack_secret.c</code> 
+</li>
+<li><code>solution.json</code> solution information
+</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>Because <code>gdb</code> doesn't like <code>setuid</code>, you might have a hard time
+tracing due to permission issues. But, you can copy the file and
+try and trace the encryption routine yourself.
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Part 3: The input is &#x2026; (2 point)</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Using gdb and objdump, determine the input that will produce the
+secret message.
+</li>
+</ul>
+
+<p>
+<i>preliminaries</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your VM machine
+</li>
+<li>gitlab repository:
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-3.3
+</pre>
+</li>
+</ul>
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>fork and clone the repo
+</li>
+<li>You will find one pre-compiled binary file
+<ul class="org-ul">
+<li><code>a.out</code> : complete the decryption function
+</li>
+</ul>
+</li>
+<li>Using gdb (or objudmp or whatever) determine how to get the binary
+to print the secret message.
+</li>
+
+<li>Once you've cracked the secret, complete the <code>solution.json</code> file:
+<pre class="example">
+ {
+   "inpput": "input key",
+   "msg": "the secret message",
+   "description" : "short description of how you cracked the message"
+}
+</pre>
+</li>
+</ul>
+
+<p>
+<i>Submission Requirements</i>
+</p>
+<ul class="org-ul">
+<li><code>solution.json</code> solution information
+</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>Use <code>gdb</code> to do some tracing of the logic
+</li>
+<li>To what and from what are the comparisons occurring?
+</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Standard Development Environment</title>
+<!-- 2015-08-20 Thu 11:26 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../index.html">Home</a> <a href="../policy.html">Policy</a> <a href="../cal.html">Calendar</a>  <a href="./index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Standard Development Environment</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. 14.04 Xubuntu 32-bit running on VirtualBox</a></li>
+<li><a href="#sec-2">2. Installation</a></li>
+<li><a href="#sec-3">3. Setup</a>
+<ul>
+<li><a href="#sec-3-1">3.1. Install Guest Editions</a></li>
+<li><a href="#sec-3-2">3.2. Installing Libraries and Tools</a></li>
+<li><a href="#sec-3-3">3.3. Setting up GDB</a></li>
+<li><a href="#sec-3-4">3.4. Turning off ASLR</a></li>
+<li><a href="#sec-3-5">3.5. Editing Default Options to <code>gcc</code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> 14.04 Xubuntu 32-bit running on VirtualBox</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+We will be using 32-bit, 14.04 Ubuntu for all assignments in this
+class unless otherwise noted.  The particular ubuntu flavor of
+choice is Xubuntu, where the X stands for XFCE windowing
+environment. The XFCE windowing environment is much lighter weight
+(requiring less disc space and processing power) and thus is a good
+choice for virtualization.
+</p>
+
+<p>
+We will also use VirtualBox for our virtualization tool. You may use
+vmware if you so desire, but all instructions will be provided in
+VirtualBox. The reason for this is that VirtualBox is completely
+free, and, frankly, I prefer it.
+</p>
+
+<p>
+The submission environment will also meet the specifications
+described here. I strongly recommend that you perform all work
+locally on your virtualbox image, and then finally, complete your
+work on the submission environment since it will be shared across
+all users.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Installation</h2>
+<div class="outline-text-2" id="text-2">
+<ol class="org-ol">
+<li>Download and install VirtualBox <a href="https://www.virtualbox.org/wiki/Downloads">https://www.virtualbox.org/wiki/Downloads</a>
+</li>
+
+<li>Download the ubuntu 32-bit, 14.04 ISO. To help with speed, I
+have a mirrored the image for faster downloads. <a href="http://zee.cs.usna.edu/~aviv/xubuntu-14.04.2-desktop-i386.iso">http://zee.cs.usna.edu/~aviv/xubuntu-14.04.2-desktop-i386.iso</a>
+</li>
+
+<li>Open and start VitualBox
+
+
+<div class="figure">
+<p><a href="devenv-images/vbox-main.png" width="50%"><img src="devenv-images/vbox-main.png" alt="vbox-main.png" width="50%"></a>
+</p>
+</div>
+</li>
+
+<li>Click the New button at the top to create a new VirtualMachine image
+</li>
+
+<li>Name your virtual machine Xubuntu-32, the type is linux, and the
+version is Ubuntu 32-bit. The memory size of 512 MB is
+sufficient, buut you may increase this if you like to 1 or 2
+GB. Do create the virtual hard drive now. Click Create.
+
+
+<div class="figure">
+<p><a href="devenv-images/vbox-setup-screen.png" width="50%"><img src="devenv-images/vbox-setup-screen.png" alt="vbox-setup-screen.png" width="50%"></a>
+</p>
+</div>
+</li>
+
+<li>When creating the disk, use the default settings of VDI (or VMDK
+if you want to transfer to VMware in the future) and 8 GB will be
+plenty of space.
+</li>
+
+<li>Once created, go ahead and start the vm which will not boot
+because you haven't installed the operating system yet. To do so
+click on the cd logo at the bottom of the screen, and then
+select "Choose a virtual CD/DVD disk file &#x2026;" Point the browser
+window at your Xubuntu iso.
+
+
+<div class="figure">
+<p><a href="devenv-images/vbox-corner-settings.png" width="25%"><img src="devenv-images/vbox-corner-settings.png" alt="vbox-corner-settings.png" width="25%"></a>
+</p>
+</div>
+
+<div class="figure">
+<p><a href="devenv-images/vbox-load-disk.png" width="25%"><img src="devenv-images/vbox-load-disk.png" alt="vbox-load-disk.png" width="25%"></a>
+</p>
+</div>
+</li>
+
+<li>Reboot the VM and now the Xubuntu installer will load. Do the
+default install configuration. 
+</li>
+
+<li>For your username use your usna m* username (!!! Important !!!)
+</li>
+
+<li>For your password DO NOT USE your USNA network password (!!!
+Important !!!)
+</li>
+
+<li>Once installation complete, boot your VM and log in. There is
+still some in environment setup to go.
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Setup</h2>
+<div class="outline-text-2" id="text-3">
+</div><div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> Install Guest Editions</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+Vbox virtual machine run happiest when they have additional
+software to make they run faster, the so called guest
+additions. To install the guest additions, you must load the
+Guest Edition DVD into the virtual machines DVD drive.
+</p>
+
+<ol class="org-ol">
+<li>Go to the menu for the virtual machine, select Device-&gt;Insert
+Guest Addition CD Image. The CDROM icon should apear on the
+desktop if succesful.
+</li>
+
+<li>Open a terminal by clicking on the "mouse" in the upper left
+corner, then type terminal and open the terminal
+
+
+<div class="figure">
+<p><a href="devenv-images/vbox-terminal.png" width="25%"><img src="devenv-images/vbox-terminal.png" alt="vbox-terminal.png" width="25%"></a>
+</p>
+</div>
+</li>
+
+<li>In the terminal, cd into the media cd rom directory, and execute
+the commands
+<pre class="example">
+$ cd /media/m179999/VBOXADDITIONS_4.3.30_101610/
+$ sudo ./VBoxLinuxAdditions.run
+</pre>
+</li>
+
+<li>Reboot the  virtual machine
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> Installing Libraries and Tools</h3>
+<div class="outline-text-3" id="text-3-2">
+<ol class="org-ol">
+<li>Open a terminal and execute the following commands to get your
+apt setup right and up to date. Say yes when prompted
+
+<pre class="example">
+# sudo apt-get update
+# sudo apt-get upgrade
+</pre>
+</li>
+
+<li>Install the following libraries and tools 
+<pre class="example">
+$ sudo apt-get install gcc gdb manpages emacs24 git openssh-server hexedit
+</pre>
+</li>
+
+<li>You can search for other libraries using apt-cache if you want but this is what you need for right now
+<pre class="example">
+$ apt-cache search some-library-to-install
+</pre>
+</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3"><span class="section-number-3">3.3</span> Setting up GDB</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+We would like gdb to use Intel style syntax by default. To do this,
+edit your <code>.gdbinit</code> file in your home directory (use vim or
+whatever if you want)
+</p>
+
+<pre class="example">
+$ emacs ~/.gdbinit
+</pre>
+
+<p>
+and add the line
+</p>
+
+<pre class="example">
+set disassembly-flavor intel
+</pre>
+
+<p>
+Additionally, I like the following shortcut <code>ds</code> for looking at
+disabled code regions, and you can add that alias like so, again in
+the <code>.gdbinit</code> file
+</p>
+
+<pre class="example">
+alias ds=disassemble
+</pre>
+</div>
+</div>
+<div id="outline-container-sec-3-4" class="outline-3">
+<h3 id="sec-3-4"><span class="section-number-3">3.4</span> Turning off ASLR</h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+For many of the assignments, we will not use Address Space Layer
+Randomization (ASLR). This can be disable using in the kernel by
+setting the value <code>/proc/sys</code>
+</p>
+
+<pre class="example">
+echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+</pre>
+</div>
+</div>
+<div id="outline-container-sec-3-5" class="outline-3">
+<h3 id="sec-3-5"><span class="section-number-3">3.5</span> Editing Default Options to <code>gcc</code></h3>
+<div class="outline-text-3" id="text-3-5">
+<p>
+We will be turning off some stack based protections in <code>gcc</code>, the
+gnu c compiler, and the easiest way to ensure that they are turned
+off is to add an alias for gcc. To have the alias by default create
+a file called .bash<sub>aliases</sub> in your home directory
+</p>
+
+<pre class="example">
+$ emacs ~/.bash_aliases
+</pre>
+
+<p>
+And add the following line:
+</p>
+
+<pre class="example">
+alias gcc="gcc -fno-stack-protector -z execstack"
+</pre>
+
+<p>
+Close and reopen the terminal. 
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

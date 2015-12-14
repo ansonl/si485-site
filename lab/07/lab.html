@@ -1,0 +1,439 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lab 07: Avoid and Conquer</title>
+<!-- 2015-10-21 Wed 17:05 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lab 07: Avoid and Conquer</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Submission Instructions</a></li>
+<li><a href="#sec-2">Part 1: The Woods are Dark and Deep (2 points)</a></li>
+<li><a href="#sec-3">Part 2: Sign THIS! (1 points)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Submission Instructions</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Submission instructions for labs can be found on the resource
+pages. In paticular, you should view this subsection: <a href="https://www.usna.edu/Users/cs/aviv/classes/si485h/f15/rsc/submit.html">Creating a new
+branch and submitting</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Part 1: The Woods are Dark and Deep (2 points)</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>There is an egg hidden in the executable, exploit the program with
+an egg hunter to get it execute the shell code.
+</li>
+</ul>
+
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository
+</li>
+<li>gitlab repository
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-7.1
+</pre>
+</li>
+<li><b>YOU MUST WORK IN THE CORRECT DIRECTORY</b>
+<ul class="org-ul">
+<li>Work in your <code>/tmp</code> directory so that I can check your exploits
+</li>
+<li>All exploits must work when run from a directory called: <code>/tmp/lab-7.1</code>
+</li>
+</ul>
+</li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository
+</li>
+<li>Copy the repository to your <code>/tmp</code> directory
+</li>
+<li><b>ALL WORK MUST BE COMPLETED IN THE DIRECTORY</b>: <code>/tmp/lab-7.1</code>
+</li>
+
+<li>Your task is to complete the <code>exploit.sh</code> script such that it will
+properly exploit the <code>thewoods</code> program, running an egg hunter
+that will find the shell code
+</li>
+
+<li>The egg you are hunting for is <code>0xdeadbeef</code>, apearing twice
+</li>
+
+<li>The source code for the vulnerable section of <code>thewoods</code> is below:
+
+<div class="org-src-container">
+
+<pre class="src src-c">    <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">check for the sig0 start finished by sig1 in str</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">border</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">s</span>){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[50];
+
+  strcpy(buf,s);
+
+  <span style="color: #00ffff;">if</span>(border != 0xcafebabe){
+    printf(<span style="color: #ffa07a;">"DANGER !!! "</span>);
+    exit(1);
+  }
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #00ffff;">if</span>( argc != 2){
+    printf(<span style="color: #ffa07a;">"INVALID"</span>);
+    exit(2);
+  }
+
+  vuln(0xcafebabe, argv[1]);
+}
+</pre>
+</div>
+</li>
+
+<li><b>NOTE</b>: vuln does a boundry check, so you need to be careful about
+how you perform your exploit, fortunately, your egg hunter should
+be well below 50 bytes, right? Or you can avoid boundries, right?
+</li>
+
+<li>Once you've identified an exploit, complete the <code>exploit.sh</code>
+so that your egg hunt will be succesful
+<code>exploit.sh</code> file:
+<pre class="example">
+#!/bin/sh
+
+./thewoods &lt;EXPLOIT ARGUMENT GOES HERE&gt;
+</pre>
+</li>
+<li>When done correctly you should expect the following:
+<pre class="example">
+user@si485H-base:6.1$ ./exploit.sh 
+Go Navy!
+user@si485H-base:6.1$ echo $?
+3
+</pre>
+</li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least one files: <code>exploit.sh</code>
+</li>
+<li>Your submission must work when executed from the following directory: <code>/tmp/lab-7.1</code>
+</li>
+<li>You <b>MAY NOT</b> use shell code that executes the solution, you must hunt for it
+</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>You may need to adjust your egg hunter. 0xdeadbeef is not executable &#x2026; and not nops
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Part 2: Sign THIS! (1 points)</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>I've designed the best signature matching scheme ever, defeat it
+with your obfuscated shell code.
+</li>
+</ul>
+
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository
+</li>
+<li>gitlab repository
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-7.2
+</pre>
+</li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository
+</li>
+
+<li>Your task is to complete the <code>obfuscate.asm</code> shell code that will
+properly avoid the signature matching sheme. 
+</li>
+
+<li>The signatures being used in <code>sigmatch.c</code>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">check for the sig0 start finished by sig1 in str</span>
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">check_sig</span>(<span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">str</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">sig0</span>,<span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">sig1</span>){
+
+  <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">p</span>,*<span style="color: #eedd82;">q</span>;
+
+  <span style="color: #00ffff;">for</span>(p=str;*p;p++){
+
+    <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">checking for start of signature</span>
+    <span style="color: #00ffff;">if</span> ( strncmp(p,sig0,strlen(sig0)) == 0 ){
+
+      <span style="color: #00ffff;">if</span> (! sig0); <span style="color: #00ffff;">return</span> 1;
+
+      <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">checking for end of signature</span>
+      <span style="color: #00ffff;">for</span>(q=p;*q;q++){
+      <span style="color: #00ffff;">if</span> (strncmp(q,sig1,strlen(sig1)) == 0){
+        <span style="color: #00ffff;">return</span> 1;<span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">found signature</span>
+        }
+      }
+    }
+  }
+
+  <span style="color: #00ffff;">return</span> 0; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">did not find signautre</span>
+
+
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #00ffff;">if</span>(argc &lt; 2){
+    printf(<span style="color: #ffa07a;">"ERROR: Require argument\n"</span>);
+    exit(1);
+  }
+
+  <span style="color: #00ffff;">if</span> ( check_sig(argv[1], <span style="color: #ffa07a;">"\xb0\x0b"</span>, <span style="color: #ffa07a;">"\xcd\x80"</span>) ||
+       check_sig(argv[1], <span style="color: #ffa07a;">"\x31\xc9"</span>, <span style="color: #ffa07a;">"\xcd\x80"</span>) ||
+       check_sig(argv[1], <span style="color: #ffa07a;">"bin"</span>, <span style="color: #ffa07a;">"sh"</span>) ||
+       check_sig(argv[1], <span style="color: #ffa07a;">"sh"</span>, <span style="color: #ffa07a;">"bin"</span>) ||
+       check_sig(argv[1], <span style="color: #ffa07a;">"\x90\x90"</span>, <span style="color: #7fffd4;">NULL</span>) ||
+       check_sig(argv[1], <span style="color: #ffa07a;">"\x90\x90\x90"</span>, <span style="color: #7fffd4;">NULL</span>) ||
+       check_sig(argv[1], <span style="color: #ffa07a;">"\x6f\x6f\x6f"</span>, <span style="color: #7fffd4;">NULL</span>) ||
+       check_sig(argv[1], <span style="color: #ffa07a;">"\x6f\x6f"</span>, <span style="color: #7fffd4;">NULL</span>) ||
+       check_sig(argv[1], <span style="color: #ffa07a;">"\x8a\x44\x0c\xff\x34"</span>, <span style="color: #7fffd4;">NULL</span>)){
+
+    printf(<span style="color: #ffa07a;">"No Way Jose!\n"</span>);
+    exit(2);
+  }
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">execute as binary code</span>
+  ((<span style="color: #98fb98;">void</span>(*)(<span style="color: #98fb98;">void</span>)) argv[1])();
+
+  <span style="color: #00ffff;">return</span>;
+}
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Once you've complete your shell code, <code>exploit.sh</code> should run
+succesfully like so: so that your egg hunt will be succesful
+<code>exploit.sh</code> file:
+<pre class="example">
+#!/bin/sh
+
+./thewoods &lt;EXPLOIT ARGUMENT GOES HERE&gt;
+</pre>
+</li>
+<li>When done correctly you should expect the following:
+<pre class="example">
+user@si485H-base:7.2$ ./exploit.sh
+Go Navy
+user@si485H-base:7.2$ echo $?
+3
+</pre>
+</li>
+</ul>
+</li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least two files: <code>exploit.sh</code> and <code>avoider.asm</code>
+</li>
+</ul>
+
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>You may need to adjust your shell code in some way.
+</li>
+<li>The current version of <code>le-fourbytes.py</code> could be edited if you want.
+</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

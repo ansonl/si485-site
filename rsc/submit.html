@@ -1,0 +1,503 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Submission and git Instructions</title>
+<!-- 2015-08-21 Fri 13:52 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../index.html">Home</a> <a href="../policy.html">Policy</a> <a href="../cal.html">Calendar</a>  <a href="./index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Submission and git Instructions</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Forking Repositories and Submitting Assignments</a></li>
+<li><a href="#sec-2">Forking a repository</a></li>
+<li><a href="#sec-3">Cloning the repository to your local machine</a></li>
+<li><a href="#sec-4">Add, Commit, Push, Pull</a></li>
+<li><a href="#sec-5">Creating a new branch and submitting</a></li>
+<li><a href="#sec-6">The last step in a submission (DO NOT FORGET)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Forking Repositories and Submitting Assignments</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+All assignments for this class will be based around git
+repositories. The workflow of an assignment will be:
+</p>
+
+<ol class="org-ol">
+<li>You fork the repository in gitlab
+</li>
+<li>Clone you fork to your local directory
+</li>
+<li>Work and complete the assignment and commit any changes locally
+</li>
+<li>Once you finish, creating a branch named "submit" which will be your submission
+</li>
+<li>Push your submit branch to gitlab where I will have access
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Forking a repository</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+First you must find a repository to clone, from your welcome
+screen, click browse button to view available projects. These will
+propagate as assignments are assigned throughout the semester.
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-browse-projects.png" width="70%"><img src="git-images/git-browse-projects.png" alt="git-browse-projects.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+One the next screen, you may need to select the buttom "show all
+projects," after which you will see a list of public
+projects. (Note: No project you create/own should ever be set for public
+or internal viewing).
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-project-list.png" width="70%"><img src="git-images/git-project-list.png" alt="git-project-list.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+Click on a project your interested in, which in this case will be
+the sample assignment. On the project page you may see some
+information about the project, but most importantly in the upper
+right corner is the fork button:
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-project-page.png" width="70%"><img src="git-images/git-project-page.png" alt="git-project-page.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+Go ahead and click fork, and then click on your username. Now, you
+have a version of the project that is all yours.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Cloning the repository to your local machine</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+To work on the project, you'll need to clone the repository to your
+local machine. If you look on you newly forked projects dashboard
+you'll see a URL for your ssh cloning:
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-project-dashboard.png" width="70%"><img src="git-images/git-project-dashboard.png" alt="git-project-dashboard.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+Copy that link to the terminal on your local VM where you wish to
+work and issue the git clone command:
+</p>
+
+<pre class="example">
+m169999@si485H-saddleback:~$ git clone git@saddleback.academy.usna.edu:m169999/sample-assignment.git
+Cloning into 'sample-assignment'...
+Ubuntu 14.04.2 LTS
+remote: Counting objects: 3, done.
+remote: Total 3 (delta 0), reused 0 (delta 0)
+Receiving objects: 100% (3/3), done.
+Checking connectivity... done.
+</pre>
+
+<p>
+In the current directory, you'll see a directory for the repository
+and any files:
+</p>
+
+<pre class="example">
+169999@si485H-saddleback:~$ ls
+sample-assignment
+m169999@si485H-saddleback:~$ cd sample-assignment/
+m169999@si485H-saddleback:~/sample-assignment$ ls
+test-file.txt
+</pre>
+</div>
+</div>
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Add, Commit, Push, Pull</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Now that you have a version of the assignment to work, go ahead and
+do that. But, you might want to save your work along the way. To do
+that, you'll need to commit your changes locally, and then push those
+changes to the remote repository on gitlab and pull any changes from
+remote repository.
+</p>
+
+<p>
+For example, consider the situation where you need to edit the test
+file by adding a line to the end:
+</p>
+
+<pre class="example">
+m169999@si485H-saddleback:~/sample-assignment$ echo "Hello World" &gt;&gt; test-file.txt 
+m169999@si485H-saddleback:~/sample-assignment$ cat test-file.txt 
+This is a test file
+
+Hello World
+</pre>
+
+<p>
+The test file is a tracked file, which means that changes to it are
+currently being tracked by git. You can see this using the status
+command:
+</p>
+
+<pre class="example">
+m169999@si485H-saddleback:~/sample-assignment$ git status
+On branch master
+Your branch is up-to-date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add &lt;file&gt;..." to update what will be committed)
+  (use "git checkout -- &lt;file&gt;..." to discard changes in working directory)
+
+	modified:   test-file.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+</pre>
+
+<p>
+To add these changes to the repository, we need to do an add:
+</p>
+<pre class="example">
+m169999@si485H-saddleback:~/sample-assignment$ git add test-file.txt
+m169999@si485H-saddleback:~/sample-assignment$ git status
+On branch master
+Your branch is up-to-date with 'origin/master'.
+
+Changes to be committed:
+  (use "git reset HEAD &lt;file&gt;..." to unstage)
+
+	modified:   test-file.txt
+</pre>
+
+<p>
+And now it is clear that these changes are staged for commit, so we
+can do so with a commit message.
+</p>
+
+<pre class="example">
+m169999@si485H-saddleback:~/sample-assignment$ git commit -m "updating test file"
+[master 77574db] updating test file
+ 1 file changed, 1 insertion(+)
+</pre>
+
+<p>
+At this point, the local changes are committed to the local
+repository. However, these changes are not merged with remote
+repository at gitlab. For that, we must push the changes to origin.
+</p>
+
+<pre class="example">
+m169999@si485H-saddleback:~/sample-assignment$ git push origin master
+Ubuntu 14.04.2 LTS
+Counting objects: 5, done.
+Writing objects: 100% (3/3), 289 bytes | 0 bytes/s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+To git@saddleback.academy.usna.edu:m169999/sample-assignment.git
+   fba00fc..77574db  master -&gt; master
+</pre>
+
+<p>
+The phrase "origin master" refers to the origin repository, the one
+you cloned from gitlab for the master branch. That is the primary
+branch for all repositories. When you do a submit, you'll create a
+new branch that you'll push to the origin to indicate you've
+completed the assignment.
+</p>
+
+<p>
+(Note: adding new files to the repository are the same as editting
+tracked files, just use the add command to have them tracked, and
+the commit and push)
+</p>
+</div>
+</div>
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Creating a new branch and submitting</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+Let's suppose you've completed the assignment and now you want to
+submit. To submit, you must create a <b>new branch</b> of the master
+with the name "submit". This is quite simple:
+</p>
+
+<pre class="example">
+m169999@si485H-saddleback:~/sample-assignment$ git branch submit
+</pre>
+
+<p>
+This will create a "local copy" of all the files tracked separately
+from the master branch. You can see all the branches by just using
+branch:
+</p>
+
+<pre class="example">
+m169999@si485H-saddleback:~/sample-assignment$ git branch
+* master
+  submit
+</pre>
+
+<p>
+And you can see that we are still on the master branch. If we wish
+to edit the other branch we have to "checkout" the new branch:
+</p>
+
+<pre class="example">
+m169999@si485H-saddleback:~/sample-assignment$ git checkout submit
+Switched to branch 'submit'
+m169999@si485H-saddleback:~/sample-assignment$ git branch
+  master
+* submit
+</pre>
+
+<p>
+Now any changes you make will be tracked on the submit branch not
+the master. Since you should only be branching at the very end for
+submitting, you shouldn't need to checkout a branch other than the
+master; however, as you get better at using git, you might want to
+do some more advanced things, so it is good to know this
+information. So let's go back to the master branch:
+</p>
+
+<pre class="example">
+m169999@si485H-saddleback:~/sample-assignment$ git checkout master
+Switched to branch 'master'
+Your branch is up-to-date with 'origin/master'.
+m169999@si485H-saddleback:~/sample-assignment$ git branch
+* master
+  submit
+</pre>
+
+<p>
+Now, to submit, we must push the submit branch to the origin, namely
+gitlab:
+</p>
+
+<pre class="example">
+m169999@si485H-saddleback:~/sample-assignment$ git push origin submit
+Ubuntu 14.04.2 LTS
+Total 0 (delta 0), reused 0 (delta 0)
+To git@saddleback.academy.usna.edu:m169999/sample-assignment.git
+ * [new branch]      submit -&gt; submit
+</pre>
+
+<p>
+While you've pushed the submit branch and you can check that the
+branch exists in gitlab website by clicking on the "commits"
+information for the project:
+</p>
+
+
+
+<div class="figure">
+<p><a href="git-images/git-project-dashboard-post-submit.png" width="70%"><img src="git-images/git-project-dashboard-post-submit.png" alt="git-project-dashboard-post-submit.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+And under the branches tab, you'll see that there is a submit
+branch.
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-branches.png" width="70%"><img src="git-images/git-branches.png" alt="git-branches.png" width="70%"></a>
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">The last step in a submission (DO NOT FORGET)</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+<b>HOWEVER YOU HAVE NOT OFFICIALLY SUBMITTED UNTIL YOU ADD ME AS A
+MEMBER OF THE PROJECT.</b> To do that select members and add members to
+your project:
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-add-member.png" width="70%"><img src="git-images/git-add-member.png" alt="git-add-member.png" width="70%"></a>
+</p>
+</div>
+
+<p>
+Then select my user name and give me reporter access
+</p>
+
+
+<div class="figure">
+<p><a href="git-images/git-add-aviv.png" width="70%"><img src="git-images/git-add-aviv.png" alt="git-add-aviv.png" width="70%"></a>
+</p>
+</div>
+
+
+<p>
+Now, you have submitted your assignment. You can keep updating the
+submit branch if you like, and per the course policy, I will
+reassess all the submission at each assessment date.
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

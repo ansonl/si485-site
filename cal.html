@@ -1,0 +1,534 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+
+<link rel="stylesheet" type="text/css" href="class.css" />
+<link rel="stylesheet" type="text/css" href="print.css" media="print" />
+
+<html><head>
+<title>SI485H (F15)</title>
+</head>
+<body>
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="index.html">Home</a> <a href="policy.html">Policy</a> <a href="cal.html">Calendar</a>  <a href="rsc/index.html">Resources</a>
+<hr>
+
+<style>
+table
+{
+border-collapse:collapse;
+}
+table, td, th
+{
+text-align:center
+}
+
+table,tr
+{
+border: 1px solid black
+}
+
+</style>
+
+
+<h2> Course Calendar </h2>
+
+<table border="0" style="font-size:98%">
+<thead>
+  <tr bgcolor="#050505">
+  <td width="3%"><font color="#DADADA"> <b>  Week </b> </font> </td>
+  <td width="7%"> <font color="#DADADA"> <b> Date </b> </td>
+  <td width="10%"> <font color="#DADADA"> <b> Class </b> </td>
+  <td width="30%"><font color="#DADADA"> <b> Topic </b> </td>
+  <td width="30%"><font color="#DADADA"> <b> Readings/Notes </b> </td>
+  <td width="15%"><font color="#DADADA"> <b> Assignment/Solutions </b> </td>
+</tr>
+</thead>
+
+<tr>
+<td rowspan=3> <b> 1 </b> </td>
+
+  <td> M 08/24 </td> <!-- Date -->
+  <td> <a href="lec/01/lec.html">Lecture 1</a> </td> <!-- Class -->
+  <td> C Programming Review </td> <!-- Topic -->
+  <td> AOE: 0x230,0x240,0x260 </td> <!-- Readings/Notes -->
+  <td> <a href="hw/01/hw01.pdf">HW 1</a> </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+
+  <td> W 08/26 </td> <!-- Date -->
+  <td> <a href="lec/02/lec.html">Lecture 2</a> </td> <!-- Class -->
+  <td> Data Types and Program Memory Layout </td> <!-- Topic -->
+  <td> AOE: 0x270 </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+  <td> R 08/27 </td> <!-- Date -->
+  <td> <a href="lab/01/lab.html">Lab 1</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+<td rowspan=3> <b> 2 </b> </td>
+
+  <td> M 08/31 </td> <!-- Date -->
+  <td> <a href="lec/03/lec.html">Lecture 3</a> </td> <!-- Class -->
+  <td> Dissasembling a Program </td> <!-- Topic -->
+  <td> AOE: 0x250 <br> <a href="https://en.wikibooks.org/wiki/X86_Disassembly/Functions_and_Stack_Frames"> WikiBook: x86 Dissambly/Functions and Stack Frames </a> </td> <!-- Readings/Notes -->
+  <td> <a href="hw/02/hw02.pdf"> HW 2</a> <br> <font color="red"> DUE 9 Sept </font> </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+
+
+  <td> W 09/02 </td> <!-- Date -->
+  <td> <a href="lec/04/lec.html">Lecture 4</a> </td> <!-- Class -->
+  <td> Stack Frame Management in Assembly </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+  <td> R 09/03 </td> <!-- Date -->
+  <td> <a href="lab/02/lab.html">Lab 2</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+<td rowspan=3> <b> 3 </b> </td>
+
+  <td> T 09/08 </td> <!-- Date -->
+  <td> <a href="lec/05/lec.html">Lecture 5</a> </td> <!-- Class -->
+  <td> Memory References, Jumps/Loops, and Function Calls </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> <a href="hw/03/HW03.pdf">HW 3</a> </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+
+  <td> W 09/09 </td> <!-- Date -->
+  <td> <a href="lec/06/lec.html">Lecture 6</a> </td> <!-- Class -->
+  <td> Tracing a Program with GDB </td> <!-- Topic -->
+  <td> <a href="http://users.ece.utexas.edu/~adnan/gdb-refcard.pdf"> GDB Quick Reference </a> </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+  <td> R 09/10 </td> <!-- Date -->
+  <td> <a href="lab/03/lab.html">Lab 3</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+<td rowspan=3> <b> 4 </b> </td>
+
+  <td> M 09/14 </td> <!-- Date -->
+  <td> <a href="lec/07/lec.html">Lecture 7</a> </td> <!-- Class -->
+  <td> Smashing the Stack for Fun and Profit </td> <!-- Topic -->
+  <td> AOE: 0x310, 0x320 <br> <a href="http://insecure.org/stf/smashstack.html"> Alef One </a> </td> <!-- Readings/Notes -->
+  <td> <a href="hw/04/hw04.pdf"> HW 4 </a> </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+
+
+  <td> W 09/16 </td> <!-- Date -->
+  <td> <a href="lec/08/lec.html">Lecture 8</a> </td> <!-- Class -->
+  <td> Shell Code and x86 System Calls </td> <!-- Topic -->
+  <td> AOE: 0x510, 0x520, 0x530 <br> </td> <!-- Readings/Notes -->
+  <td> Summary 1: <br> <a href="http://web.cs.jhu.edu/~sam/ccs243-mason.pdf">English Shell Code</a> </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+  <td> R 09/17 </td> <!-- Date -->
+  <td> <a href="lab/04/lab.html">Lab 4</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+<td rowspan=3> <b> 5 </b> </td>
+
+  <td> M 09/21 </td> <!-- Date -->
+  <td> <a href="lec/09/lec.html">Lecture 9</a> </td> <!-- Class -->
+  <td> Shell Code in x86 </td> <!-- Topic -->
+  <td> <a href="https://web.archive.org/web/20120710010645/http://badishi.com/basic-shellcode-example">Internet Archive of Basic Shellcode Example</a> </td> <!-- Readings/Notes -->
+  <td> <a href="hw/05/hw05.pdf">HW 5 </a> </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+
+  <td> W 09/23 </td> <!-- Date -->
+  <td> <a href="lec/10/lec.html">Lecture 10</a> </td> <!-- Class -->
+  <td> Making Shell Code Exploit Ready </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> Summary 1 Due </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+  <td> R 09/24 </td> <!-- Date -->
+  <td> <a href="lab/05/lab.html">Lab 5</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+<td rowspan=3> <b> 6 </b> </td>
+
+  <td> M 09/28 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> Catchup and Review </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+
+
+  <td> W 09/30 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> <font color="red">Written Exam </font> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> <a href="exams/06-week-written/exam.pdf"> Written Exam </a> <br> <a href="exams/06-week-written/solution.pdf"> Solution </a> </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+  <td> R 10/01 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> <font color="red">Practicum</font><br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> <font color="red"> LAB ASSESSMENT POINT </font> <br> <i> Labs 1-4</i> </td> <!-- Assignments -->
+
+</tr>
+<tr>
+<td rowspan=3> <b> 7 </b> </td>
+
+  <td> M 10/05 </td> <!-- Date -->
+  <td> <a href="lec/11/lec.html">Lecture 11</a> </td> <!-- Class -->
+  <td> Stack Smashing with Shell Code </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> <a href="hw/06/hw06.pdf"> HW 06 </a> </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+
+  <td> W 10/07 </td> <!-- Date -->
+  <td> <a href="lec/12/lec.html">Lecture 12</a> </td> <!-- Class -->
+  <td> Small Shell Code </td> <!-- Topic -->
+  <td> <a href="http://shell-storm.org/shellcode/"> The shellcode repository </a> </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+  <td> R 10/08 </td> <!-- Date -->
+  <td> <a href="lab/06/lab.html">Lab 6</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+<td rowspan=3> <b> 8 </b> </td>
+
+  <td> M 10/12 </td> <!-- Date -->
+  <td> <i> No Class </i> </td> <!-- Class -->
+  <td> <i> Columbus Day </i> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+
+
+  <td> W 10/14 </td> <!-- Date -->
+  <td> <a href="lec/13/lec.html">Lecture 13</a> </td> <!-- Class -->
+  <td> Decode and Egg Hunt Shell Code </td> <!-- Topic -->
+  <td> <a href="http://www.nologin.com/Downloads/Papers/egghunt-shellcode.pdf"> Safely Searching Process Virtual Address Space</a> <br> nologon.org </td> <!-- Readings/Notes -->
+  <td> <a href="hw/07/hw07.pdf"> HW 07 </a> </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+  <td> R 10/15 </td> <!-- Date -->
+  <td> <a href="lab/07/lab.html">Lab 7</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+<td rowspan=3> <b> 9 </b> </td>
+
+  <td> M 10/19 </td> <!-- Date -->
+  <td> <a href="lec/14/lec.html">Lecture 14</a> </td> <!-- Class -->
+  <td> Socket Programming and Remote Shells </td> <!-- Topic -->
+  <td> AOE: 0x540 </td> <!-- Readings/Notes -->
+  <td> <a href="hw/08/hw08.pdf"> HW 08 </a> <br> <font color="red"> Due 28 Oct </font><br> </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+
+  <td> W 10/21 </td> <!-- Date -->
+  <td> <a href="lec/15/lec.html">Lecture 15</a> </td> <!-- Class -->
+  <td> Socket Programming in Assembly </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+  <td> R 10/22 </td> <!-- Date -->
+  <td> <a href="lab/08/lab.html">Lab 8</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+<td rowspan=3> <b> 10 </b> </td>
+
+  <td> M 10/26 </td> <!-- Date -->
+  <td> <a href="lec/16/lec.html">Lecture 16</a> </td> <!-- Class -->
+  <td> Address Space Layout Randomization </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> <a href="hw/09/hw09.pdf"> HW 09 </a> </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+
+
+  <td> W 10/28 </td> <!-- Date -->
+  <td> <a href="lec/17/lec.html">Lecture 17</a> </td> <!-- Class -->
+  <td> Defeating ASLR by Bouncing and Basing </td> <!-- Topic -->
+  <td> AOE: 0x6c0 </td> <!-- Readings/Notes -->
+  <td> Summary 2: <a href="http://www.cs.columbia.edu/~locasto/projects/candidacy/papers/shacham2004ccs.pdf"> On the Effectiveness of Address Space Layer Randomization </a> </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+  <td> R 10/29 </td> <!-- Date -->
+  <td> <a href="lab/09/lab.html">Lab 9</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+<td rowspan=3> <b> 11 </b> </td>
+
+  <td> M 11/02 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> Catchup/Review </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+
+  <td> W 11/04 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> <font color="red">Written Exam</font> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+  <td> R 11/05 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> <font color="red">Practicum</font><br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> <font color="red"> LAB ASSESSMENT POINT </font> <br> <i> Labs 1-8</i> </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+<td rowspan=3> <b> 12 </b> </td>
+
+  <td> M 11/09 </td> <!-- Date -->
+  <td> <a href="lec/18/lec.html">Lecture 18</a> </td> <!-- Class -->
+  <td> Stack Canaries </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> <a href="hw/10/hw10.pdf">HW 10</a> <br> Summary 2 due <br> Summary 3: <br> <a href="https://www.usenix.org/legacy/publications/library/proceedings/sec98/full_papers/cowan/cowan.pdf"> StackGuard: Automatic Adaptive Detection and Prevention of Buffer Overlow Attacks </a> </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+
+
+  <td> W 11/11 </td> <!-- Date -->
+  <td> <i> No Class </i> </td> <!-- Class -->
+  <td> <i> Veterans Day </i> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+  <td> R 11/12 </td> <!-- Date -->
+  <td> <a href="lab/10/lab.html">Lab 10</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+<td rowspan=3> <b> 13 </b> </td>
+
+  <td> M 11/16 </td> <!-- Date -->
+  <td> <a href="lec/19/lec.html">Lecture 19</a> </td> <!-- Class -->
+  <td> Format String Attacks I </td> <!-- Topic -->
+  <td> AOE 0x350 </td> <!-- Readings/Notes -->
+  <td> <a href="hw/11/hw11.pdf"> HW 11 </a> </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+
+  <td> W 11/18 </td> <!-- Date -->
+  <td> <a href="lec/20/lec.html">Lecture 20</a> </td> <!-- Class -->
+  <td> Format String Attacks II </td> <!-- Topic -->
+  <td> <a href="http://www.cis.syr.edu/~wedu/Teaching/cis643/LectureNotes_New/Format_String.pdf"> Syracuse Lecture Notes </a> <br> <a href="http://www.cis.syr.edu/~wedu/Teaching/cis643/Papers/formatstring-1.2.pdf"> scut / team teso </a> </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+  <td> R 11/19 </td> <!-- Date -->
+  <td> <a href="lab/11/lab.html">Lab 11</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+<td rowspan=3> <b> 14 </b> </td>
+
+  <td> M 11/23 </td> <!-- Date -->
+  <td> <a href="lec/21/lec.html">Lecture 21</a> </td> <!-- Class -->
+  <td> Format String Attacks III </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+
+
+  <td> W 11/25 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> Lab Work Day </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> Summary 3: Due </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+  <td> R 11/26 </td> <!-- Date -->
+  <td> <i> No Lab </i> </td> <!-- Class -->
+  <td> <i> Thanksgiving </i><br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+<td rowspan=3> <b> 15 </b> </td>
+
+  <td> M 11/30 </td> <!-- Date -->
+  <td> <a href="lec/22/lec.html">Lecture 22</a> </td> <!-- Class -->
+  <td> Return to Lib C </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> <a href="hw/12/hw12.pdf">HW 12 </a> </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+
+  <td> W 12/02 </td> <!-- Date -->
+  <td> <a href="lec/23/lec.html">Lecture 23</a> </td> <!-- Class -->
+  <td> Return Oriented Programming 1 </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> Summary 4: <br> <a href="http://cseweb.ucsd.edu/~hovav/dist/geometry.pdf">The Geometry of Innocent Flesh on the Bone</a> </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+  <td> R 12/03 </td> <!-- Date -->
+  <td> <a href="lab/12/lab.html">Lab 12</a> </td> <!-- Class -->
+  <td> <br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+<td rowspan=3> <b> 16 </b> </td>
+
+  <td> M 12/07 </td> <!-- Date -->
+  <td> <a href="lec/24/lec.html">Lecture 24</a> </td> <!-- Class -->
+  <td> Return Oriented Programming 2 </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+
+
+  <td> W 12/09 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> Lab Work Day </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td> Summary 4 Due </td> <!-- Assignments -->
+
+</tr>
+<tr bgcolor="#ABABAB">
+  <td> R 12/10 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> <font color="red">Final Practicum</font><br><br> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+<td rowspan=3> <b> 17 </b> </td>
+
+  <td> 12/19 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> Final Exam @ 755 </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+<tr>
+
+
+  <td> 12/22 </td> <!-- Date -->
+  <td> -- </td> <!-- Class -->
+  <td> <font color="red"> LABS FINAL ASSESSMENT </font> <br> <i> Labs 1-12 </i> </td> <!-- Topic -->
+  <td>  </td> <!-- Readings/Notes -->
+  <td>  </td> <!-- Assignments -->
+
+</tr>
+
+</table>
+
+<hr>
+</table>
+
+<hr>
+<!-- hhmts start -->Last modified: Mon Nov 30 08:32:54 2015 <!-- hhmts end -->
+</body> </html>
+

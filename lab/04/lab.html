@@ -1,0 +1,504 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<!-- 2015-09-22 Tue 09:05 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 04: Hulk Smash Now!</title>
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lab 04: Hulk Smash Now!</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline1">Submission Instructions</a></li>
+<li><a href="#orgheadline2">Part 1: Loop Smashing for Fun and Profit (1 point)</a></li>
+<li><a href="#orgheadline3">Part 2: Loop-de-(Loop-de-(Loop-de-( &#x2026; ))) For Fun and Profit (3 point + 1 point)</a></li>
+<li><a href="#orgheadline4">Part 3: Smashing for Secrets (2 points)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1">Submission Instructions</h2>
+<div class="outline-text-2" id="text-orgheadline1">
+<p>
+Submission instructions for labs can be found on the resource
+pages. In paticular, you should view this subsection: <a href="https://www.usna.edu/Users/cs/aviv/classes/si485h/f15/rsc/submit.html">Creating a new
+branch and submitting</a>
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2">Part 1: Loop Smashing for Fun and Profit (1 point)</h2>
+<div class="outline-text-2" id="text-orgheadline2">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Given the compiled program <code>looper</code>, create a stack smashing
+buffer overflow to change the loop structure to match the desired
+output.</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository</li>
+<li>gitlab repository</li>
+</ul>
+
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-4.1
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>Find the program <code>looper</code>, which will execute like so:</li>
+</ul>
+
+<pre class="example">
+$ ./looper "Go Navy!"
+0:10: Go Navy!
+1:9: Go Navy!
+2:8: Go Navy!
+3:7: Go Navy!
+4:6: Go Navy!
+5:5: Go Navy!
+</pre>
+
+<ul class="org-ul">
+<li>Use gdb and your knowledge of stack smashing to have the program execute in the following manner:</li>
+</ul>
+
+<pre class="example">
+$ ./looper &lt;SOME STACK SMASH OF YOUR CREATION&gt;
+ -16:-1: &lt;OUTPUT&gt;
+ -15:-2: &lt;OUTPUT&gt;
+ -14:-3: &lt;OUTPUT&gt;
+ -13:-4: &lt;OUTPUT&gt;
+ -12:-5: &lt;OUTPUT&gt;
+ -11:-6: &lt;OUTPUT&gt;
+ -10:-7: &lt;OUTPUT&gt;
+  -9:-8: &lt;OUTPUT&gt;
+</pre>
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li><b>NOTE NEW SUBMISSION INSTRUCTIONS HAVE CHANGD</b></li>
+<li>Complete two files: <code>exploit.sh</code> and <code>descript.txt</code>
+<ul class="org-ul">
+<li><p>
+<code>exploit.sh</code> should contain an executable version of your exploit
+</p>
+<pre class="example">
+#!/bin/bash
+./loop &lt;SOME STACK SMASH OF YOUR CREATION&gt;
+</pre>
+<p>
+Such that when executed, you get the desired result:
+</p>
+<pre class="example">
+$ ./exploit.sh
+-16:-1: &lt;OUTPUT&gt;
+-15:-2: &lt;OUTPUT&gt;
+-14:-3: &lt;OUTPUT&gt;
+-13:-4: &lt;OUTPUT&gt;
+-12:-5: &lt;OUTPUT&gt;
+-11:-6: &lt;OUTPUT&gt;
+-10:-7: &lt;OUTPUT&gt;
+-9:-8: &lt;OUTPUT&gt;
+</pre></li>
+<li><code>desript.txt</code> should contain a short description of the exploit</li>
+</ul></li>
+</ul>
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>2's compliment numbers?</li>
+<li>What are the arguments to vulnerable function?</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline3" class="outline-2">
+<h2 id="orgheadline3">Part 2: Loop-de-(Loop-de-(Loop-de-( &#x2026; ))) For Fun and Profit (3 point + 1 point)</h2>
+<div class="outline-text-2" id="text-orgheadline3">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Given the compiled program <code>recursion</code>, create an exploit that
+will cause an infinite loop of calls to the <code>recruse</code> function and
+the <code>bad</code> function.</li>
+<li>You only have to get this explioit to work in gdb. Extra credit is
+awarded for coming up with an exploit outside of gdb.</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository</li>
+<li>gitlab repository</li>
+</ul>
+
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-4.2
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li><p>
+You'll find the program <code>recursion</code> whose source code is below:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">  #include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">  #include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">  #include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bad</span>(){
+   printf(<span style="color: #ffa07a;">"You did it!\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">recurse</span>(<span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">input</span>){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[0x30];
+
+  strcpy(buf,input);
+
+  <span style="color: #00ffff;">return</span>;
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+
+  recurse(argv[1]);
+}
+</pre>
+</div></li>
+</ul>
+<ul class="org-ul">
+<li>Find an exploit string <b>in gdb</b> such that the program will recurse forever
+by calling bad and recurse back and forth (until memory runs out
+and segfault occurs)</li>
+<li>To do this, you want to
+<ol class="org-ol">
+<li>Overflow the buffer in vulnerable such that bad is called</li>
+<li>The next value on the stack (the return value) to bad, should be
+recurse function</li>
+<li>The stack should further be setup such that the argument to
+recurse is the exploit string (again), so the whole process
+repeats.</li>
+</ol></li>
+</ul>
+
+<p>
+<i>Extra Credit</i>
+</p>
+<ul class="org-ul">
+<li>Develop an exploit string outside of gdb</li>
+</ul>
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li><b>NOTE NEW SUBMISSION INSTRUCTIONS HAVE CHANGED</b>
+<ul class="org-ul">
+<li><p>
+Complete the following files to receive credit:
+</p>
+<ul class="org-ul">
+<li><p>
+<code>exploit.gdb</code> : file containing the command line as you used
+in gdb. In this case, it would just be the line
+</p>
+<pre class="example">
+r `python -c "...."`
+</pre>
+<p>
+Your file should execute the exploit if run like this:
+</p>
+<pre class="example">
+$ gdb --batch --command=exploit.gdb ./recursion
+You did it!
+You did it!
+You did it!
+You did it!
+You did it!
+You did it!
+You did it!
+You did it!
+You did it!
+(...)
+</pre></li>
+</ul>
+<ul class="org-ul">
+<li><code>descript.txt</code> : file containing a short description of your exploit</li>
+</ul></li>
+<li><p>
+If you complete the extra credit, complete the file called
+<code>exploit.sh</code>:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-sh"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">!/bin/</span><span style="color: #00ffff;">bash</span>
+./recursion <span style="color: #fa8072;">`python -c " .... "`</span>
+</pre>
+</div>
+<p>
+which when run, will complete the exploit:
+</p>
+<pre class="example">
+$ ./exploit.sh
+You did it!
+You did it!
+You did it!
+You did it!
+You did it!
+You did it!
+You did it!
+You did it!
+You did it!
+(...)
+</pre></li>
+</ul></li>
+</ul>
+
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>gdb changes the address space layout &#x2026; you'll need to do some
+experimentation to determine how many bytes gdb affects the stack
+addresses.</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline4" class="outline-2">
+<h2 id="orgheadline4">Part 3: Smashing for Secrets (2 points)</h2>
+<div class="outline-text-2" id="text-orgheadline4">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Given the compiled program <code>vuln</code> find a way to smash the stack to
+find the secret message.</li>
+<li>Your exploit should work, in and out of gdb.</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository</li>
+<li>gitlab repository</li>
+</ul>
+
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-4.3
+</pre>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository</li>
+<li>You'll find the program <code>vuln</code> which you need to analyze using
+<code>objdump</code> and <code>gdb</code> to determine the fulnerability.</li>
+<li>Once you've identified the vulnerability. exploit it to reveal the
+secret message.</li>
+</ul>
+
+<p>
+<i>Submision</i>
+</p>
+<ul class="org-ul">
+<li><b>NOTE NEW SUBMISSION INSTRUCTIONS HAVE CHANGED</b></li>
+<li>Complete two files for submission: <code>exploit.sh</code> and <code>descript.txt</code></li>
+<li><p>
+<code>exploit.sh</code> should contain the expoit executable like so:
+</p>
+<pre class="example">
+#/bin/bash
+python -c " .... " | ./vuln
+</pre>
+<p>
+such that when run, the secret message is displayed
+</p>
+<pre class="example">
+$ ./exploit.sh
+&lt;SECRET MESSAGE&gt;
+</pre></li>
+</ul>
+<ul class="org-ul">
+<li><code>descript.txt</code> contains information about how you achieved your exploit</li>
+</ul>
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li><code>strings</code> is a very useful tool &#x2026; ;-)</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

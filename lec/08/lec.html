@@ -1,0 +1,502 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lec. 08: Shell Code and System Calls in x86</title>
+<!-- 2015-09-16 Wed 10:02 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 08: Shell Code and System Calls in x86</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. What is "shell code"?</a></li>
+<li><a href="#sec-2">2. Executing a Shell in C and in x86</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> What is "shell code"?</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+The term shellcode refers to a small bit of binary code that can
+launch a shell (e.g., like a bash shell). Once you have a shell on a
+system, then you can do a lot of good (or bad).  
+</p>
+
+
+<p>
+Shell code fits into the stack smashing from the last class in that it
+is the code we wish to execute once the return address is
+overwritten. Like before, our exploit string will overrun a buffer and
+rewrite the return address, but instead of jumping to some function,
+we'll jump back into the data we overrun the buffer with. That data
+should be the shell code.
+</p>
+
+<p>
+However, before we can do all of that, we first need to better
+understand shell code, what is good vs. bad shell code, and how to use
+it. Good shell code is compact and contains no NULL bytes. In later
+lessons, we will write our own shell code; today, we'll use a very
+standard example of shell code.  <i>This example was based on a post</i>
+<i>from a blog called Security Bits that seems to have disappeared into
+the Internet, here is the <a href="https://web.archive.org/web/20120710010645/http://badishi.com/basic-shellcode-example">Internet Archive</a> of the original article.</i>
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Executing a Shell in C and in x86</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Before we dive into the details of shellcode, let's discuss how we actually execute a shell in x86 which is just the execution of another program, like the execve() system call. Something like this:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;unistd.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>() {
+
+    <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">args</span>[] = {<span style="color: #ffa07a;">"/bin/sh"</span>, <span style="color: #7fffd4;">NULL</span>};
+
+    execve(args[0], args, <span style="color: #7fffd4;">NULL</span>);
+    <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+
+<p>
+Recall back to systems programming, and you'll remember that a system
+call is invoked by interrupting the normal flow of a program, context
+switching the operating system in, which then performs the actual
+tasks of the system call. In this case, that task will be replacing
+the current program binary with another program's binary, the
+<code>/bin/sh</code> program. 
+</p>
+
+<p>
+Let's take a look at how we get there in the dissembler. First, we
+need to make sure we compile our program using static reference so we
+can fully see how this works:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gcc --static exec.c -o exec
+</pre>
+
+<p>
+Then we can use gdb to poke around:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gdb -q exec
+(gdb) ds main
+Dump of assembler code for function main:
+   0x08048e44 &lt;+0&gt;: push   ebp
+   0x08048e45 &lt;+1&gt;: mov    ebp,esp
+   0x08048e47 &lt;+3&gt;: and    esp,0xfffffff0
+   0x08048e4a &lt;+6&gt;: sub    esp,0x20
+   0x08048e4d &lt;+9&gt;: mov    DWORD PTR [esp+0x18],0x80be9c8
+   0x08048e55 &lt;+17&gt;: mov    DWORD PTR [esp+0x1c],0x0
+   0x08048e5d &lt;+25&gt;: mov    eax,DWORD PTR [esp+0x18]
+   0x08048e61 &lt;+29&gt;: mov    DWORD PTR [esp+0x8],0x0
+   0x08048e69 &lt;+37&gt;: lea    edx,[esp+0x18]
+   0x08048e6d &lt;+41&gt;: mov    DWORD PTR [esp+0x4],edx
+   0x08048e71 &lt;+45&gt;: mov    DWORD PTR [esp],eax
+   0x08048e74 &lt;+48&gt;: call   0x806c470 &lt;execve&gt;
+   0x08048e79 &lt;+53&gt;: mov    eax,0x0
+   0x08048e7e &lt;+58&gt;: leave  
+   0x08048e7f &lt;+59&gt;: ret    
+End of assembler dump.
+(gdb) ds execve
+Dump of assembler code for function execve:
+   0x0806c470 &lt;+0&gt;: push   ebx
+   0x0806c471 &lt;+1&gt;: mov    edx,DWORD PTR [esp+0x10]
+   0x0806c475 &lt;+5&gt;: mov    ecx,DWORD PTR [esp+0xc]
+   0x0806c479 &lt;+9&gt;: mov    ebx,DWORD PTR [esp+0x8]
+   0x0806c47d &lt;+13&gt;: mov    eax,0xb
+   0x0806c482 &lt;+18&gt;: call   DWORD PTR ds:0x80ea9f0
+   0x0806c488 &lt;+24&gt;: cmp    eax,0xfffff000
+   0x0806c48d &lt;+29&gt;: ja     0x806c491 &lt;execve+33&gt;
+   0x0806c48f &lt;+31&gt;: pop    ebx
+   0x0806c490 &lt;+32&gt;: ret    
+   0x0806c491 &lt;+33&gt;: mov    edx,0xffffffe8
+   0x0806c497 &lt;+39&gt;: neg    eax
+   0x0806c499 &lt;+41&gt;: mov    ecx,DWORD PTR gs:0x0
+   0x0806c4a0 &lt;+48&gt;: mov    DWORD PTR [ecx+edx*1],eax
+   0x0806c4a3 &lt;+51&gt;: or     eax,0xffffffff
+   0x0806c4a6 &lt;+54&gt;: pop    ebx
+   0x0806c4a7 &lt;+55&gt;: ret    
+End of assembler dump.
+(gdb) ds *0x80ea9f0
+Dump of assembler code for function _dl_sysinfo_int80:
+   0x0806f040 &lt;+0&gt;: int    0x80
+   0x0806f042 &lt;+2&gt;: ret    
+End of assembler dump.
+</pre>
+
+<p>
+Now if we put all the instructions together that lead to the intrupt
+instruction <code>int</code> which invokes the operating system:
+</p>
+
+<pre class="example">
+0x0806c471 &lt;+1&gt;:  mov    edx,DWORD PTR [esp+0x10]
+0x0806c475 &lt;+5&gt;:  mov    ecx,DWORD PTR [esp+0xc]
+0x0806c479 &lt;+9&gt;:  mov    ebx,DWORD PTR [esp+0x8]
+0x0806c47d &lt;+13&gt;: mov    eax,0xb
+
+(...)
+0x0806f040 &lt;+0&gt;:  int    0x80
+</pre>
+
+<p>
+Recall that the arguments to <code>execve</code> are <code>execve(args[0],args,NULL)</code>
+and the memory references offset from <code>esp</code> at 0x8, 0xc, and 0x10
+correspond to those arguments. The tasks is matching those values up
+with the setup in <code>main()</code>, which should correspond to 0x0, 0x4, and
+0x8 offset from esp in main. 
+</p>
+
+<p>
+To see why, consider that two stack operations occur between <code>main()</code>
+and <code>exeve()</code>. First, there is a call to <code>exeve()</code>, which will push
+the return value on the stack, and then in <code>exeve()</code>, there is a <code>push
+ebx</code> which will save the value of ebx. Both those operations shift the
+stack down (subtract from the stack pointer) by 4 bytes, so we can
+look into <code>main()</code> plus 8 bytes from esp offsets in <code>exeve</code>.
+</p>
+
+<p>
+When we finally do look into <code>main()</code> at the offsets 0x0, 0x4 and 0x8,
+we find the following instructions:
+</p>
+
+<pre class="example">
+0x08048e4d &lt;+9&gt;:  mov    DWORD PTR [esp+0x18],0x80bea08
+0x08048e5d &lt;+25&gt;: mov    eax,DWORD PTR [esp+0x18]
+0x08048e61 &lt;+29&gt;: mov    DWORD PTR [esp+0x8],0x0
+0x08048e69 &lt;+37&gt;: lea    edx,[esp+0x18]
+0x08048e6d &lt;+41&gt;: mov    DWORD PTR [esp+0x4],edx
+0x08048e71 &lt;+45&gt;: mov    DWORD PTR [esp],eax
+</pre>
+<p>
+And with a bit of work, we can see how these match to the arguments of
+<code>execve</code> and the setting of the registers. First, lets look at what at
+address 0x80bea08:
+</p>
+
+<pre class="example">
+(gdb) x/x 0x80bea08
+0x80bea08:	0x6e69622f
+(gdb) x/s 0x80bea08
+0x80bea08:	"/bin/sh"
+</pre>
+
+<p>
+That is the address of the string "/bin/sh" wich is written to stack
+at address <code>esp+0x18</code>. The next mov instruction loads that address
+into <code>eax</code>. 
+</p>
+
+<p>
+At instruction <code>&lt;+29&gt;</code>, 0x0 is written to address esp+0x8. and at
+instruction <code>&lt;+37&gt;</code>, the address of [esp+0x18] is loaded into edx
+using a lea. So the literal value of <code>edx</code> at this point is the
+calculation <code>esp+0x18</code>, a reference to the memory that stores the
+reference 0x80bea08 which references the string "/bin/sh". The value
+in edx is then written to <code>esp+0x4</code> in instruction <code>&lt;+41&gt;</code>. Finally,
+in <code>&lt;+45&gt;</code>, the value in <code>eax</code> is written to the top of the stack.
+</p>
+
+<p>
+Visually, the stack at this point looks a bit like this (note I use [
+] when indicating a reference calculated from an offset):
+</p>
+
+<pre class="example">
+                           ___________.--&gt; "/bin/sh"
+                          /           |
+esp + 0x18 -&gt; |   0x80bea08  |&lt;-.   .-'
+esp + 0x14 -&gt; |              |  |  /
+esp + 0x10 -&gt; |              |  | |    eax: 0x80bea08
+esp + 0xc  -&gt; |              |  | |    ebx:  ?????
+esp + 0x8  -&gt; |     0x00     |  | |    ecx:  ?????
+esp + 0x4  -&gt; |  [esp+0x18]  | -' |    edx: [esp+0x18] 
+esp + 0x0  -&gt; |  0x80bea08   | ---'  
+              '--------------'
+</pre>
+
+<p>
+Let's now match the arguments up to those in <code>execve()</code>:
+</p>
+
+<ul class="org-ul">
+<li><code>args[0]</code> : <code>esp+0x0</code> : memory reference to "/bin/sh"
+</li>
+<li><code>args</code>    : <code>esp+0x4</code> : memory reference to a memory reference to "/bin/sh" (double pointer)
+</li>
+<li><code>NULL</code>    : <code>esp+0x8</code> : NULL or 0 value
+</li>
+</ul>
+
+
+<p>
+After the call to <code>execve()</code> and the <code>push ebx</code> in exeve, the stack
+now looks like this:
+</p>
+
+<pre class="example">
+                           ___________.--&gt; "/bin/sh"
+                          /           |
+esp + 0x20 -&gt; |   0x80bea08  |&lt;-.   .-'
+esp + 0x1c -&gt; |              |  |  /
+esp + 0x18 -&gt; |              |  | |    eax: 0x80bea08
+esp + 0x14 -&gt; |              |  | |    ebx: ?????
+esp + 0x10 -&gt; |     0x00     |  | |    ecx: ?????
+esp + 0xc  -&gt; |  [esp+0x20]  | -' |    edx: [esp+0x20]
+esp + 0x8  -&gt; |  0x80bea08   | ---'  
+esp + 0x4  -&gt; |  ret addr    |
+esp + 0x0  -&gt; |  saved ebx   |
+              '--------------'
+</pre>
+
+
+<p>
+Now, if we look again at the instructions prior to the interupt:
+</p>
+<pre class="example">
+0x0806c471 &lt;+1&gt;:  mov    edx,DWORD PTR [esp+0x10]
+0x0806c475 &lt;+5&gt;:  mov    ecx,DWORD PTR [esp+0xc]
+0x0806c479 &lt;+9&gt;:  mov    ebx,DWORD PTR [esp+0x8]
+0x0806c47d &lt;+13&gt;: mov    eax,0xb
+
+(...)
+0x0806f040 &lt;+0&gt;:  int    0x80
+</pre>
+<p>
+Visually, the world looks like this:
+</p>
+<pre class="example">
+                           ___________.--&gt; "/bin/sh"
+                          /           |                  
+esp + 0x20 -&gt; |   0x80bea08  |&lt;-.   .-'
+esp + 0x1c -&gt; |              |  |  /                  
+esp + 0x18 -&gt; |              |  | |    eax: 0xb       
+esp + 0x14 -&gt; |              |  | |    ebx: 0x80bea08 
+esp + 0x10 -&gt; |     0x00     |  | |    ecx: [esp+0x20]
+esp + 0xc  -&gt; |  [esp+0x20]  | -' |    edx: 0x00          
+esp + 0x8  -&gt; |  0x80bea08   | ---'                      
+esp + 0x4  -&gt; |  ret addr    |
+esp + 0x0  -&gt; |  saved ebx   |
+              '--------------'
+</pre>
+
+<p>
+And, we can write down the ultimate register values to their ultimate values:
+</p>
+<ul class="org-ul">
+<li><code>eax</code> : 0xb 
+</li>
+<li><code>ebx</code> : 0x80bea08 : a memory reference to the string "/bin/sh"
+</li>
+<li><code>ecx</code> : [esp+0x20] : a memory reference to the memory reference to "/bin/sh" (double pinter)
+</li>
+<li><code>edx</code> : 0x00       : a null byte
+</li>
+</ul>
+
+<p>
+With all that setup, we can now focus on the interrupt itself. The
+interrupt number is 0x80 or 128. This is the interrupt number for all
+system calls. After the interrupt, the operating system is invoked and
+will look at the state of the registers to determine which system call
+to perform using which arguments.
+</p>
+
+<p>
+Which system call to execute is always set in <code>eax</code>. This is generally
+referred to as the system call number, and in this case, the system
+call number is 0xb or 12 for the exec system call. You can look at
+this handy table for other system
+calls. <a href="http://asm.sourceforge.net/syscall.html">http://asm.sourceforge.net/syscall.html</a>. You can also find all
+the system call numbers in the following include file:
+</p>
+
+<pre class="example">
+/usr/include/i386-linux-gnu/asm/unistd_32.h
+</pre>
+
+<p>
+The next registers, ebx, ecx, and edx are used to pass the system
+call's arguments. In this case, that is the path to the executable
+ in ebx (e.g., "/bin/sh"), the argv array for the executable in ecx (e.g., the double
+pointer to "/bin/sh"), and environment setup in edx (.e.g., NULL since
+we have none). One the system call completes, the return value (e.g.,
+success or failure) is set in <code>eax</code>. 
+</p>
+
+<p>
+This use of registers for argument passing is the same for all system
+calls, not just the exec-like variants. The reason for this is
+actually quite simple and practical: The operating system and the user
+programs do not share the same memory address. It is incredibly
+important that they do not for security purposes &#x2014; imagine a
+universe where any old user program with a buffer overflow can
+accidentally change the operating systems -&#x2014; but it does lead to
+some particular challenges, like argument passing for systems calls
+where data must be explicitly passed between os-space and
+user-space. Using the registers is an obvious solution since registers
+are shared between all executing programs. The OS knows that right
+after a system call is made via an interrupt that the registers are
+all prepared the way they need to identify the right system call, pass
+arguments, and set a return value. There are also explicit ways for
+the kernel to reach into user memory and grab data and put data back,
+which also must happen here because only the pointer to the start of
+the /bin/sh string is passed, but that process is a discussion for a
+different class &#x2014; an operating systems class.
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

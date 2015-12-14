@@ -1,0 +1,1135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lec. 03: Disassembling a Program</title>
+<!-- 2015-08-24 Mon 08:09 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 03: Disassembling a Program</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. A binary program &#x2026; what is it?</a></li>
+<li><a href="#sec-2">2. <code>objdump</code> and <code>readelf</code> basics</a>
+<ul>
+<li><a href="#sec-2-1">2.1. ELF Files and ELF Headers</a></li>
+<li><a href="#sec-2-2">2.2. Getting at the assembly with <code>objdump</code></a></li>
+<li><a href="#sec-2-3">2.3. Dissasembling with <code>gdb</code></a></li>
+</ul>
+</li>
+<li><a href="#sec-3">3. x86 the Processor Register State</a>
+<ul>
+<li><a href="#sec-3-1">3.1. x86 Instruction Set</a></li>
+<li><a href="#sec-3-2">3.2. Anatomy of an Instruction</a></li>
+<li><a href="#sec-3-3">3.3. Processor Registers</a></li>
+<li><a href="#sec-3-4">3.4. The Base Pointer and Stack Pointer</a></li>
+<li><a href="#sec-3-5">3.5. Managing the Stack Frame and the Stack</a></li>
+<li><a href="#sec-3-6">3.6. Referencing, De-Referencing, and Setting Memory</a></li>
+<li><a href="#sec-3-7">3.7. Loops, Jumps, and Condition Testing</a></li>
+<li><a href="#sec-3-8">3.8. Function Calls</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> A binary program &#x2026; what is it?</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Last week we looked a lot at writing programs in c, compiling them
+into binaries, and then running them. This week, we peal back the
+covers further and look right at the binary files themselves. We will
+examine both what exactly is a binary, how is it formatted, and how do
+we parse or dissemble the contents within?
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> <code>objdump</code> and <code>readelf</code> basics</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+For this entire class, we will pick apart a simple helloworld program:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="helloworld.c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>){
+
+    <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">hello</span>[15]=<span style="color: #ffa07a;">"Hello, World!\n"</span>;
+    <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">p</span>;
+
+    <span style="color: #00ffff;">for</span>(p = hello; *p; p++){
+
+        putchar(*p);         
+
+    }
+
+    <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+
+<p>
+Let's compile the program to create a binary:
+</p>
+<pre class="example">
+user@si485H-base:demo$ gcc helloworld.c -o helloworld
+</pre>
+
+<p>
+Now if we use the <code>file</code> command we can see what kind of file the
+binary is. 
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ file helloworld
+helloworld: ELF 32-bit LSB  executable, Intel 80386, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.24, BuildID[sha1]=2b27688b97f10f626f1ff62c232d7a2298d6afa1, not stripped
+</pre>
+
+<p>
+We see that it is actually an <code>ELF</code> file, which stands for Executable
+and Linkable Format. We will work exclusively with binaries in ELF. 
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> ELF Files and ELF Headers</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+All ELF files have a header describing the different sections and
+general information. We can read the header information for our 
+<code>helloworld</code> program using the <code>readelf</code>
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ readelf -h helloworld
+ELF Header:
+  Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              EXEC (Executable file)
+  Machine:                           Intel 80386
+  Version:                           0x1
+  Entry point address:               0x8048370
+  Start of program headers:          52 (bytes into file)
+  Start of section headers:          4472 (bytes into file)
+  Flags:                             0x0
+  Size of this header:               52 (bytes)
+  Size of program headers:           32 (bytes)
+  Number of program headers:         9
+  Size of section headers:           40 (bytes)
+  Number of section headers:         30
+  Section header string table index: 27
+</pre>
+
+<p>
+Most of this information isn't too useful, but let me point out some key things. 
+</p>
+<ol class="org-ol">
+<li>There is a magic number! The magic number is used to say, hey this is ELF and what version
+</li>
+<li>The class is ELF32, so it's 32 bit
+</li>
+<li>The machine is Intel 80386, or x386 to be execpected
+</li>
+<li>The entry point for the file is address 0x804870, essentially what
+is the first intsruction in the _<sub>start</sub> section function which calls
+main.
+</li>
+</ol>
+<p>
+Everything else is not super useful for our purposes. Another nice
+thing we can do with <code>readelf</code> is we can look at all the sections,
+which is regions of the binary for different purposes. 
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ readelf -S helloworld
+There are 30 section headers, starting at offset 0x1178:
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .interp           PROGBITS        08048154 000154 000013 00   A  0   0  1
+  [ 2] .note.ABI-tag     NOTE            08048168 000168 000020 00   A  0   0  4
+  [ 3] .note.gnu.build-i NOTE            08048188 000188 000024 00   A  0   0  4
+  [ 4] .gnu.hash         GNU_HASH        080481ac 0001ac 000020 04   A  5   0  4
+  [ 5] .dynsym           DYNSYM          080481cc 0001cc 000060 10   A  6   1  4
+  [ 6] .dynstr           STRTAB          0804822c 00022c 000068 00   A  0   0  1
+  [ 7] .gnu.version      VERSYM          08048294 000294 00000c 02   A  5   0  2
+  [ 8] .gnu.version_r    VERNEED         080482a0 0002a0 000030 00   A  6   1  4
+  [ 9] .rel.dyn          REL             080482d0 0002d0 000008 08   A  5   0  4
+  [10] .rel.plt          REL             080482d8 0002d8 000020 08   A  5  12  4
+  [11] .init             PROGBITS        080482f8 0002f8 000023 00  AX  0   0  4
+  [12] .plt              PROGBITS        08048320 000320 000050 04  AX  0   0 16
+  [13] .text             PROGBITS        08048370 000370 0001f2 00  AX  0   0 16
+  [14] .fini             PROGBITS        08048564 000564 000014 00  AX  0   0  4
+  [15] .rodata           PROGBITS        08048578 000578 000008 00   A  0   0  4
+  [16] .eh_frame_hdr     PROGBITS        08048580 000580 00002c 00   A  0   0  4
+  [17] .eh_frame         PROGBITS        080485ac 0005ac 0000b0 00   A  0   0  4
+  [18] .init_array       INIT_ARRAY      08049f08 000f08 000004 00  WA  0   0  4
+  [19] .fini_array       FINI_ARRAY      08049f0c 000f0c 000004 00  WA  0   0  4
+  [20] .jcr              PROGBITS        08049f10 000f10 000004 00  WA  0   0  4
+  [21] .dynamic          DYNAMIC         08049f14 000f14 0000e8 08  WA  6   0  4
+  [22] .got              PROGBITS        08049ffc 000ffc 000004 04  WA  0   0  4
+  [23] .got.plt          PROGBITS        0804a000 001000 00001c 04  WA  0   0  4
+  [24] .data             PROGBITS        0804a01c 00101c 000008 00  WA  0   0  4
+  [25] .bss              NOBITS          0804a024 001024 000004 00  WA  0   0  1
+  [26] .comment          PROGBITS        00000000 001024 00004d 01  MS  0   0  1
+  [27] .shstrtab         STRTAB          00000000 001071 000106 00      0   0  1
+  [28] .symtab           SYMTAB          00000000 001628 000440 10     29  45  4
+  [29] .strtab           STRTAB          00000000 001a68 000274 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), T (TLS), E (exclude), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+</pre>
+
+<p>
+Again, a bunch of this information isn't too useful for us, but might
+be later. Some key things to look at:
+</p>
+<ol class="org-ol">
+<li>The .bss section is listed, this is the same as bss in the program memory layout
+</li>
+<li>There is also .data section, same as the program memory layout
+</li>
+<li>Finally, there is a .text section, same as before. And notice that it is
+at address 0x08048370 which is the same address in the header to
+the start of the program instructions.
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Getting at the assembly with <code>objdump</code></h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Now that we have some idea of the how the file is formatted, it would
+be nice to get down into the details of the machine instructions
+themselves. For this, we'll use <code>objdump</code> or "object dump". Simply, we
+can call it on the binary executable like so:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ objdump -d helloworld 
+
+helloworld:     file format elf32-i386
+
+
+Disassembly of section .init:
+
+080482f8 &lt;_init&gt;:
+ 80482f8:	53                   	push   %ebx
+ 80482f9:	83 ec 08             	sub    $0x8,%esp
+ 80482fc:	e8 9f 00 00 00       	call   80483a0 &lt;__x86.get_pc_thunk.bx&gt;
+ 8048301:	81 c3 ff 1c 00 00    	add    $0x1cff,%ebx
+ 8048307:	8b 83 fc ff ff ff    	mov    -0x4(%ebx),%eax
+ 804830d:	85 c0                	test   %eax,%eax
+ 804830f:	74 05                	je     8048316 &lt;_init+0x1e&gt;
+ 8048311:	e8 2a 00 00 00       	call   8048340 &lt;__gmon_start__@plt&gt;
+ 8048316:	83 c4 08             	add    $0x8,%esp
+ 8048319:	5b                   	pop    %ebx
+ 804831a:	c3                   	ret    
+
+Disassembly of section .plt:
+
+08048320 &lt;__stack_chk_fail@plt-0x10&gt;:
+ 8048320:	ff 35 04 a0 04 08    	pushl  0x804a004
+ 8048326:	ff 25 08 a0 04 08    	jmp    *0x804a008
+ 804832c:	00 00                	add    %al,(%eax)
+	...
+</pre>
+
+
+<p>
+It's going to dump a lot of stuff, but lets look more carefully down,
+we'll see one header that looks familiar, main:
+</p>
+
+<pre class="example">
+0804841d &lt;main&gt;:
+ 804841d:	55                   	push   %ebp
+ 804841e:	89 e5                	mov    %esp,%ebp
+ 8048420:	83 e4 f0             	and    $0xfffffff0,%esp
+ 8048423:	83 ec 30             	sub    $0x30,%esp
+ 8048426:	c7 44 24 1d 48 65 6c 	movl   $0x6c6c6548,0x1d(%esp)
+ 804842d:	6c 
+ 804842e:	c7 44 24 21 6f 2c 20 	movl   $0x57202c6f,0x21(%esp)
+ 8048435:	57 
+ 8048436:	c7 44 24 25 6f 72 6c 	movl   $0x646c726f,0x25(%esp)
+ 804843d:	64 
+ 804843e:	66 c7 44 24 29 21 0a 	movw   $0xa21,0x29(%esp)
+ 8048445:	c6 44 24 2b 00       	movb   $0x0,0x2b(%esp)
+ 804844a:	8d 44 24 1d          	lea    0x1d(%esp),%eax
+ 804844e:	89 44 24 2c          	mov    %eax,0x2c(%esp)
+ 8048452:	eb 17                	jmp    804846b &lt;main+0x4e&gt;
+ 8048454:	8b 44 24 2c          	mov    0x2c(%esp),%eax
+ 8048458:	0f b6 00             	movzbl (%eax),%eax
+ 804845b:	0f be c0             	movsbl %al,%eax
+ 804845e:	89 04 24             	mov    %eax,(%esp)
+ 8048461:	e8 aa fe ff ff       	call   8048310 &lt;putchar@plt&gt;
+ 8048466:	83 44 24 2c 01       	addl   $0x1,0x2c(%esp)
+ 804846b:	8b 44 24 2c          	mov    0x2c(%esp),%eax
+ 804846f:	0f b6 00             	movzbl (%eax),%eax
+ 8048472:	84 c0                	test   %al,%al
+ 8048474:	75 de                	jne    8048454 &lt;main+0x37&gt;
+ 8048476:	b8 00 00 00 00       	mov    $0x0,%eax
+ 804847b:	c9                   	leave  
+ 804847c:	c3                   	ret    
+ 804847d:	66 90                	xchg   %ax,%ax
+ 804847f:	90                   	nop
+</pre>
+
+<p>
+This is the assembly for the main function. Looking across, from left
+to right, the furtherest left is the address this instruction is
+loaded into, then the actually bytes of the instruction, and then
+finally the name of the details of the instruction. 
+</p>
+
+<p>
+The first thing you might notice about the instruction itself is that
+it is really, really hard to read. That's because it is AT&amp;T syntax,
+which, simply, sucks! We will use an alternative format called Intel
+syntax, which is much, much nicer. For that, we need to pass an
+argument to <code>objdump</code>:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ objdump -M intel -d helloworld 
+
+helloworld:     file format elf32-i386
+
+
+Disassembly of section .init:
+
+080482f8 &lt;_init&gt;:
+ 80482f8:	53                   	push   ebx
+ 80482f9:	83 ec 08             	sub    esp,0x8
+(... snip ...)
+
+0804841d &lt;main&gt;:
+ 804841d:	55                   	push   ebp
+ 804841e:	89 e5                	mov    ebp,esp
+ 8048420:	83 e4 f0             	and    esp,0xfffffff0
+ 8048423:	83 ec 30             	sub    esp,0x30
+ 8048426:	c7 44 24 1d 48 65 6c 	mov    DWORD PTR [esp+0x1d],0x6c6c6548
+ 804842d:	6c 
+ 804842e:	c7 44 24 21 6f 2c 20 	mov    DWORD PTR [esp+0x21],0x57202c6f
+ 8048435:	57 
+ 8048436:	c7 44 24 25 6f 72 6c 	mov    DWORD PTR [esp+0x25],0x646c726f
+ 804843d:	64 
+ 804843e:	66 c7 44 24 29 21 0a 	mov    WORD PTR [esp+0x29],0xa21
+ 8048445:	c6 44 24 2b 00       	mov    BYTE PTR [esp+0x2b],0x0
+ 804844a:	8d 44 24 1d          	lea    eax,[esp+0x1d]
+ 804844e:	89 44 24 2c          	mov    DWORD PTR [esp+0x2c],eax
+ 8048452:	eb 17                	jmp    804846b &lt;main+0x4e&gt;
+ 8048454:	8b 44 24 2c          	mov    eax,DWORD PTR [esp+0x2c]
+ 8048458:	0f b6 00             	movzx  eax,BYTE PTR [eax]
+ 804845b:	0f be c0             	movsx  eax,al
+ 804845e:	89 04 24             	mov    DWORD PTR [esp],eax
+ 8048461:	e8 aa fe ff ff       	call   8048310 &lt;putchar@plt&gt;
+ 8048466:	83 44 24 2c 01       	add    DWORD PTR [esp+0x2c],0x1
+ 804846b:	8b 44 24 2c          	mov    eax,DWORD PTR [esp+0x2c]
+ 804846f:	0f b6 00             	movzx  eax,BYTE PTR [eax]
+ 8048472:	84 c0                	test   al,al
+ 8048474:	75 de                	jne    8048454 &lt;main+0x37&gt;
+ 8048476:	b8 00 00 00 00       	mov    eax,0x0
+ 804847b:	c9                   	leave  
+ 804847c:	c3                   	ret    
+ 804847d:	66 90                	xchg   ax,ax
+ 804847f:	90                   	nop
+
+0804846d &lt;main&gt;:
+ 804846d:	55                   	push   ebp
+ 804846e:	89 e5                	mov    ebp,esp
+ 8048470:	83 e4 f0             	and    esp,0xfffffff0
+ 8048473:	83 ec 30             	sub    esp,0x30
+ 8048476:	65 a1 14 00 00 00    	mov    eax,gs:0x14
+ 804847c:	89 44 24 2c          	mov    DWORD PTR [esp+0x2c],eax
+ 8048480:	31 c0                	xor    eax,eax
+ 8048482:	c7 44 24 1d 48 65 6c 	mov    DWORD PTR [esp+0x1d],0x6c6c6548
+ 8048489:	6c 
+ 804848a:	c7 44 24 21 6f 2c 20 	mov    DWORD PTR [esp+0x21],0x57202c6f
+ 8048491:	57 
+ 8048492:	c7 44 24 25 6f 72 6c 	mov    DWORD PTR [esp+0x25],0x646c726f
+ 8048499:	64 
+ 804849a:	66 c7 44 24 29 21 0a 	mov    WORD PTR [esp+0x29],0xa21
+ 80484a1:	c6 44 24 2b 00       	mov    BYTE PTR [esp+0x2b],0x0
+ 80484a6:	8d 44 24 1d          	lea    eax,[esp+0x1d]
+ 80484aa:	89 44 24 18          	mov    DWORD PTR [esp+0x18],eax
+ 80484ae:	eb 17                	jmp    80484c7 &lt;main+0x5a&gt;
+ 80484b0:	8b 44 24 18          	mov    eax,DWORD PTR [esp+0x18]
+ 80484b4:	0f b6 00             	movzx  eax,BYTE PTR [eax]
+ 80484b7:	0f be c0             	movsx  eax,al
+ 80484ba:	89 04 24             	mov    DWORD PTR [esp],eax
+ 80484bd:	e8 9e fe ff ff       	call   8048360 &lt;putchar@plt&gt;
+ 80484c2:	83 44 24 18 01       	add    DWORD PTR [esp+0x18],0x1
+ 80484c7:	8b 44 24 18          	mov    eax,DWORD PTR [esp+0x18]
+ 80484cb:	0f b6 00             	movzx  eax,BYTE PTR [eax]
+ 80484ce:	84 c0                	test   al,al
+ 80484d0:	75 de                	jne    80484b0 &lt;main+0x43&gt;
+ 80484d2:	b8 00 00 00 00       	mov    eax,0x0
+ 80484d7:	8b 54 24 2c          	mov    edx,DWORD PTR [esp+0x2c]
+ 80484db:	65 33 15 14 00 00 00 	xor    edx,DWORD PTR gs:0x14
+ 80484e2:	74 05                	je     80484e9 &lt;main+0x7c&gt;
+ 80484e4:	e8 47 fe ff ff       	call   8048330 &lt;__stack_chk_fail@plt&gt;
+ 80484e9:	c9                   	leave  
+ 80484ea:	c3                   	ret    
+ 80484eb:	66 90                	xchg   ax,ax
+ 80484ed:	66 90                	xchg   ax,ax
+ 80484ef:	90                   	nop
+ (... snip ...)
+</pre>
+</div>
+</div>
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3"><span class="section-number-3">2.3</span> Dissasembling with <code>gdb</code></h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+Another way to get the dissambly code is using <code>gdb</code>, the gnu
+debugger, which also does a tone of other tasks which we will look at
+later. To start, run the program under the debugger:
+</p>
+
+<pre class="example">
+user@si485H-base:demo$ gdb helloworld 
+GNU gdb (Ubuntu 7.7.1-0ubuntu5~14.04.2) 7.7.1
+Copyright (C) 2014 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "i686-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;.
+Find the GDB manual and other documentation resources online at:
+&lt;http://www.gnu.org/software/gdb/documentation/&gt;.
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from helloworld...(no debugging symbols found)...done.
+(gdb)
+</pre>
+
+<p>
+This will print out a disclaimer and leave you in a gdb terminal. Now,
+you can type <code>disassemble main</code> to disassemble the main function. If
+you set up the alias already as suggested in the resource page, you
+can shorten that to <code>ds</code> for dissasemble:
+</p>
+
+<pre class="example">
+(gdb) ds main
+Dump of assembler code for function main:
+   0x0804841d &lt;+0&gt;:	push   ebp
+   0x0804841e &lt;+1&gt;:	mov    ebp,esp
+   0x08048420 &lt;+3&gt;:	and    esp,0xfffffff0
+   0x08048423 &lt;+6&gt;:	sub    esp,0x30
+   0x08048426 &lt;+9&gt;:	mov    DWORD PTR [esp+0x1d],0x6c6c6548
+   0x0804842e &lt;+17&gt;:	mov    DWORD PTR [esp+0x21],0x57202c6f
+   0x08048436 &lt;+25&gt;:	mov    DWORD PTR [esp+0x25],0x646c726f
+   0x0804843e &lt;+33&gt;:	mov    WORD PTR [esp+0x29],0xa21
+   0x08048445 &lt;+40&gt;:	mov    BYTE PTR [esp+0x2b],0x0
+   0x0804844a &lt;+45&gt;:	lea    eax,[esp+0x1d]
+   0x0804844e &lt;+49&gt;:	mov    DWORD PTR [esp+0x2c],eax
+   0x08048452 &lt;+53&gt;:	jmp    0x804846b &lt;main+78&gt;
+   0x08048454 &lt;+55&gt;:	mov    eax,DWORD PTR [esp+0x2c]
+   0x08048458 &lt;+59&gt;:	movzx  eax,BYTE PTR [eax]
+   0x0804845b &lt;+62&gt;:	movsx  eax,al
+   0x0804845e &lt;+65&gt;:	mov    DWORD PTR [esp],eax
+   0x08048461 &lt;+68&gt;:	call   0x8048310 &lt;putchar@plt&gt;
+   0x08048466 &lt;+73&gt;:	add    DWORD PTR [esp+0x2c],0x1
+   0x0804846b &lt;+78&gt;:	mov    eax,DWORD PTR [esp+0x2c]
+   0x0804846f &lt;+82&gt;:	movzx  eax,BYTE PTR [eax]
+   0x08048472 &lt;+85&gt;:	test   al,al
+   0x08048474 &lt;+87&gt;:	jne    0x8048454 &lt;main+55&gt;
+   0x08048476 &lt;+89&gt;:	mov    eax,0x0
+   0x0804847b &lt;+94&gt;:	leave  
+   0x0804847c &lt;+95&gt;:	ret    
+End of assembler dump.
+</pre>
+
+<p>
+If your output is in AT&amp;T syntax, then issue the command:
+</p>
+<pre class="example">
+(gdb) set disassembly-flavor intel
+</pre>
+<p>
+To have gdb output in Intel syntax.
+</p>
+
+<p>
+I'll mostly work with gdb dissambled output because it's more nicely
+formatted, IMHO. Our next task is understanding what the hell is going
+on?!?!
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> x86 the Processor Register State</h2>
+<div class="outline-text-2" id="text-3">
+</div><div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> x86 Instruction Set</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+Let's start with a simple item, what is x86? It is an assembly
+instruction set &#x2013; a programming language. We can repressed x86 terms
+of it's byte (as seen in the objdump output) or in a human readable
+form (as seen in the Intel or AT&amp;T) syntax. 
+</p>
+
+<p>
+You may have worked with an instruction set previously, such as
+MIPS. MIPS has the property that it is a RISC instrument set, or a
+Reduce Instruction Set Computing, which has the advantage that all
+instructions and arguments are always the same size, 32 bits.
+</p>
+
+<p>
+x86 is a CISC instruction set, or Complex Instruction Set Computing,
+and it has the property that instruction sizes are not contest. They
+can very between 8 bits and 64 bits and more, depending on the
+instruction. You may wonder, why in the world would anything be
+designed this way? The answer is market inertia and backwards
+capability. As Intel chips dominated the market, more and more binary
+was x86. 
+</p>
+
+<p>
+Today, another instruction set has become very relevant: ARM or Acron
+Risc Machine. And, as the name indicates, it is a RISC instruction set
+and thus is bringing back a bit of sanity to the instruction set
+world. ARM is also the architecture of choice on many mobile devices,
+so it will be relevant for quite some time. 
+</p>
+
+<p>
+However, we will not be working with ARM in this class, just x86, and
+we will only be using a very small set of the x86 instructions. You
+can read more about x86 in the extensive online resources, and when we
+encounter an unfamiliar instruction, we will look it up.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> Anatomy of an Instruction</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+An instruction, in the human readable format, has the following format:
+</p>
+<pre class="example">
+operation &lt;dst&gt;, &lt;src&gt;
+</pre>
+
+<p>
+The operation name is the kind of operation that will be
+performed. For example, it could be an <code>add</code> or <code>mov</code> or <code>and</code>. The
+<code>&lt;dst&gt;</code> is where the result will be stored, which is typically a
+register. The <code>&lt;src&gt;</code> is from where the data is read to be operated
+over which might also include data referenced in the <code>&lt;dst&gt;</code>. The
+<code>&lt;src&gt;</code> is optional, and depends on the command.
+</p>
+
+<p>
+If we take a few operations from our sample code:
+</p>
+<pre class="example">
+0x0804841d &lt;+0&gt;:	push   ebp
+0x0804841e &lt;+1&gt;:	mov    ebp,esp
+0x08048420 &lt;+3&gt;:	and    esp,0xfffffff0
+</pre>
+<p>
+The first command <code>push</code> takes one argument an places that argument on
+the stack, adjusting the stack pointer. In this case, it pushes the
+value of the base pointer stored in the register <code>ebp</code> onto the
+stack. The second command, <code>mov</code> takes two arguments, and will <i>move</i>
+a value from one location to another, much like assignment. The second
+command moves the value in the stack pointer <code>esp</code> and saves it in the
+base pointer <code>ebp</code>. Finally, the last command is a bitwise and
+operation taking two arguments. It will perform a bitwise and on the
+<code>&lt;dst&gt;</code> with the <code>&lt;src&gt;</code> and store the result in <code>&lt;dst&gt;</code>. In this
+context, the <code>and</code> command aligns the stack pointer with the lowest
+4-bit value. The 4-bit alignment is due to an old bug in the division
+unit of the x86 processor, and so you'll see this sequence a lot in
+assembly.
+</p>
+
+<p>
+We will take a closer look at these instructions again in a second,
+but before we do that, we need to understand these registers and what
+they are used for in more detail.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3"><span class="section-number-3">3.3</span> Processor Registers</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+Registers are special storage spaces on the processor that store the
+state of the program. Some registers are used for general purpose
+storage to store intermediate storage, while others are used to keep
+track of the execution state, e.g., like what is the next instruction.
+</p>
+
+<p>
+Here are the standard registers you will encounter. There are some
+others, but we'll explain them when we come across them:
+</p>
+
+<ul class="org-ul">
+<li><code>esp</code>: 32-bit register to store the stack pointer
+</li>
+<li><code>ebp</code>: 32-bit register to store the base pointer
+</li>
+<li><code>eax</code>: 32-bit general purpose register, sometimes called the "accumulator" 
+</li>
+<li><code>ecx</code>: 32-bit general purpose register 
+</li>
+<li><code>ebx</code>: 32-bit general purpose register
+</li>
+<li><code>edx</code>: 32-bit general purpose register
+</li>
+<li><code>esi</code>: 32-bit general purpose registers mostly used for loading and storing 
+</li>
+<li><code>edi</code>: 32-bit general purpose registers mostly used for loading and storing 
+</li>
+</ul>
+
+<p>
+Each of the general purpose registers can be referenced either by
+there full 32-bit value or by some subset of that, such as the first 8
+bits or second 8 bits. For example, <code>eax</code> refers to the 32-bit general
+registers, but <code>ax</code> refers to the last 16 bits of the <code>eax</code> register
+and <code>al</code> is the first 8 bits. Depending on the kind of data the
+register is storing, we may reference different parts. 
+</p>
+
+
+<div class="figure">
+<p><a href="imgs/x86-registers.png" width="50%"><img src="imgs/x86-registers.png" alt="x86-registers.png" width="50%"></a>
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-3-4" class="outline-3">
+<h3 id="sec-3-4"><span class="section-number-3">3.4</span> The Base Pointer and Stack Pointer</h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+Two registers will be referenced more than any other: the base and
+stack pointer. These registers maintain the memory reference state for
+the current execution, with reference to the current function frame. A
+function frame is portion of memory on the stack that stores the
+information for a current functions execution, including local data
+and return addresses. The base pointer define the top and bottom of
+the function frame.
+</p>
+
+
+<p>
+The structure of a function frame is like such
+</p>
+
+<pre class="example">
+           &lt;- 4 bytes -&gt;
+          .-------------.    
+          |    ...      |    higher address
+ebp+0x8 -&gt;| func args   |
+ebp+0x4 -&gt;| return addr |       
+    ebp -&gt;| saved ebp   |
+ebp-0x4 -&gt;|             |
+   :      :             :              
+   '      '             '
+            local args
+   .      .             .
+   :      :             :
+esp+0x4 -&gt;|             |
+    esp -&gt;|             |    lower addreses
+          '-------------'
+</pre>
+
+<p>
+Moving from higher addresses to lower addresses, the top of the frame
+stores the function arguments. These are typically referenced in
+positive offsets of <code>ebp</code> register. For example, the first argument is
+at <code>ebp+0x8</code> moving upwards from there.
+</p>
+
+<p>
+The second item in the function frame is the return address at
+<code>ebp+0x4</code>. The value stored in this memory is where the next
+instruction is after the return statement, or what instruction occurs
+after the call to this insturction completes. We will spend a LOT OF
+TIME talking about this later.
+</p>
+
+<p>
+Finally, there is the saved <code>ebp</code>, this is the address where the last
+base pointer for the calling function. We need to save this value so
+that the calling function's stack frame can be restored onced this
+function completes.
+</p>
+
+<p>
+The stack pointer references the bottom of the stack, the lowest
+address allocated. Addresses past this point are considered
+un-allocated. However, it's pretty easy to allocate more space, we'll
+just subtract from the stack pointer.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3-5" class="outline-3">
+<h3 id="sec-3-5"><span class="section-number-3">3.5</span> Managing the Stack Frame and the Stack</h3>
+<div class="outline-text-3" id="text-3-5">
+<p>
+Now that we have some context for the registers, let's take a look at
+the first set of instructions in our code:
+</p>
+
+<pre class="example">
+0x0804841d &lt;+0&gt;:	push   ebp
+0x0804841e &lt;+1&gt;:	mov    ebp,esp
+0x08048420 &lt;+3&gt;:	and    esp,0xfffffff0
+0x08048423 &lt;+6&gt;:	sub    esp,0x30
+</pre>
+
+<p>
+Let's first analyze the first four instructions.  The push instruction
+will push a value onto the stack, and in this case it is the previous
+base pointer, ie, the saved based pointer. Next, the base pointer is
+set to the stack pointer (<code>mov</code>), and then aligned to 4-bits
+(<code>and</code>). Next, subtracting from the stack pointer allocates the rest
+of the stack frame, which is 0x30 bytes long or 48 bytes (don't forget
+about hex).
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3-6" class="outline-3">
+<h3 id="sec-3-6"><span class="section-number-3">3.6</span> Referencing, De-Referencing, and Setting Memory</h3>
+<div class="outline-text-3" id="text-3-6">
+<p>
+The next set of instructions entitles the memory of the stack. Let's
+switch back to the C-code to see this in c first before we look at it
+in assembly.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #98fb98;">char</span> <span style="color: #eedd82;">hello</span>[15]=<span style="color: #ffa07a;">"Hello, World!\n"</span>;
+</pre>
+</div>
+
+<p>
+The string "Hello World!\n" is set on the stack in 15 byte character
+array. In assembly, this looks like this.
+</p>
+
+<pre class="example">
+0x08048426 &lt;+9&gt;:	mov    DWORD PTR [esp+0x1d],0x6c6c6548
+0x0804842e &lt;+17&gt;:	mov    DWORD PTR [esp+0x21],0x57202c6f
+0x08048436 &lt;+25&gt;:	mov    DWORD PTR [esp+0x25],0x646c726f
+0x0804843e &lt;+33&gt;:	mov    WORD PTR [esp+0x29],0xa21
+0x08048445 &lt;+40&gt;:	mov    BYTE PTR [esp+0x2b],0x0
+</pre>
+
+<p>
+If you squint at the <code>&lt;src&gt;</code> of the operators, you'll recognize that
+this is ASCII. If you don't believe, check out the ASCII table. The
+DWORD or WORD or BYTE PTR are deference commands.
+</p>
+
+<ul class="org-ul">
+<li><code>BYTE PTR[addr]</code> : byte-pointer : de-reference one byte at the address
+</li>
+<li><code>WORD PTR[addr]</code> : word-pointer : de-reference the two bytes at the address
+</li>
+<li><code>DWORD PTR[addr]</code> : double word-pointer : de-reference the four bytes at the address
+</li>
+</ul>
+
+<p>
+Another way to look at these instructions in C would be like this
+(don't program like this, though):
+</p>
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #98fb98;">char</span> <span style="color: #eedd82;">hello</span>[15];
+<span style="color: #ff7f24;">//                      </span><span style="color: #ff7f24;">l l e H  </span>
+* ((<span style="color: #98fb98;">int</span> *) (hello)) = 0x6c6c6548;      <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">set hello[0]-&gt;hello[3]</span>
+<span style="color: #ff7f24;">//                          </span><span style="color: #ff7f24;">W   , o</span>
+* ((<span style="color: #98fb98;">int</span> *) (hello + 4)) = 0x57202c6f; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">set hello[4]-&gt;hello[7]</span>
+<span style="color: #ff7f24;">//                          </span><span style="color: #ff7f24;">d l r o      </span>
+* ((<span style="color: #98fb98;">int</span> *) (hello + 8)) = 0x646c726f; <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">set hello[8]-&gt;hello[11]</span>
+<span style="color: #ff7f24;">//                             </span><span style="color: #ff7f24;">\n !</span>
+* ((<span style="color: #98fb98;">short</span> *) (hello + 12)) = 0x0a21;  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">set hello[12]-&gt;hello[13]</span>
+<span style="color: #ff7f24;">//                         </span><span style="color: #ff7f24;">\0</span>
+* ((<span style="color: #98fb98;">char</span> *) (hello+14)) = 0x00;  <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">set hello[14]</span>
+</pre>
+</div>
+
+<p>
+The next two ins ructions are a bit different:
+</p>
+<pre class="example">
+0x0804844a &lt;+45&gt;:	lea    eax,[esp+0x1d]
+0x0804844e &lt;+49&gt;:	mov    DWORD PTR [esp+0x2c],eax
+</pre>
+<p>
+<code>lea</code> stands for <i>load effective address</i> and is a short cut for to do
+a bit a math and calculate a pointer offset and store it. If we look
+at what's next in the C-program, we see that it is setting up the
+for-loop.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #00ffff;">for</span>(p = hello; *p; p++){
+</pre>
+</div>
+
+<p>
+The first part of the for loop is initializing the pointer <code>p</code> to
+refernce the start of the string hello. From the previous code, the
+start of the string hello is at address offset <code>esp+0x1d</code> and we want
+to set that address to the value of <code>p</code>. This is a two step process:
+</p>
+
+<ol class="org-ol">
+<li>The actually address must be computed using addition from <code>esp</code>
+and stored. <code>lea eax,[esp+0x1d]</code> will calculate the address and
+store it in <code>eax</code>.
+</li>
+<li>The value in <code>eax</code> must be stored in the memory reserved for <code>p</code>,
+which is at address <code>esp+0x2c</code>, the move command accomplishes that.
+</li>
+</ol>
+
+<p>
+At this point, everything is set up. And for reference, remeber that
+the address of <code>p</code> is at <code>esp+0x2c</code>. 
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3-7" class="outline-3">
+<h3 id="sec-3-7"><span class="section-number-3">3.7</span> Loops, Jumps, and Condition Testing</h3>
+<div class="outline-text-3" id="text-3-7">
+<p>
+Now, we've reached the meat of the program: the inner loop. We can
+follow the execution at this point by following the jumps.
+</p>
+
+<pre class="example">
+0x08048452 &lt;+53&gt;: jmp    0x804846b &lt;main+78&gt;      # -----------.
+0x08048454 &lt;+55&gt;: mov    eax,DWORD PTR [esp+0x2c] # &lt;-------.  |
+0x08048458 &lt;+59&gt;: movzx  eax,BYTE PTR [eax]       #         |  |
+0x0804845b &lt;+62&gt;: movsx  eax,al                   #         |  |
+0x0804845e &lt;+65&gt;: mov    DWORD PTR [esp],eax      #         |  |  //loop body
+0x08048461 &lt;+68&gt;: call   0x8048310 &lt;putchar@plt&gt;  #         |  |
+0x08048466 &lt;+73&gt;: add    DWORD PTR [esp+0x2c],0x1 #         |  |
+0x0804846b &lt;+78&gt;: mov    eax,DWORD PTR [esp+0x2c] # &lt;-------+--'
+0x0804846f &lt;+82&gt;: movzx  eax,BYTE PTR [eax]       #         |    //exit condition
+0x08048472 &lt;+85&gt;: test   al,al                    #         |
+0x08048474 &lt;+87&gt;: jne    0x8048454 &lt;main+55&gt;      #  -------'
+</pre>
+
+<p>
+A <code>jmp</code> instruction changes the instruction pointer to the destination
+specified. It is not conditioned, it is explicit hard jump. Following
+that jump in the code, we find the following three  instructions:
+</p>
+
+<pre class="example">
+0x0804846f &lt;+82&gt;: movzx  eax,BYTE PTR [eax]       
+0x08048472 &lt;+85&gt;: test   al,al                    
+0x08048474 &lt;+87&gt;: jne    0x8048454 &lt;main+55&gt;
+</pre>
+
+<p>
+Easier to start with the <code>movzx</code> instruction. Recall that at this
+point in the code, <code>eax</code> has the value that is the same as <code>p</code>. And
+you can see that to be case in the previous instruction <code>mov eax,DWORD
+PTR [esp+0x2c]</code> where <code>esp+0x2c</code> is the memory address for p.
+</p>
+
+<p>
+The <code>movzx</code> instruction will deference the address stored in <code>eax</code>
+which is whatever <code>p</code> references, read one byte at that address and
+write it to the lower 8-bits of eax. This is essentially the <code>*p</code>
+operation which is some character in hello, and so what we want to
+test is if <code>p</code> references the NULL at the end of hello.
+</p>
+
+<p>
+That test occurs <code>test al,al</code> which compares to registers in a number
+of ways. Here we are testing the <code>al</code> register which is the lower
+8-bits= of <code>eax</code>, where we stored the deference of <code>p</code>. The results of
+the test, greater then, less than, equal, not zero, etc. are stored in
+a set of bit flags. The one we care about is the <code>ZF</code> flag or the
+<i>zero flag</i>. If <code>al</code> is zero then <code>ZF</code> is set to 1 which would be the
+case when <code>p</code> references the end of the <code>hello</code> string.
+</p>
+
+<p>
+The <code>jne</code> command says to <i>jump when not equal to zero</i>. If it is the
+case that <code>al</code> is zero, do not jump, otherwise continue to the address
+and continue the loop. 
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-8" class="outline-3">
+<h3 id="sec-3-8"><span class="section-number-3">3.8</span> Function Calls</h3>
+<div class="outline-text-3" id="text-3-8">
+<p>
+If we investigate the loop body, we find the following instructions:
+</p>
+
+<pre class="example">
+0x08048454 &lt;+55&gt;: mov    eax,DWORD PTR [esp+0x2c] 
+0x08048458 &lt;+59&gt;: movzx  eax,BYTE PTR [eax]       
+0x0804845b &lt;+62&gt;: movsx  eax,al                   
+0x0804845e &lt;+65&gt;: mov    DWORD PTR [esp],eax      
+0x08048461 &lt;+68&gt;: call   0x8048310 &lt;putchar@plt&gt;
+</pre>
+
+<p>
+The first set of instructions, much like the test before, is to
+deference the pointer <code>p</code>.
+</p>
+
+<ol class="org-ol">
+<li>load the value o <code>p</code>, a memory address, into <code>eax</code>
+</li>
+<li>Read the byte referenced at <code>p</code> into the lower 8-bits of <code>eax</code>
+</li>
+<li>zero out the remaining bits of <code>eax</code> leaving only lower 8-bits
+</li>
+</ol>
+
+<p>
+At this point, <code>eax</code> stores a value like 0x0000048 (i.e, 'H') where
+the lowest byte is the character of interest, and the remaining bytes
+are 0.
+</p>
+
+<p>
+This value is then writen to the top of the stack as referenced by
+<code>esp</code> because we are about to make a function call. The arguments to
+functions are <i>pushed</i> onto the stack before a call. In this case, we
+allocated that stack space ahead of time so we don't need to push, but
+the argument is in the right place, at the top of the stack.
+</p>
+
+<p>
+The next operation is a <code>call</code> which will execute the function
+<code>putchar</code>, conveniently told to us by gdb. Once that function
+completes, execution will continue to the point right after the
+<code>call</code>, which is the instruction <code>add</code>.
+</p>
+
+<pre class="example">
+0x08048466 &lt;+73&gt;: add    DWORD PTR [esp+0x2c],0x1
+</pre>
+
+<p>
+Looking closely at this instruction, you see that this will increment
+the pointer <code>p</code>, and the instructions following test weather <code>p</code> now
+references zero. And the loop goes on &#x2026; as the world turns. 
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

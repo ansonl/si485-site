@@ -1,0 +1,642 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lab 06: Smash, Smash, Smash, Shell!!!!!</title>
+<!-- 2015-10-07 Wed 18:31 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lab 06: Smash, Smash, Smash, Shell!!!!!</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Submission Instructions</a></li>
+<li><a href="#sec-2">Part 1: Don't Smash the Cafe, Babe! (2 points)</a></li>
+<li><a href="#sec-3">Part 2: Smashable Pointers are Dangerous! (4 points)</a></li>
+<li><a href="#sec-4">Part 3: Smashing Standard Input (3 points)</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Submission Instructions</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Submission instructions for labs can be found on the resource
+pages. In paticular, you should view this subsection: <a href="https://www.usna.edu/Users/cs/aviv/classes/si485h/f15/rsc/submit.html">Creating a new
+branch and submitting</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Part 1: Don't Smash the Cafe, Babe! (2 points)</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Use the shell code to exploit the vulnerable program. 
+</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository
+</li>
+<li>gitlab repository
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-6.1
+</pre>
+</li>
+<li><b>YOU MUST WORK IN THE CORRECT DIRECTORY</b>
+<ul class="org-ul">
+<li>Work in your <code>/tmp</code> directory so that I can check your exploits
+</li>
+<li>All exploits must work when run from a directory called: <code>/tmp/lab-6.1</code>
+</li>
+</ul>
+</li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository
+</li>
+<li>Copy the repository to your <code>/tmp</code> directory
+</li>
+<li><b>ALL WORK MUST BE COMPLETED IN THE DIRECTORY</b>: <code>/tmp/lab-6.1</code>
+</li>
+
+<li>Your task is to complete the <code>exploit.sh</code> script such that it will
+properly exploit the <code>vulnerable</code> program. 
+</li>
+
+<li>The source code for <code>vulnerable</code> is below:
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">foo</span>(<span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">s</span>){
+
+  <span style="color: #98fb98;">int</span> <span style="color: #eedd82;">i</span> = 0xcafebabe;
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[0xbf];
+
+  strcpy(buf,s);
+
+  <span style="color: #00ffff;">if</span>(i != 0xcafebabe){
+    printf(<span style="color: #ffa07a;">"Danger! I'm out-of-here!\n"</span>);
+    exit(1);
+  }
+
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+  <span style="color: #00ffff;">if</span> ( argc &lt; 2){
+    printf(<span style="color: #ffa07a;">"I pitty thefool who doesn't give me at least one argument!\n"</span>);
+    exit(2);
+  }
+  foo(argv[1]);
+
+  printf(<span style="color: #ffa07a;">"Go Army!\n"</span>);
+  exit(0);
+}
+</pre>
+</div>
+</li>
+
+<li>Here's some sample execution traces for vulnerable:
+<pre class="example">
+user@si485H-base:6.1$ ./vulnerable 
+I pitty thefool who doesn't give me at least one argument!
+user@si485H-base:6.1$ ./vulnerable a
+Go Army!
+user@si485H-base:6.1$ ./vulnerable `python -c "print 'A'*200"`
+Danger! I'm out-of-here!
+</pre>
+</li>
+<li>Your goal is to change the output such that it no longer prints
+"Go Army!" and instead prints "Go Navy!" without hiting the "Danger!"
+</li>
+<li>The provided shell code to do that is <code>beatarmy.asm</code> (shown below)
+which will execute the program <code>./gonavy.sh</code> (also shown below)
+which will <code>echo</code> "Go Navy"
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">SECTION</span> .text
+        <span style="color: #00ffff;">global</span> _start
+
+<span style="color: #87cefa;">_start</span>:
+        <span style="color: #00ffff;">jmp</span> callback
+<span style="color: #87cefa;">dowork</span>:
+        <span style="color: #00ffff;">pop</span> esi
+        <span style="color: #00ffff;">xor</span> ecx,ecx
+        <span style="color: #00ffff;">mul</span> ecx
+        <span style="color: #00ffff;">mov</span> al,0xb
+        <span style="color: #00ffff;">mov</span> ebx, esi
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">exec("./gonavy.sh",NULL,NULL)</span>
+<span style="color: #87cefa;">callback</span>:
+        <span style="color: #00ffff;">call</span> dowork
+        <span style="color: #00ffff;">db</span> <span style="color: #ffa07a;">"./gonavy.sh"</span>,0x0
+</pre>
+</div>
+<div class="org-src-container">
+
+<pre class="src src-sh"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">!/bin/</span><span style="color: #00ffff;">sh</span>
+
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">"Go Navy!"</span>
+<span style="color: #00ffff;">exit</span> 3
+</pre>
+</div>
+</li>
+<li>Once you've gotten your exploit to work, save the arguments in
+    <code>exploit.sh</code> file:
+<pre class="example">
+#!/bin/sh
+
+./vulnerable &lt;EXPLOIT ARGUMENT GOES HERE&gt;
+</pre>
+</li>
+<li>When done correctly you should expect the following:
+<pre class="example">
+user@si485H-base:6.1$ ./exploit.sh 
+Go Navy!
+user@si485H-base:6.1$ echo $?
+3
+</pre>
+</li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least one files: <code>exploit.sh</code>
+</li>
+<li>Your submission must work when executed from the following directory: <code>/tmp/lab-6.1</code>
+</li>
+<li>You <b>MAY NOT</b> change the shell code in anyway
+</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>None. You got this one.
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Part 2: Smashable Pointers are Dangerous! (4 points)</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Use the provided shell code to exploit the vulnerable program. 
+</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository
+</li>
+<li>gitlab repository
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-6.2
+</pre>
+</li>
+<li><b>YOU MUST WORK IN THE CORRECT DIRECTORY</b>
+<ul class="org-ul">
+<li>Work in your <code>/tmp</code> directory so that I can check your exploits
+</li>
+<li>All exploits must work when run from a directory called: <code>/tmp/lab-6.2</code>
+</li>
+</ul>
+</li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository
+</li>
+<li>Copy the repository to your <code>/tmp</code> directory
+</li>
+<li><b>ALL WORK MUST BE COMPLETED IN THE DIRECTORY</b>: <code>/tmp/lab-6.2</code>
+</li>
+
+<li>Your task is to complete the <code>exploit.gdb</code> which commands the gdb
+environment commands to properly exploit the program when run like so:
+<pre class="example">
+gdb -batch -x exploit.gdb ./vulnerable
+</pre>
+</li>
+
+<li>You will be exploit the <code>vulnerable</code> program whose source code is below:
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">foo</span>(<span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">s</span>){
+
+  <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">p</span>;
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[300];
+
+  <span style="color: #00ffff;">for</span>(p=buf; *s; p++,s++){
+    *p = *s;
+  }
+
+  <span style="color: #00ffff;">return</span>;
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+  <span style="color: #00ffff;">if</span> ( argc &lt; 2){
+    printf(<span style="color: #ffa07a;">"I pitty the fool who doesn't give me at least one argument!\n"</span>);
+    exit(2);
+  }
+
+  foo(argv[1]);
+
+  printf(<span style="color: #ffa07a;">"Go Army!\n"</span>);
+  exit(0);
+}
+</pre>
+</div>
+</li>
+<li>Using gdb, determine a argument to <code>vulnerbale</code> which "Go Navy!"
+instead of "Go Army!" using the provided shell code <code>beatarmy.asm</code>
+(provide below) which will execute a shell script to print "Go
+Navy" and exit with status 3:
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">SECTION</span> .text
+        <span style="color: #00ffff;">global</span> _start
+
+<span style="color: #87cefa;">_start</span>:
+        <span style="color: #00ffff;">xor</span> ecx,ecx
+        <span style="color: #00ffff;">mul</span> ecx
+        <span style="color: #00ffff;">push</span> eax
+        <span style="color: #00ffff;">push</span> 0x68732e79         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">"y.sh"</span>
+        <span style="color: #00ffff;">push</span> 0x76616e6f         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">"onav"</span>
+        <span style="color: #00ffff;">push</span> 0x672f2f2e         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">".//g"</span>
+        <span style="color: #00ffff;">mov</span> al,0xb
+        <span style="color: #00ffff;">mov</span> ebx, esp
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">execv(".//gonavy.sh",NULL,NULL)</span>
+</pre>
+</div>
+<div class="org-src-container">
+
+<pre class="src src-sh"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">!/bin/</span><span style="color: #00ffff;">sh</span>
+
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">"Go Navy!"</span>
+<span style="color: #00ffff;">exit</span> 3
+</pre>
+</div>
+</li>
+<li>Once you've gotten your exploit to work save the commands in <code>exploit.gdb</code>
+<pre class="example">
+# PUT EXPLOIT BELOW for the r command
+
+r &lt;EXPLOIT GOES HERE&gt;
+</pre>
+</li>
+<li>When done correctly you should expect the following:
+<pre class="example">
+user@si485H-base:6.2$ gdb -batch -x exploit.gdb ./vulnerable
+process 18296 is executing new program: /bin/dash
+Go Navy!
+[Inferior 1 (process 18296) exited with code 03]
+</pre>
+</li>
+</ul>
+
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least one files: <code>exploit.sgdb</code>
+</li>
+<li>Your submission must work when executed from the following directory: <code>/tmp/lab-6.2</code>
+</li>
+<li>You may not alter the beatarmy.asm program in any way
+</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>Consider what happens when you smash the pointer <code>p</code>: Once you
+overwrite that value, you can get it to write almost anywhere
+&#x2026; such as the return address!
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Part 3: Smashing Standard Input (3 points)</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<i>Description</i>
+</p>
+<ul class="org-ul">
+<li>Use the provided shell code to exploit the vulnerable program. 
+</li>
+</ul>
+
+<p>
+<i>Preamble</i>
+</p>
+<ul class="org-ul">
+<li>The assignment can be completed on your vm repository
+</li>
+<li>gitlab repository
+<pre class="example">
+http://saddleback.academy.usna.edu/aviv/lab-6.3
+</pre>
+</li>
+<li><b>YOU MUST WORK IN THE CORRECT DIRECTORY</b>
+<ul class="org-ul">
+<li>Work in your <code>/tmp</code> directory so that I can check your exploits
+</li>
+<li>All exploits must work when run from a directory called: <code>/tmp/lab-6.3</code>
+</li>
+</ul>
+</li>
+</ul>
+
+<p>
+<i>Instructions</i>
+</p>
+<ul class="org-ul">
+<li>Fork and clone the repository
+</li>
+<li>Copy the repository to your <code>/tmp</code> directory
+</li>
+<li><b>ALL WORK MUST BE COMPLETED IN THE DIRECTORY</b>: <code>/tmp/lab-6.3</code>
+</li>
+
+<li>Your task is to complete the <code>exploit.sh</code> which when executed will
+properly exploit the vulnerable program.
+</li>
+
+<li>You will be exploit the <code>vulnerable</code> program whose source code is below:
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdlib.h&gt;</span>
+<span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;string.h&gt;</span>
+
+<span style="color: #98fb98;">void</span> <span style="color: #87cefa;">foo</span>(){
+
+  <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">buf</span>[0x10];
+
+  printf(<span style="color: #ffa07a;">"%s"</span>, <span style="color: #ffa07a;">"Say something spirtiful!\n"</span>);
+
+  scanf(<span style="color: #ffa07a;">"%s"</span>,buf);
+
+}
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">argv</span>[]){
+  foo();
+  printf(<span style="color: #ffa07a;">"Go Army!\n"</span>);
+  exit(0);
+}
+</pre>
+</div>
+</li>
+<li>You will use the following shell code which will print "Go Navy!" when executed properly:
+<div class="org-src-container">
+
+<pre class="src src-asm"><span style="color: #87cefa;">SECTION</span> .text
+        <span style="color: #00ffff;">global</span> _start
+
+<span style="color: #87cefa;">_start</span>:
+        <span style="color: #00ffff;">xor</span> ecx,ecx
+        <span style="color: #00ffff;">mul</span> ecx
+        <span style="color: #00ffff;">push</span> eax
+        <span style="color: #00ffff;">push</span> 0x68732e79         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">"y.sh"</span>
+        <span style="color: #00ffff;">push</span> 0x76616e6f         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">"onav"</span>
+        <span style="color: #00ffff;">push</span> 0x672f2f2e         <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">".//g"</span>
+        <span style="color: #00ffff;">mov</span> al,0xb
+        <span style="color: #00ffff;">mov</span> ebx, esp
+        <span style="color: #00ffff;">int</span> 0x80                <span style="color: #ff7f24;">;</span><span style="color: #ff7f24;">execv(".//gonavy.sh",NULL,NULL)</span>
+</pre>
+</div>
+<div class="org-src-container">
+
+<pre class="src src-sh"><span style="color: #ff7f24;">#</span><span style="color: #ff7f24;">!/bin/</span><span style="color: #00ffff;">sh</span>
+
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">"Go Navy!"</span>
+<span style="color: #00ffff;">exit</span> 3
+</pre>
+</div>
+</li>
+<li>Once you've gotten your exploit to work save the commands in <code>exploit.sh</code>
+<pre class="example">
+#!/bin/bash
+
+&lt;EXPLOIT TO STDOUT GOES HERE&gt; | ./vulnerable
+</pre>
+</li>
+<li>When done correctly you should expect the following:
+<pre class="example">
+user@si485H-base:6.3$ ./exploit.sh 
+Say something spirtiful!
+Go Navy!
+</pre>
+</li>
+<li><b>YOU ARE ALLOWED TO ALTER THE SHELL CODE</b>
+</li>
+</ul>
+
+<p>
+<i>Submission</i>
+</p>
+<ul class="org-ul">
+<li>You must submit at least one files: <code>exploit.sb</code>
+</li>
+<li>Your submission must work when executed from the following directory: <code>/tmp/lab-6.3</code>
+</li>
+<li>You <b>MAY</b> (and probably will need to) alter the beatarmy.asm program in any way
+</li>
+</ul>
+
+<p>
+<i>Hints</i>
+</p>
+<ul class="org-ul">
+<li>In gdb, if you want to set standard input you can use a redirct:
+<pre class="example">
+(gdb) r &lt; input.txt
+</pre>
+<p>
+Where <code>input.txt</code> is some file that will be read from. While
+probing, you can place your exploit string there for testing
+</p>
+</li>
+<li>You might find that <code>scanf()</code> doesn't properly read your source
+code sometimes: How can you fix that?
+</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

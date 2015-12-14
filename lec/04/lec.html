@@ -1,0 +1,582 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Lec. 04: Stack Frame Management</title>
+<!-- 2015-09-02 Wed 16:52 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../../index.html">Home</a> <a href="../../policy.html">Policy</a> <a href="../../cal.html">Calendar</a>  <a href="../../rsc/index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Lec. 04: Stack Frame Management</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Review</a></li>
+<li><a href="#sec-2">2. Stack Frames</a></li>
+<li><a href="#sec-3">3. Stack Machines</a></li>
+<li><a href="#sec-4">4. Allocating a new stack frame</a></li>
+<li><a href="#sec-5">5. De-allocating a stack frame</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Review</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+We continue in this lesson to understand the resulting binary for
+the hello world program:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c" id="helloworld.c"><span style="color: #b0c4de;">#include</span> <span style="color: #ffa07a;">&lt;stdio.h&gt;</span>
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(<span style="color: #98fb98;">int</span> <span style="color: #eedd82;">argc</span>, <span style="color: #98fb98;">char</span> *<span style="color: #eedd82;">argv</span>){
+
+    <span style="color: #98fb98;">char</span> <span style="color: #eedd82;">hello</span>[15]=<span style="color: #ffa07a;">"Hello, World!\n"</span>;
+    <span style="color: #98fb98;">char</span> * <span style="color: #eedd82;">p</span>;
+
+    <span style="color: #00ffff;">for</span>(p = hello; *p; p++){
+
+        putchar(*p);         
+
+    }
+
+    <span style="color: #00ffff;">return</span> 0;
+}
+</pre>
+</div>
+
+<p>
+So far, we've identified that the result of compilation is a
+executable in ELF. We can analyze the ELF with <code>readelf</code>, and look at
+the x86 code with <code>objdump</code> or <code>gdb</code>. The instructions of the main
+program are as follows:
+</p>
+
+<pre class="example">
+(gdb) ds main
+Dump of assembler code for function main:
+   0x0804841d &lt;+0&gt;:	push   ebp
+   0x0804841e &lt;+1&gt;:	mov    ebp,esp
+   0x08048420 &lt;+3&gt;:	and    esp,0xfffffff0
+   0x08048423 &lt;+6&gt;:	sub    esp,0x30
+   0x08048426 &lt;+9&gt;:	mov    DWORD PTR [esp+0x1d],0x6c6c6548
+   0x0804842e &lt;+17&gt;:	mov    DWORD PTR [esp+0x21],0x57202c6f
+   0x08048436 &lt;+25&gt;:	mov    DWORD PTR [esp+0x25],0x646c726f
+   0x0804843e &lt;+33&gt;:	mov    WORD PTR [esp+0x29],0xa21
+   0x08048445 &lt;+40&gt;:	mov    BYTE PTR [esp+0x2b],0x0
+   0x0804844a &lt;+45&gt;:	lea    eax,[esp+0x1d]
+   0x0804844e &lt;+49&gt;:	mov    DWORD PTR [esp+0x2c],eax
+   0x08048452 &lt;+53&gt;:	jmp    0x804846b &lt;main+78&gt;
+   0x08048454 &lt;+55&gt;:	mov    eax,DWORD PTR [esp+0x2c]
+   0x08048458 &lt;+59&gt;:	movzx  eax,BYTE PTR [eax]
+   0x0804845b &lt;+62&gt;:	movsx  eax,al
+   0x0804845e &lt;+65&gt;:	mov    DWORD PTR [esp],eax
+   0x08048461 &lt;+68&gt;:	call   0x8048310 &lt;putchar@plt&gt;
+   0x08048466 &lt;+73&gt;:	add    DWORD PTR [esp+0x2c],0x1
+   0x0804846b &lt;+78&gt;:	mov    eax,DWORD PTR [esp+0x2c]
+   0x0804846f &lt;+82&gt;:	movzx  eax,BYTE PTR [eax]
+   0x08048472 &lt;+85&gt;:	test   al,al
+   0x08048474 &lt;+87&gt;:	jne    0x8048454 &lt;main+55&gt;
+   0x08048476 &lt;+89&gt;:	mov    eax,0x0
+   0x0804847b &lt;+94&gt;:	leave  
+   0x0804847c &lt;+95&gt;:	ret    
+End of assembler dump.
+</pre>
+
+
+<p>
+Looking at an individual instruction, we see that it typically has
+the form:
+</p>
+
+<pre class="example">
+operation &lt;dst&gt;, &lt;src&gt;
+</pre>
+
+<p>
+However, x86 being a CISC architecture, this can vary. Additionally,
+recall that instructions can manipulate memory and processor
+registers which store program state. The two registers, in
+particular, are used to manage the stack frame representing the
+current function:
+</p>
+
+<ul class="org-ul">
+<li><code>ebp</code> the base pointer, top of the frame
+</li>
+<li><code>esp</code> the stack pointer, bottom of the frame
+</li>
+</ul>
+
+<p>
+We will use other registers along the way to manage intermediary
+values, particular the <code>eax</code> registers, which is also used as the
+return value. 
+</p>
+
+<p>
+In the rest of this lesson, we will reverse engineer the
+instructions of the main function. 
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Stack Frames</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The stack frame is an encapsulation of the local memory state for a
+function call. It has information about the local variables of the
+function as well as to which function (or specifically which
+instruction address) to jump to once this function returns.
+</p>
+
+<p>
+A stack frame is managed by two registers: ebp and esp. The ebp
+register, or base pointer, is at the top of the stack frame (higher
+addresses) and the esp regiser, or stack pointer, is at the bototm of
+the stack frame (lower addresses). To make this even more confusing,
+we sometimes refer to the esp being the "top of the stack," but it is
+really the bottom since it is in lower address space. 
+</p>
+
+<p>
+When we do memory references within a function, we are almost always
+describing the address of that memory as a positive or negative offset
+of esp or ebp.
+</p>
+
+<p>
+For example, a typical stack frame looks like so:
+</p>
+
+<pre class="example">
+           &lt;- 4 bytes -&gt;
+          .-------------.    
+          |    ...      |    higher address
+ebp+0x8 -&gt;| func args   |
+ebp+0x4 -&gt;| return addr |       
+    ebp -&gt;| saved ebp   |
+ebp-0x4 -&gt;|             |
+   :      :             :              
+   '      '             '
+            local vars
+   .      .             .
+   :      :             :
+esp+0x4 -&gt;|             |
+    esp -&gt;|             |    lower addreses
+          '-------------'
+</pre>
+
+<p>
+The base pointer always references the saved based pointer of the
+calling function (more on that soon), and above that (in higher
+address) is the return address and the arguments to the function.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Stack Machines</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+We often describe x86 processors as stack machines. The reason for
+this is that the execution model is built around a stack. As functions
+are called, there infomration is pushed on to the stack, and as
+functions return, they are popped off of the stack.
+</p>
+
+<p>
+For example, in this code:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #98fb98;">int</span> <span style="color: #87cefa;">foo</span>(){
+  bar();
+  baz();
+}
+
+
+
+<span style="color: #98fb98;">int</span> <span style="color: #87cefa;">main</span>(){
+  <span style="color: #00ffff;">return</span> foo();
+}
+</pre>
+</div>
+
+<p>
+In the stack machine model, the first calling function is pushed on
+the stack, namely <code>main</code>. Since <code>main</code> calls <code>foo</code>, we push <code>foo</code> onto
+the stack next. Now we have something that looks like this:
+</p>
+
+<pre class="example">
+.------.
+| main |
+| foo  |
+</pre>
+
+<p>
+Since foo calls <code>bar</code> before it can return, <code>bar</code> is pushed on the
+stack.
+</p>
+
+
+<pre class="example">
+.------.
+| main |
+| foo  |
+| bar  |
+</pre>
+
+<p>
+Once <code>bar</code> returns, <code>foo</code> still can't return since <code>baz</code> needs to be
+called and is pushed on the stack.
+</p>
+
+<pre class="example">
+.------.
+| main |
+| foo  |
+| baz  |
+</pre>
+
+<p>
+At this point, it is important to note that the entire state of
+functions ot complete, <code>main</code> and <code>foo</code>, have not been forgotten. They
+are still there. Once <code>baz</code> returns and is poped, <code>foo</code> can return and
+be popped, and finally, <code>main</code> returns and is popped.
+</p>
+
+<p>
+This stack-based model of execution is directly applied in the
+function stack in memory. Each function is described as a stack frame,
+and each stack frame has a link back to the previous stack frame
+execution reference (the return address) and alignment information
+(the saved base pointer). As functions are called and completed, their
+stack frames are pushed and popped off the stack accordingly, but this
+doesn't happen automatically. There needs to be explicit instructions
+to do that, and that is what we'll look at next.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> Allocating a new stack frame</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+The first set of instructions in our main function is for managing
+the stack frame for the current function. In our code, this looks
+like this:
+</p>
+
+<pre class="example">
+0x0804841d &lt;+0&gt;:	push   ebp
+0x0804841e &lt;+1&gt;:	mov    ebp,esp
+0x08048420 &lt;+3&gt;:	and    esp,0xfffffff0
+0x08048423 &lt;+6&gt;:	sub    esp,0x30
+</pre>
+
+<p>
+Let's first analyze the first four instructions.  The push instruction
+will push a value onto the stack, and in this case it is the previous
+base pointer, ie, the saved based pointer. Next, the base pointer is
+set to the stack pointer (<code>mov</code>), and then aligned to 4-bits
+(<code>and</code>). Next, subtracting from the stack pointer allocates the rest
+of the stack frame, which is 0x30 bytes long or 48 bytes (don't forget
+about hex).
+</p>
+
+<p>
+The need for these instructions is so that the previous stack frame,
+the calling function's stack frame, can be reconstructed. To
+understand this, recall the layout of a function's stack frame. The
+<code>ebp</code> register references the saved value for the base pointer of the
+calling stack. Once the function returns, memory is deallocated by
+adjusting the stack pointer to the current base pointer; setting the
+base pointer to the saved base pointer; and then performing a <i>leave</i>
+by popping off the saved base pointer and return address, setting the
+current instruction pointer to the return address.
+</p>
+
+<p>
+Visually the frame construction looks like this:
+</p>
+
+<pre class="example">
+    (0) calling         (1) return value of      (2) push ebp
+        function's          calling function   
+        stack frame         pushed onto stack
+
+     .-------------.       .-------------.      .-------------.       
+     |    ...      |       |    ...      |      |    ...      |  
+ebp-&gt;|             |  ebp-&gt;|             | ebp-&gt;|             |
+     :             :       :             :      :             :
+         calling              calling             calling
+     :   stack     :       :   stack     :      :   stack     :
+     |   frame     |       |   frame     |      |   frame     |
+     |             |       |             |      |             |
+esp-&gt;|  func args  |       |  func args  |      |  func args  |   
+     '-------------'  esp-&gt;|  return adr |      |  return adr |
+                           '-------------' esp-&gt;|  saved ebp  |
+                                                '-------------'
+
+
+ 
+       (3) mov ebp,esp         (4) and esp,0xFFFFFF0   (5) sub esp,0x30
+                                   4-bit align 
+         .-------------.          .-------------.      .-------------.       
+         |    ...      |          |    ...      |      |    ...      |   
+         |             |          |             |      |             |  
+         :             :          :             :      :             :  
+            calling                  calling              calling       
+         :   stack     :          :   stack     :      :   stack     :  
+         |   frame     |          |   frame     |      |   frame     |  
+         |             |          |             |      |             |  
+         |  func args  |          |  func args  |      |  func args  |  
+         |  retur adr |          |  retur adr |      |  retur adr |
+esp,ebp-&gt;|  saved ebp  |     ebp-&gt;|  saved ebp  | ebp-&gt;|  saved ebp  |
+         '-------------'     esp-&gt;'-------------'      |             |
+                                                       :             :
+                                                          New 
+                                                       :   stack     :
+                                                  esp-&gt;|      Frame  |
+                                                       '-------------'
+</pre>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> De-allocating a stack frame</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+Now that a new stack frame construction is complete, we can jump to
+the end and look at what happens once the function returns. How is the
+stack frame deallocated and popped off the stack. 
+</p>
+
+<p>
+Two instructions manage that process.
+</p>
+
+<pre class="example">
+0x0804847b &lt;+94&gt;:	leave  
+0x0804847c &lt;+95&gt;:	ret
+</pre>
+
+<p>
+First the <code>leave</code> instruction will do two things:
+</p>
+<ol class="org-ol">
+<li><code>mov esp,ebp</code> : set the stack pointer to the base pointer,
+essential deallocating the local variables in the function
+</li>
+<li><code>pop ebp</code> : after the move, the top of the stack is the saved
+base pointer, so by poping the value at the top of the stack into
+ebp, we are reseting the base pointer to the saved one.
+</li>
+</ol>
+
+<p>
+Visually this would look like this:
+</p>
+
+<pre class="example">
+                             leave                  leave
+                             1. =mov esp,ebp=       2. pop ebp
+     .-------------.          .-------------.      .-------------.   
+     |    ...      |          |     ...     | ebp-&gt;|    ...      |
+     |             |          |             |      |             |
+     :             :          :             :      :             :
+       calling                  calling               calling
+     :   stack     :          :  stack      :      :  stack      :
+     |   frame     |          |  frame      |      |  frame      |
+     |             |          |             |      |
+     |  func args  |          |  func args  |      |  func args  |
+     |  retur val  |          |  return adr | esp-&gt;|  return adr |
+ebp-&gt;|  saved ebp  | ebp,esp-&gt;| saved ebp   |      '-------------'
+     |             |          '-------------'
+     :             :
+           New 
+     :   stack     :
+esp-&gt;|      Frame  |
+     '-------------'
+</pre>
+
+
+<p>
+At this point the stack is almost back to its state prior to the
+function call. The last thing to do is to pop off the return value and
+set the instruction pointer (i.e., the current execution point) to the
+return value. Conceptually, we can see that <code>ret</code> does both those in
+two steps:
+</p>
+<ol class="org-ol">
+<li><code>pop eip</code> : pop the return value and set it to the instruction pointer
+</li>
+<li><code>jmp eip</code> : move execution to the instruction pointer
+</li>
+</ol>
+<p>
+In reality, these procedures happen at the same time, but it's good to
+think of them as separate steps.
+</p>
+
+<pre class="example">
+                             ret                  ret 
+                            1. pop eip          2. jmp eip
+      .-------------.      .-------------.     
+ebp-&gt; |    ...      | ebp-&gt;|      ...    |        Execution
+      :             :      :             :        returns to calling 
+         calling            calling               function after the call
+      :  stack      :      : stack       :        with stack frame reset
+      |  frame      |      | frame       |
+      |             |      |             |
+      |  func args  | esp-&gt;| func args   |
+esp-&gt; | return adr  |      '-------------'
+      '-------------'
+</pre>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Setting up a Linux 2.6 Environment</title>
+<!-- 2015-08-03 Mon 16:18 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta  name="generator" content="Org-mode">
+<meta  name="author" content="Adam Aviv">
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="../class.css" />
+<link rel="stylesheet" type="text/css" href="../print.css" media="print" />
+<div class="page-head">
+SI485H: Stack Based Binary Exploits and Defenses (F15)
+</div>
+<hr>
+<a href="../index.html">Home</a> <a href="../policy.html">Policy</a> <a href="../cal.html">Calendar</a>  <a href="./index.html">Resources</a>
+<hr>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Setting up a Linux 2.6 Environment</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Unbuntu 6.06 &#x2026; going old schoole</a></li>
+<li><a href="#sec-2">2. Installation</a></li>
+<li><a href="#sec-3">3. Setup</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Unbuntu 6.06 &#x2026; going old schoole</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+For some of the labs, we need to go back in time to 2.6 linux kernels
+before some exploits were patched and fixed. This will require a bit
+of work.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Installation</h2>
+<div class="outline-text-2" id="text-2">
+<ol class="org-ol">
+<li>Download the Ununtu 6.06 desktop i386 iso. I have a mirror on the
+yard for your conveniance. <a href="http://zee.cs.usna.edu/~aviv/ubuntu-6.06.1-desktop-i386.iso"><a href="http://zee.cs.usna.edu/~aviv/ubuntu-6.06.1-desktop-i386.iso">http://zee.cs.usna.edu/~aviv/ubuntu-6.06.1-desktop-i386.iso</a></a>
+</li>
+
+<li>Open virtual box and create a new machine.
+</li>
+
+<li>It is very important to get the settings right. Name the machine,
+Ubuntu-6.06 or something like that. The type is linux, but the
+version must be Linux 2.6/3.x (32-bit)
+</li>
+
+<li>Go ahead and make a hard drive and install the operating system
+from the cd. Again, use your USNA user name as your username, but
+<b>do not</b> use your USNA password. 
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Setup</h2>
+<div class="outline-text-2" id="text-3">
+<ol class="org-ol">
+<li>Once installed and booted up, we need to modify the apt sources
+list to install some software. This editing will need to occur
+using <code>vim</code> since emacs is not installed yet. Start by opening
+<code>/etc/apt/sources.list</code> from a terminal
+<pre class="example">
+$ sudo vim /etc/apt/sources.list
+</pre>
+<p>
+And then replace the repositories at the top with the following:
+</p>
+<pre class="example">
+# Line commented out by installer because it failed to verify:
+deb http://old-releases.ubuntu.com/ubuntu/ dapper main restricted
+# Line commented out by installer because it failed to verify:
+deb-src http://old-releases.ubuntu.com/ubuntu/ dapper main restricted
+
+## Major bug fix updates produced after the final release of the
+## distribution.
+# Line commented out by installer because it failed to verify:
+deb http://old-releases.ubuntu.com/ubuntu/ dapper-updates main restricted
+# Line commented out by installer because it failed to verify:
+deb-src http://old-releases.ubuntu.com/ubuntu/ dapper-updates main restricted
+</pre>
+<p>
+Note that the <code>old-release</code> prefix is key
+</p>
+</li>
+
+<li>Execute an update to for the repositoires
+<pre class="example">
+$ sudo apt-get update
+</pre>
+</li>
+
+<li>Install all the required packages
+<pre class="example">
+$ sudo apt-get install emacsen-common emacs21-common emacs21-bin-common emacs21 
+$ sudo apt-get install libungif4g xaw3dg 
+$ sudo apt-get install openssh-client openssh-blacklist openssh-server 
+$ sudo apt-get install binutils cpp-4.0 cpp gcc-4.0 gcc 
+$ sudo apt-get install make nasm rcs git-core libc6 libc6-i686 
+$ sudo apt-et install binutils-dev linux-kernel-headers libc6-dev
+</pre>
+</li>
+
+<li>Now we need to fix some environment issues. Add the following to your <code>.bashrc</code>
+<pre class="example">
+export TERM=xterm-color
+</pre>
+</li>
+
+<li>If you are an emacs user, you might want to add this to your <code>.emacs</code> file
+<pre class="example">
+(global-font-lock-mode 1)
+</pre>
+</li>
+
+<li>gcc is so old we do not need have stack protectors, so that setting in gcc should be turned off
+</li>
+
+<li>Finally, turn off address space randomization like before
+<pre class="example">
+echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+</pre>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</body>
+</html>
